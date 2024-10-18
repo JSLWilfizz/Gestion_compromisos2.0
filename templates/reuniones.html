@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reuniones y Compromisos</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+        }
+        .form-horizontal {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .form-horizontal label {
+            width: 150px;
+            margin-right: 10px;
+        }
+        .form-horizontal .form-control {
+            flex: 1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .btn {
+            padding: 10px;
+            background-color: #2980b9;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #3498db;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Reuniones y Compromisos</h2>
+
+    <!-- Formulario para crear una reunión -->
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="form-horizontal">
+            <label for="nombre">Nombre de la Reunión:</label>
+            {{ form.nombre(class="form-control") }}
+        </div>
+
+        <div class="form-horizontal">
+            <label for="staff">Staff:</label>
+            {{ form.staff(class="form-control") }}
+        </div>
+
+        <div class="form-horizontal">
+            <label for="area">Área:</label>
+            {{ form.area(class="form-control") }}
+        </div>
+
+        <div class="form-horizontal">
+            <label for="origen">Origen:</label>
+            {{ form.origen(class="form-control") }}
+        </div>
+
+        <div class="form-horizontal">
+            <label for="fecha">Fecha:</label>
+            {{ form.fecha(class="form-control", type="datetime-local") }}
+        </div>
+
+        <div class="form-horizontal">
+            <button type="submit" class="btn">Crear Reunión</button>
+        </div>
+    </form>
+
+    <!-- Tabla de reuniones y compromisos -->
+    {% for reunion in reuniones %}
+        <h3>{{ reunion['nombre'] }}</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    <th>Prioridad</th>
+                    <th>Fecha Límite</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if reunion['compromiso_id'] %}
+                    <tr>
+                        <td>{{ reunion['descripcion'] }}</td>
+                        <td>{{ reunion['estado'] }}</td>
+                        <td>{{ reunion['prioridad'] }}</td>
+                        <td>{{ reunion['fecha_limite'] }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4">No hay compromisos para esta reunión.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        <!-- Formulario para añadir más compromisos -->
+        <form method="POST" action="{{ url_for('reunion.create_compromiso', reunion_id=reunion['id']) }}">
+            <div class="form-horizontal">
+                <label for="descripcion">Descripción del Compromiso:</label>
+                <input type="text" name="descripcion" class="form-control" required>
+            </div>
+
+            <div class="form-horizontal">
+                <label for="estado">Estado:</label>
+                <select name="estado" class="form-control">
+                    <option value="Pendiente">Pendiente</option>
+                    <option value="Completado">Completado</option>
+                </select>
+            </div>
+
+            <div class="form-horizontal">
+                <label for="prioridad">Prioridad:</label>
+                <select name="prioridad" class="form-control">
+                    <option value="Alta">Alta</option>
+                    <option value="Media">Media</option>
+                    <option value="Baja">Baja</option>
+                </select>
+            </div>
+
+            <div class="form-horizontal">
+                <label for="fecha_limite">Fecha Límite:</label>
+                <input type="date" name="fecha_limite" class="form-control" required>
+            </div>
+
+            <div class="form-horizontal">
+                <button type="submit" class="btn">Agregar Compromiso</button>
+            </div>
+        </form>
+    {% endfor %}
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Inicializar Select2
+        $('select').select2();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Crear Reunión</title>
+    <!-- CSS and JS includes -->
+</head>
+<body>
+    <div class="container">
+        <h2>Crear Reunión</h2>
+        <form method="POST" action="{{ url_for('reunion.crear_reunion') }}">
+            {{ form.hidden_tag() }}
+
+            <!-- Datos de la reunión -->
+            <div class="form-horizontal">
+                <label for="nombre">Nombre de la Reunión:</label>
+                {{ form.nombre(class="form-control") }}
+            </div>
+
+            <div class="form-horizontal">
+                <label for="staff">Staff:</label>
+                {{ form.staff(class="form-control") }}
+            </div>
+
+            <div class="form-horizontal">
+                <label for="origen">Origen:</label>
+                {{ form.origen(class="form-control") }}
+                <span>o </span>
+                <button id="btn-add-origen">Añadir nuevo origen</button>
+                <input type="text" id="new-origen-input" name="new_origen" placeholder="Añadir nuevo origen" class="form-control" style="display:none;">
+            </div>
+
+            <div class="form-horizontal">
+                <label for="area">Área:</label>
+                {{ form.area(class="form-control") }}
+                <span>o </span>
+                <button id="btn-add-area">Añadir nueva área</button>
+                <input type="text" id="new-area-input" name="new_area" placeholder="Añadir nueva área" class="form-control" style="display:none;">
+            </div>
+
+            <div class="form-horizontal">
+                <label for="asistentes">Asistentes:</label>
+                {{ form.asistentes(class="form-control") }}
+            </div>
+
+            <div class="form-buttons">
+                <button type="submit" class="btn btn-primary">Crear Reunión</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

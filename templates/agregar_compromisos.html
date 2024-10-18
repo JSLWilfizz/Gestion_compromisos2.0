@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Agregar Compromisos</title>
+    <!-- CSS and JS includes -->
+</head>
+<body>
+    <div class="container">
+        <h2>Agregar Compromisos para la Reunión</h2>
+        <form method="POST" action="{{ url_for('reunion.agregar_compromisos', reunion_id=reunion.id) }}">
+            {{ form.hidden_tag() }}
+
+            <!-- Sección Compromisos -->
+            <div id="compromisos-section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Descripción</th>
+                            <th>Fecha Límite</th>
+                            <th>Prioridad</th>
+                            <th>Departamento</th>
+                            <th>Estado</th>
+                            <th>Responsables</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for field in form.compromisos %}
+                        <tr>
+                            <td>{{ field.descripcion(class="form-control") }}</td>
+                            <td>{{ field.fecha_limite(class="form-control") }}</td>
+                            <td>{{ field.prioridad(class="form-control") }}</td>
+                            <td>{{ field.departamento(class="form-control") }}</td>
+                            <td>{{ field.estado(class="form-control") }}</td>
+                            <td>
+                                <select id="responsables-{{ loop.index0 }}" class="form-control" name="compromisos-{{ loop.index0 }}-responsables" multiple="multiple">
+                                    {% for value, label in field.responsables.choices %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="form-buttons">
+                <button id="add-compromiso" class="btn btn-secondary">Añadir otro compromiso</button>
+                <button type="submit" class="btn btn-primary">Guardar Compromisos</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

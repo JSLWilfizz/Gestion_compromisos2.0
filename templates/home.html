@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Bienvenido, {{ user.name }} {{ user.lastname }}</h1>
+        <p>Departamento: {{ user.departamento_name }}</p>
+        <p>Cargo: {{ user.position }}</p>
+
+        <a href="{{ url_for('reunion.crear_reunion_paso1') }}" class="btn btn-primary">Crear Reunión</a>
+        <a href="{{ url_for('home.ver_compromisos') }}" class="btn btn-secondary">Ver Compromisos</a>
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">Cerrar Sesión</a>
+    </div>
+</body>
+</html>

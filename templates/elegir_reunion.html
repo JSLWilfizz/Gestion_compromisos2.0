@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elige una Reunión</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .form-horizontal {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .form-horizontal label {
+            width: 150px;
+            margin-right: 10px;
+        }
+        .form-horizontal .form-control {
+            flex: 1;
+        }
+        .btn {
+            padding: 10px;
+            background-color: #2980b9;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #3498db;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Reuniones Disponibles</h2>
+
+    <!-- Tabla para ver reuniones disponibles -->
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre de la Reunión</th>
+                <th>Fecha</th>
+                <th>Departamento (si es director)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reunion in reuniones %}
+            <tr>
+                <td>{{ reunion.nombre }}</td>
+                <td>{{ reunion.fecha }}</td>
+                <td>{{ reunion.departamento if reunion.departamento else 'N/A' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3">No hay reuniones disponibles</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Crear una Nueva Reunión</h3>
+
+    <!-- Formulario para crear nueva reunión -->
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <div class="form-horizontal">
+            <label for="nombre">Nombre de la Reunión:</label>
+            {{ form.nombre(class="form-control") }}
+        </div>
+
+        <div class="form-horizontal">
+            <label for="staff">Staff:</label>
+            {{ form.staff(class="form-control") }}
+        </div>
+
+        <div class="form-horizontal">
+            <label for="area">Área:</label>
+            {{ form.area(class="form-control") }}
+        </div>
+
+        <div class="form-horizontal">
+            <label for="origen">Origen:</label>
+            {{ form.origen(class="form-control") }}
+        </div>
+
+        <div class="form-horizontal">
+            <button type="submit" class="btn">Crear Reunión</button>
+        </div>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Inicializar Select2
+        $('select').select2();
+    });
+</script>
+</body>
+</html>

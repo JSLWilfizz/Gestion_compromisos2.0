@@ -1,0 +1,73 @@
+<form method="POST" action="{{ url_for('reunion.crear_reunion') }}" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+
+    <!-- Sección Nombre de la Reunión -->
+    <div class="form-group">
+        <label for="nombre">Nombre de la Reunión:</label>
+        {{ form.nombre(class="form-control") }}
+    </div>
+
+    <!-- Sección Staff -->
+    <div class="form-group">
+        <label for="staff">Staff:</label>
+        {{ form.staff(class="form-control") }}
+    </div>
+
+    <!-- Sección Origen -->
+    <div class="form-group">
+        <label for="origen">Origen:</label>
+        {{ form.origen(class="form-control") }}
+    </div>
+
+    <!-- Sección Área -->
+    <div class="form-group">
+        <label for="area">Área:</label>
+        {{ form.area(class="form-control") }}
+    </div>
+
+    <!-- Sección Asistentes -->
+    <div class="form-group">
+        <label for="asistentes">Asistentes:</label>
+        {{ form.asistentes(class="form-control") }}
+    </div>
+
+    <!-- Sección Compromisos -->
+    <h3>Añadir Compromisos</h3>
+    <div id="compromisos-section">
+        {% for field in form.compromisos %}
+            <div class="compromiso" data-index="{{ loop.index0 }}">
+                <div class="form-group">
+                    <label for="descripcion">Descripción:</label>
+                    {{ field.descripcion(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    <label for="estado">Estado:</label>
+                    {{ field.estado(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    <label for="prioridad">Prioridad:</label>
+                    {{ field.prioridad(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    <label for="fecha_limite">Fecha Límite:</label>
+                    {{ field.fecha_limite(class="form-control", type="date") }}
+                </div>
+                <div class="form-group">
+                    <label for="nivel_avance">Nivel de Avance:</label>
+                    {{ field.nivel_avance(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    <label for="departamento">Departamento:</label>
+                    {{ field.departamento(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    <label for="responsables">Responsables:</label>
+                    {{ field.responsables(class="form-control") }}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Botón de envío -->
+    <button type="submit" class="btn btn-primary">Crear Reunión</button>
+</form>

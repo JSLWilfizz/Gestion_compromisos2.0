@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modificar Compromiso</title>
+
+    <!-- Incluir CSS de Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <style>
+        .form-horizontal {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .form-horizontal label {
+            width: 150px;
+            margin-right: 10px;
+        }
+
+        .form-horizontal .form-control {
+            flex: 1;
+            margin-right: 20px;
+        }
+
+        .compromiso {
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* Mejor separación visual entre la reunión y los compromisos */
+        #compromisos-section {
+            margin-top: 40px;  /* Mayor separación entre reunión y compromisos */
+            text-align: center; /* Centrar el contenido */
+        }
+
+        /* Añadir separación clara entre las secciones */
+        .section-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Línea divisoria */
+        .divider {
+            height: 2px;
+            background-color: #ddd;
+            margin: 30px 0;
+        }
+
+        /* Estilo para los botones de añadir compromiso y enviar el formulario */
+        .form-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+        <h2>Editar Compromiso</h2>
+        <form method="POST" action="{{ url_for('home.edit_compromiso_view', compromiso_id=compromiso_id) }}">
+            {{ form.hidden_tag() }}
+
+            <div class="form-horizontal">
+                <label for="descripcion">Descripción:</label>
+                {{ form.descripcion(class="form-control") }}
+            </div>
+
+            <div class="form-horizontal">
+                <label for="estado">Estado:</label>
+                {{ form.estado(class="form-control") }}
+            </div>
+            <div class="form-horizontal">
+                <label for="prioridad">Prioridad:</label>
+                {{ form.prioridad(class="form-control") }}
+            </div>
+
+            <div class="form-horizontal">
+                <label for="fecha_limite">Fecha Límite:</label>
+                {{ form.fecha_limite(class="form-control", type="date") }}
+            </div>
+
+            <!-- Campo SelectField para los departamentos -->
+            <div class="form-horizontal">
+                <label for="departamento">Departamento:</label>
+                {{ form.departamento(class="form-control") }}
+            </div>
+
+            <!-- Campo Select2 para los responsables -->
+            <div class="form-horizontal">
+                <label for="responsables">Responsables:</label>
+                {{ form.responsables(class="form-control") }}
+            </div>
+
+            <div class="form-horizontal">
+                <button type="submit" class="btn btn-primary">Actualizar Compromiso</button>
+            </div>
+        </form>
+
+        <a href="{{ url_for('home.home_view') }}" class="btn btn-secondary">Volver al Home</a>
+    </div>
+
+    <!-- Incluir jQuery (necesario para Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Incluir JS de Select2 -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+         $(document).ready(function() {
+            // Inicializar Select2 para los responsables
+            $('#responsables').select2({
+                placeholder: "Selecciona responsables",
+                allowClear: true
+            });
+
+            // Forzar la selección de los responsables preseleccionados desde el backend
+            var responsablesPreseleccionados = {{ form.responsables.data|tojson }};
+            $('#responsables').val(responsablesPreseleccionados).trigger('change');
+
+            // Forzar la selección del departamento preseleccionado desde el backend
+            var departamentoPreseleccionado = {{ form.departamento.data }};
+            $('#departamento').val(departamentoPreseleccionado).trigger('change');
+        });
+    </script>
+</body>
+</html>
