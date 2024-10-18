@@ -11,7 +11,8 @@
 <body>
     <div class="container">
         <h1>Crear Reunión y Agregar Compromisos</h1>
-        <form method="POST" action="{{ url_for('reunion.crear_reunion_paso1') }}">
+        <form method="POST" action="{{ url_for('reunion.crear_reunion_paso1') }}" enctype="multipart/form-data">
+
             {{ form.hidden_tag() }}
 
             <!-- Sección de Origen y Área en paralelo -->
@@ -88,6 +89,11 @@
 <div class="form-group-horizontal" style="margin-top: 20px; display: flex; justify-content: space-between;">
     <!-- Botón para volver al home -->
     <a href="{{ url_for('home.home_view') }}" class="btn btn-secondary" style="width: auto;">Volver al inicio</a>
+
+    <div class="form-group">
+        <label for="acta_pdf">Subir PDF del acta</label>
+        <input type="file" name="acta_pdf" accept="application/pdf" class="form-control">
+    </div>
 
     <!-- Botón para confirmar la reunión y los compromisos -->
     <button type="submit" class="btn btn-primary" style="width: auto;">Confirmar Reunión y Compromisos</button>

@@ -11,7 +11,16 @@ from datetime import datetime
 
 reunion = Blueprint('reunion', __name__)
 
+# Define la carpeta donde se almacenarán los archivos PDF
+UPLOAD_FOLDER = 'uploads/actas/'
+ALLOWED_EXTENSIONS = {'pdf'}
 
+# Asegúrate de que la carpeta de subidas exista
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 @reunion.route('/reunion/crear_paso1', methods=['GET', 'POST'])
 @login_required
 def crear_reunion_paso1():
@@ -91,6 +100,15 @@ def crear_reunion_paso1():
             else:
                 area_id = form.area.data  # Utilizar el área seleccionada
 
+            acta_pdf = request.files.get('acta_pdf')
+            acta_pdf_filename = None
+
+            if acta_pdf and allowed_file(acta_pdf.filename):
+                # Almacenar el archivo con un nombre seguro
+                acta_pdf_filename = secure_filename(acta_pdf.filename)
+                acta_pdf.save(os.path.join(UPLOAD_FOLDER, acta_pdf_filename))
+                path = os.path.join(UPLOAD_FOLDER, acta_pdf_filename)
+
             # Guardar la reunión en la base de datos
             with conn.cursor() as cursor:
                 # Obtener los asistentes ingresados manualmente
@@ -101,13 +119,14 @@ def crear_reunion_paso1():
 
                 # Usar .data para obtener los valores de los campos
                 cursor.execute("""
-                        INSERT INTO reunion (nombre, id_staff, id_area, id_origen, fecha_creacion, asistentes)
-                        VALUES (%s, %s, %s, %s, NOW(), %s) RETURNING id
-                    """, ("test", None, area_id, origen_id, asistentes_str))
+                        INSERT INTO reunion (nombre, id_staff, id_area, id_origen, fecha_creacion, asistentes, acta_pdf)
+                        VALUES (%s, %s, %s, %s, NOW(), %s,%s) RETURNING id
+                    """, ("test", None, area_id, origen_id, asistentes_str, path))
 
                 reunion_id = cursor.fetchone()[0]
 
             print(f'Reunión creada con ID: {reunion_id}')
+            print(f'acta_pdf: {acta_pdf_filename}')
             print(f'formulario: {form.compromisos.data}')
             if form.compromisos.data:
                 print(len(form.compromisos.data))

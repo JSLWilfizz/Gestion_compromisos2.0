@@ -44,5 +44,6 @@ class CreateMeetingForm(FlaskForm):
     area = SelectField('Área', validators=[DataRequired()], choices=[], description="Si no encuentras el área, escríbela en el campo de abajo")
     asistentes = StringField('Asistentes', validators=[DataRequired()], description="Separar los nombres con comas")
     compromisos = FieldList(FormField(CompromisoForm), min_entries=1)  # Asegúrate de tener FieldList para compromisos
+    acta_pdf = FileField('Subir Acta (PDF)', validators=[FileAllowed(['pdf'], 'Solo se permiten archivos PDF')])
     submit = SubmitField('Confirmar Reunión')
 
