@@ -16,6 +16,7 @@ class LoginForm(FlaskForm):
 class ActaForm(FlaskForm):
     acta_pdf = FileField('Subir Acta (PDF)', validators=[FileAllowed(['pdf'], 'Solo se permiten archivos PDF')])
     submit = SubmitField('Subir Acta')
+
 class MultiSelectField(SelectMultipleField):
     def process_formdata(self, valuelist):
         try:
@@ -44,6 +45,6 @@ class CreateMeetingForm(FlaskForm):
     area = SelectField('Área', validators=[DataRequired()], choices=[], description="Si no encuentras el área, escríbela en el campo de abajo")
     asistentes = StringField('Asistentes', validators=[DataRequired()], description="Separar los nombres con comas")
     compromisos = FieldList(FormField(CompromisoForm), min_entries=1)  # Asegúrate de tener FieldList para compromisos
-    acta_pdf = FileField('Subir Acta (PDF)', validators=[FileAllowed(['pdf'], 'Solo se permiten archivos PDF')])
+    acta_pdf = FileField('Subir Acta (PDF o Imagen)', validators=[FileAllowed(['pdf', 'png', 'jpg', 'jpeg', 'gif'], 'Solo se permiten archivos PDF o imágenes')])
     submit = SubmitField('Confirmar Reunión')
 

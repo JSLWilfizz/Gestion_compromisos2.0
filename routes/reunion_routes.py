@@ -13,7 +13,7 @@ reunion = Blueprint('reunion', __name__)
 
 # Define la carpeta donde se almacenarán los archivos PDF
 UPLOAD_FOLDER = 'uploads/actas/'
-ALLOWED_EXTENSIONS = {'pdf'}
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif'}
 
 # Asegúrate de que la carpeta de subidas exista
 if not os.path.exists(UPLOAD_FOLDER):
@@ -137,6 +137,7 @@ def crear_reunion_paso1():
                     id_departamento = compromiso_form['departamento'].data
                     nivel_avance = 0  # Se establece el nivel de avance en 0 por defecto
                     estado = 'Pendiente'
+                    responsables = compromiso_form['responsables'].data
                     fecha_creacion = datetime.now()
 
                     # Guardar cada compromiso en la base de datos
@@ -154,6 +155,11 @@ def crear_reunion_paso1():
                                 INSERT INTO reunion_compromiso (id_reunion, id_compromiso)
                                 VALUES (%s, %s)
                             """, (reunion_id, compromiso_id))
+                        for responsable_id in responsables:
+                            cursor.execute("""
+                                    INSERT INTO persona_compromiso (id_persona, id_compromiso)
+                                    VALUES (%s, %s)
+                                """, (responsable_id, compromiso_id))
 
             conn.commit()  # Confirmar los cambios en la base de datos
 
@@ -162,7 +168,7 @@ def crear_reunion_paso1():
     except Exception as e:
         print(f'Ocurrió un error: {e}')
         conn.rollback()  # Revertir los cambios si ocurre un error
-        flash(f'Ocurrió un error al crear la reunión: {e}', 'danger')
+        print(f'Ocurrió un error al crear la reunión: {e}', 'danger')
 
-    return render_template('crear_reunion_paso1.html', form=form)
+    return render_template('crear_reunion.html', form=form)
 

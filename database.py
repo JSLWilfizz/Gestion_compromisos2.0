@@ -7,7 +7,7 @@ def get_db_connection():
         host="localhost",
         database="PyCG",
         user="postgres",
-        password="Federico0628"
+        password="fede0628"
     )
     return conn
 

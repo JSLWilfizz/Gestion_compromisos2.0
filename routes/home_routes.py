@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, session, redirect, url_for, flash,
 from database import get_db_connection, get_departamento_compromisos
 from psycopg2.extras import RealDictCursor
 from forms import CompromisoForm
+from .auth_routes import login_required
 
 home = Blueprint('home', __name__)
 
@@ -50,46 +51,100 @@ def home_view():
 
 
 # Ruta para ver compromisos del departamento
-@home.route('/compromisos', methods=['GET', 'POST'])
+@home.route('/ver_compromisos', methods=['GET', 'POST'])
+@login_required
 def ver_compromisos():
-    if 'user_id' not in session:
-        return redirect(url_for('auth.login'))
-
     conn = get_db_connection()
-    user_id = session['user_id']
+    user_id = session['user_id']  # Obtener el ID del usuario logueado
 
-    # Verificar si el usuario es director de algún departamento
-    with conn.cursor() as cursor:
+    # Verificar si el usuario es director
+    with conn.cursor(cursor_factory=RealDictCursor) as cursor:
         cursor.execute("""
-            SELECT d.id AS id_departamento, pd.es_director
+            SELECT pd.es_director, pd.id_departamento
             FROM persona_departamento pd
-            JOIN departamento d ON pd.id_departamento = d.id
-            WHERE pd.id_persona = %s
+            JOIN persona p ON p.id = pd.id_persona
+            WHERE p.id = %s
         """, (user_id,))
-        departamento_info = cursor.fetchone()
+        director_info = cursor.fetchone()
 
-    # Cargar los compromisos del departamento del usuario
-    compromisos = get_departamento_compromisos(conn, user_id)
+    es_director = director_info['es_director']
+    id_departamento = director_info['id_departamento']
 
-    # Procesar el comentario del director si el formulario es enviado
-    if request.method == 'POST':
-        if departamento_info and departamento_info[1]:  # El usuario es director
-            compromiso_id = request.form.get('compromiso_id')
-            comentario = request.form.get('comentario')
+    # Si el usuario es director, ver todos los compromisos del departamento
+    if es_director:
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("""
+                SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.avance, c.fecha_limite, c.comentario_director, 
+                       STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
+                FROM compromiso c
+                LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+                LEFT JOIN persona p ON pc.id_persona = p.id
+                WHERE c.id_departamento = %s
+                GROUP BY c.id
+            """, (id_departamento,))
+            compromisos = cursor.fetchall()
+    else:
+        # Si no es director, ver solo los compromisos donde el usuario es responsable
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("""
+                SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.avance, c.fecha_limite, c.comentario_director, 
+                       STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
+                FROM compromiso c
+                LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+                LEFT JOIN persona p ON pc.id_persona = p.id
+                WHERE pc.id_persona = %s
+                GROUP BY c.id
+            """, (user_id,))
 
-            # Actualizar el comentario del compromiso
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    UPDATE compromiso
-                    SET comentario_director = %s
-                    WHERE id = %s
-                """, (comentario, compromiso_id))
-                conn.commit()
+            compromisos = cursor.fetchall()
 
-            flash('Comentario actualizado correctamente.', 'success')
+    print(compromisos)
 
-    return render_template('compromisos.html', compromisos=compromisos, es_director=departamento_info[1])
+    # Si se envía un formulario de actualización
+    try:
+        if request.method == 'POST':
+            for compromiso in compromisos:
+                compromiso_id = compromiso['compromiso_id']
+                nuevo_estado = request.form.get(f'estado-{compromiso_id}')
+                nuevo_avance = request.form.get(f'nivel_avance-{compromiso_id}')
+                nuevo_comentario = request.form.get(f'comentario-{compromiso_id}')
 
+                # Actualizar estado, avance y comentario
+                with conn.cursor() as cursor:
+                    # Ejemplo de actualización del compromiso
+                    cursor.execute("""
+                        UPDATE compromiso
+                        SET  estado = %s, avance = %s, comentario_director = %s
+                        WHERE id = %s
+                    """, ( nuevo_estado, nuevo_avance,nuevo_comentario, compromiso_id))
+
+                    cursor.execute("""
+                            INSERT INTO compromiso_modificaciones (id_compromiso, id_usuario)
+                            VALUES (%s, %s)
+                        """, (compromiso_id, user_id))
+
+                    # Si es director, puede cambiar los responsables
+                if es_director:
+                    nuevos_responsables = request.form.getlist(f'responsables-{compromiso_id}')
+                    # Actualizar los responsables
+                    with conn.cursor() as cursor:
+                        cursor.execute("DELETE FROM persona_compromiso WHERE id_compromiso = %s", (compromiso_id,))
+                        for responsable_id in nuevos_responsables:
+                            cursor.execute("""
+                                INSERT INTO persona_compromiso (id_persona, id_compromiso)
+                                VALUES (%s, %s)
+                            """, (responsable_id, compromiso_id))
+
+            conn.commit()  # Confirmar cambios en la base de datos
+            flash('Compromisos actualizados correctamente.', 'success')
+
+        conn.close()
+        return render_template('compromisos.html', compromisos=compromisos, es_director=es_director)
+    except Exception as e:
+        conn.rollback()
+        print(f"Error al actualizar los compromisos: {e}")
+        flash('Ocurrió un error al actualizar los compromisos.', 'danger')
+        return redirect(url_for('home.ver_compromisos'))
 
 @home.route('/edit_compromiso/<int:compromiso_id>', methods=['GET', 'POST'])
 def edit_compromiso_view(compromiso_id):
