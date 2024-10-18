@@ -40,9 +40,9 @@ class CompromisoForm(FlaskForm):
 
 
 class CreateMeetingForm(FlaskForm):
-    origen = SelectField('Origen', validators=[DataRequired()], choices=[])
-    area = SelectField('Área', validators=[DataRequired()], choices=[])
-    asistentes = StringField('Asistentes', validators=[DataRequired()])
+    origen = SelectField('Origen', validators=[DataRequired()], choices=[], description="Si no encuentras el origen, escríbelo en el campo de abajo")
+    area = SelectField('Área', validators=[DataRequired()], choices=[], description="Si no encuentras el área, escríbela en el campo de abajo")
+    asistentes = StringField('Asistentes', validators=[DataRequired()], description="Separar los nombres con comas")
     compromisos = FieldList(FormField(CompromisoForm), min_entries=1)  # Asegúrate de tener FieldList para compromisos
     submit = SubmitField('Confirmar Reunión')
 

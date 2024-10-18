@@ -7,142 +7,6 @@
 
     <!-- Incluir CSS de Select2 -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
-    <style>
-        .hidden {
-            display: none;
-        }
-
-        .form-group-horizontal {
-            display: flex;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .form-group-horizontal label {
-            width: 150px;
-            margin-right: 10px;
-            text-align: right;
-        }
-
-        .form-group-horizontal .form-control {
-            flex: 1;
-            min-width: 0;
-            margin-right: 20px;
-        }
-
-        .form-group-horizontal button {
-            width: 200px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            font-size: 1em;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .btn-primary {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-
-        .btn-secondary:hover {
-            background-color: #5a6268;
-        }
-
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-
-        th, td {
-            padding: 10px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .btn-add {
-            background-color: #28a745;
-            color: white;
-            padding: 10px 20px;
-            margin-top: 10px;
-            border-radius: 5px;
-        }
-
-        .btn-add:hover {
-            background-color: #218838;
-        }
-
-        .btn-remove {
-            background-color: #dc3545;
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-        }
-
-        .btn-remove:hover {
-            background-color: #c82333;
-        }
-
-        .form-group-pair {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-
-        .form-group-pair .form-group-horizontal {
-            flex: 1;
-        }
-
-        .form-group-pair .form-group-horizontal:last-child {
-            margin-left: 20px;
-        }
-        .table {
-    width: 100%;
-    table-layout: fixed; /* Distribuye las celdas uniformemente */
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-.table th, .table td {
-    text-align: center; /* Centra el contenido en las celdas */
-    padding: 10px;
-    border: 1px solid #ddd;
-}
-
-.table input.form-control, .table select.form-control {
-    width: 100%; /* Los campos ocuparán el ancho completo de la celda */
-    box-sizing: border-box; /* Incluye el padding y borde dentro del ancho */
-}
-
-    </style>
 </head>
 <body>
     <div class="container">
@@ -188,7 +52,7 @@
                 <tbody>
                     {% for compromiso_form in form.compromisos %}
         <tr>
-            <td><input type="text" name="compromisos-{{ loop.index }}-descripcion" class="form-control" /></td>
+            <td><input type="text" name="compromisos-{{ loop.index }}-nombre" class="form-control" /></td>
             <td>
                 <select name="compromisos-{{ loop.index }}-prioridad" class="form-control">
                     <option value="Alta">Alta</option>
@@ -244,7 +108,7 @@
         allowClear: true
     });
 
-    let compromisoIndex = {{ form.compromisos | length }};  // Mantener el índice de compromisos
+    let compromisoIndex = $('#compromisos-table tbody tr').length + 1; // Mantener el índice de compromisos
 
     $('#btn-add-origen').on('click', function() {
         const origenSelect = $('select[name="origen"]');
@@ -280,7 +144,7 @@
     $('#add-compromiso').on('click', function() {
         const newRow = `
             <tr>
-                <td><input type="text" name="compromisos-${compromisoIndex}-descripcion" class="form-control" /></td>
+                <td><input type="text" name="compromisos-${compromisoIndex}-nombre" class="form-control" /></td>
                 <td>
                     <select name="compromisos-${compromisoIndex}-prioridad" class="form-control">
                         <option value="Alta">Alta</option>
@@ -307,23 +171,73 @@
             </tr>
         `;
 
+        // Añadir el nuevo compromiso a la tabla
         $('#compromisos-table tbody').append(newRow);
 
-        // Re-inicializar Select2 para el nuevo campo de responsables
+        // Re-inicializar Select2 para los nuevos responsables
         $(`select[name="compromisos-${compromisoIndex}-responsables"]`).select2({
             placeholder: "Selecciona responsables",
             allowClear: true
         });
 
-        compromisoIndex++;  // Incrementar el índice de compromisos
+        // Debug: Mostrar el índice del nuevo compromiso agregado
+        console.log(`Nuevo compromiso agregado con índice: ${compromisoIndex}`);
+
+        // Incrementar el índice para el siguiente compromiso
+        compromisoIndex++;
+
+        // Debug: Mostrar todos los compromisos actuales
+        console.log('Compromisos actuales después de agregar uno nuevo:');
+        $('#compromisos-table tbody tr').each(function() {
+            $(this).find('input, select').each(function() {
+                console.log($(this).attr('name') + ': ' + $(this).val());
+            });
+        });
     });
 
-    // Función para eliminar fila de compromiso
+    // Función para eliminar una fila de compromiso dinámicamente
     $('#compromisos-table').on('click', '.btn-remove', function() {
         $(this).closest('tr').remove();
+
+        // Reindexar los compromisos restantes
+        $('#compromisos-table tbody tr').each(function(index) {
+            $(this).find('input, select').each(function() {
+                const nameAttr = $(this).attr('name');
+                if (nameAttr) {
+                    const newName = nameAttr.replace(/compromisos-\d+/, `compromisos-${index}`);
+                    $(this).attr('name', newName);
+                }
+            });
+            console.log(`Compromiso reindexado con índice: ${index}`);
+        });
+
+        // Ajustar el índice de compromiso para el siguiente agregado
+        compromisoIndex = $('#compromisos-table tbody tr').length;
+
+        // Debug: Mostrar todos los compromisos después de eliminar uno
+        console.log('Compromisos actuales después de eliminar uno:');
+        $('#compromisos-table tbody tr').each(function() {
+            $(this).find('input, select').each(function() {
+                console.log($(this).attr('name') + ': ' + $(this).val());
+            });
+        });
     });
 
-    // Interceptar el submit del formulario para validar los campos
+    // Interceptar el submit para verificar qué campos están siendo enviados
+    $('form').on('submit', function(event) {
+        event.preventDefault();  // Prevenir el envío para inspeccionar los datos
+
+        // Debug: Mostrar los valores de los compromisos antes de enviar el formulario
+        console.log('Datos enviados antes de submit:');
+        $('#compromisos-table tbody tr').each(function() {
+            $(this).find('input, select').each(function() {
+                console.log($(this).attr('name') + ': ' + $(this).val());
+            });
+        });
+
+        // Enviar el formulario después de la depuración
+        this.submit();
+    });
 });
     </script>
 

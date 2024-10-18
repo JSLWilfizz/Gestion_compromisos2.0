@@ -65,3 +65,135 @@ li {
     text-align: center;
     margin: 20px 0;
 }
+        .hidden {
+            display: none;
+        }
+
+        .form-group-horizontal {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .form-group-horizontal label {
+            width: 150px;
+            margin-right: 10px;
+            text-align: right;
+        }
+
+        .form-group-horizontal .form-control {
+            flex: 1;
+            min-width: 0;
+            margin-right: 20px;
+        }
+
+        .form-group-horizontal button {
+            width: 200px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 1em;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .btn-add {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+
+        .btn-add:hover {
+            background-color: #218838;
+        }
+
+        .btn-remove {
+            background-color: #dc3545;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .btn-remove:hover {
+            background-color: #c82333;
+        }
+
+        .form-group-pair {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .form-group-pair .form-group-horizontal {
+            flex: 1;
+        }
+
+        .form-group-pair .form-group-horizontal:last-child {
+            margin-left: 20px;
+        }
+        .table {
+    width: 100%;
+    table-layout: fixed; /* Distribuye las celdas uniformemente */
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.table th, .table td {
+    text-align: center; /* Centra el contenido en las celdas */
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+
+.table input.form-control, .table select.form-control {
+    width: 100%; /* Los campos ocuparán el ancho completo de la celda */
+    box-sizing: border-box; /* Incluye el padding y borde dentro del ancho */
+}
