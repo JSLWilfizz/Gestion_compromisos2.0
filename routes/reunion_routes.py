@@ -102,7 +102,7 @@ def crear_reunion_paso1():
 
             acta_pdf = request.files.get('acta_pdf')
             acta_pdf_filename = None
-
+            path = None
             if acta_pdf and allowed_file(acta_pdf.filename):
                 # Almacenar el archivo con un nombre seguro
                 acta_pdf_filename = secure_filename(acta_pdf.filename)
@@ -162,7 +162,7 @@ def crear_reunion_paso1():
                                 """, (responsable_id, compromiso_id))
 
             conn.commit()  # Confirmar los cambios en la base de datos
-
+            conn.close()
             return redirect(url_for('home.home_view'))
 
     except Exception as e:

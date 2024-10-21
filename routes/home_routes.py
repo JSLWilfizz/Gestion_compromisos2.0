@@ -6,6 +6,9 @@ from .auth_routes import login_required
 
 home = Blueprint('home', __name__)
 
+@home.route('/')
+def redirect_home():
+    return redirect(url_for('home.home_view'))
 
 # Ruta principal (home)
 @home.route('/home')
@@ -54,54 +57,69 @@ def home_view():
 @home.route('/ver_compromisos', methods=['GET', 'POST'])
 @login_required
 def ver_compromisos():
-    conn = get_db_connection()
+    conn = get_db_connection()  # Obtener la conexión a la base de datos
     user_id = session['user_id']  # Obtener el ID del usuario logueado
 
-    # Verificar si el usuario es director
-    with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-        cursor.execute("""
-            SELECT pd.es_director, pd.id_departamento
-            FROM persona_departamento pd
-            JOIN persona p ON p.id = pd.id_persona
-            WHERE p.id = %s
-        """, (user_id,))
-        director_info = cursor.fetchone()
-
-    es_director = director_info['es_director']
-    id_departamento = director_info['id_departamento']
-
-    # Si el usuario es director, ver todos los compromisos del departamento
-    if es_director:
-        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("""
-                SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.avance, c.fecha_limite, c.comentario_director, 
-                       STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
-                FROM compromiso c
-                LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
-                LEFT JOIN persona p ON pc.id_persona = p.id
-                WHERE c.id_departamento = %s
-                GROUP BY c.id
-            """, (id_departamento,))
-            compromisos = cursor.fetchall()
-    else:
-        # Si no es director, ver solo los compromisos donde el usuario es responsable
-        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("""
-                SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.avance, c.fecha_limite, c.comentario_director, 
-                       STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
-                FROM compromiso c
-                LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
-                LEFT JOIN persona p ON pc.id_persona = p.id
-                WHERE pc.id_persona = %s
-                GROUP BY c.id
-            """, (user_id,))
-
-            compromisos = cursor.fetchall()
-
-    print(compromisos)
-
-    # Si se envía un formulario de actualización
     try:
+        # Verificar si el usuario es director
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("""
+                SELECT pd.es_director, pd.id_departamento
+                FROM persona_departamento pd
+                JOIN persona p ON p.id = pd.id_persona
+                WHERE p.id = %s
+            """, (user_id,))
+            director_info = cursor.fetchone()
+
+        es_director = director_info['es_director']
+        id_departamento = director_info['id_departamento']
+
+        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            # Cargar todos los responsables
+            cursor.execute("""
+                        SELECT p.id, p.name, p.lastname, d.name AS departamento, p.position
+                        FROM persona p
+                        JOIN persona_departamento pd ON p.id = pd.id_persona
+                        JOIN departamento d ON pd.id_departamento = d.id
+                    """)
+            # Crear la lista con el formato "Nombre Apellido - Departamento - Cargo"
+            todos_responsables = [
+                (persona['id'],
+                 f"{persona['name']} {persona['lastname']} - {persona['departamento']} - {persona['position']}")
+                for persona in cursor.fetchall()
+            ]
+
+        # Si el usuario es director, ver todos los compromisos del departamento
+        if es_director:
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.avance, c.fecha_limite, c.comentario_director, 
+                           ARRAY_AGG(DISTINCT p.id) AS responsables
+                    FROM compromiso c
+                    LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+                    LEFT JOIN persona p ON pc.id_persona = p.id
+                    WHERE c.id_departamento = %s
+                    GROUP BY c.id
+                """, (id_departamento,))
+                compromisos = cursor.fetchall()
+        else:
+            # Si no es director, ver solo los compromisos donde el usuario es responsable
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.avance, c.fecha_limite, c.comentario_director, 
+                       STRING_AGG(DISTINCT p.id::text, ', ') AS responsables_ids,
+                       STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
+                FROM compromiso c
+                LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+                LEFT JOIN persona p ON pc.id_persona = p.id
+                GROUP BY c.id
+                HAVING %s = ANY(ARRAY_AGG(p.id))
+                """, (user_id,))
+                compromisos = cursor.fetchall()
+
+        print(compromisos)  # Debug: mostrar compromisos cargados
+
+        # Si se envía un formulario de actualización
         if request.method == 'POST':
             for compromiso in compromisos:
                 compromiso_id = compromiso['compromiso_id']
@@ -111,22 +129,20 @@ def ver_compromisos():
 
                 # Actualizar estado, avance y comentario
                 with conn.cursor() as cursor:
-                    # Ejemplo de actualización del compromiso
                     cursor.execute("""
                         UPDATE compromiso
-                        SET  estado = %s, avance = %s, comentario_director = %s
+                        SET estado = %s, avance = %s, comentario_director = %s
                         WHERE id = %s
-                    """, ( nuevo_estado, nuevo_avance,nuevo_comentario, compromiso_id))
+                    """, (nuevo_estado, nuevo_avance, nuevo_comentario, compromiso_id))
 
                     cursor.execute("""
-                            INSERT INTO compromiso_modificaciones (id_compromiso, id_usuario)
-                            VALUES (%s, %s)
-                        """, (compromiso_id, user_id))
+                        INSERT INTO compromiso_modificaciones (id_compromiso, id_usuario)
+                        VALUES (%s, %s)
+                    """, (compromiso_id, user_id))
 
-                    # Si es director, puede cambiar los responsables
+                # Si es director, puede cambiar los responsables
                 if es_director:
                     nuevos_responsables = request.form.getlist(f'responsables-{compromiso_id}')
-                    # Actualizar los responsables
                     with conn.cursor() as cursor:
                         cursor.execute("DELETE FROM persona_compromiso WHERE id_compromiso = %s", (compromiso_id,))
                         for responsable_id in nuevos_responsables:
@@ -138,13 +154,17 @@ def ver_compromisos():
             conn.commit()  # Confirmar cambios en la base de datos
             flash('Compromisos actualizados correctamente.', 'success')
 
-        conn.close()
-        return render_template('compromisos.html', compromisos=compromisos, es_director=es_director)
+        return render_template('compromisos.html', compromisos=compromisos, es_director=es_director, todos_responsables=todos_responsables)
+
     except Exception as e:
         conn.rollback()
         print(f"Error al actualizar los compromisos: {e}")
         flash('Ocurrió un error al actualizar los compromisos.', 'danger')
         return redirect(url_for('home.ver_compromisos'))
+
+    finally:
+        conn.close()  # Cerrar la conexión solo al final
+
 
 @home.route('/edit_compromiso/<int:compromiso_id>', methods=['GET', 'POST'])
 def edit_compromiso_view(compromiso_id):

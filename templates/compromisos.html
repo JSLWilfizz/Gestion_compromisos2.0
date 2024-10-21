@@ -88,18 +88,18 @@
                         <td><input type="number" name="nivel_avance-{{ compromiso.compromiso_id }}" value="{{ compromiso.avance }}" min="0" max="100"></td>
                         <td>{{ compromiso.fecha_limite.strftime('%Y-%m-%d') }}</td>
                         <td>
-                            {% if es_director %}
-                                <select name="responsables-{{ compromiso.compromiso_id }}" multiple>
-                                    {% for responsable in todos_responsables %}
-                                        <option value="{{ responsable.id }}" {% if responsable.id in compromiso.responsables %}selected{% endif %}>
-                                            {{ responsable.name }} {{ responsable.lastname }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                            {% else %}
-                                {{ compromiso.responsables }}
-                            {% endif %}
-                        </td>
+    {% if es_director %}
+        <select name="responsables-{{ compromiso.compromiso_id }}" multiple>
+            {% for value, label in todos_responsables %}
+                <option value="{{ value }}" {% if value in compromiso.responsables_ids %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+    {% else %}
+        {{ compromiso.responsables }}
+    {% endif %}
+</td>
                         <td><textarea name="comentario-{{ compromiso.compromiso_id }}">{{ compromiso.comentario_director }}</textarea></td>
                         <td><button type="button" class="btn-primary guardar-btn" data-id="{{ compromiso.compromiso_id }}">Guardar</button></td>
                     </tr>
@@ -110,11 +110,17 @@
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(document).ready(function() {
+            // Inicializar Select2 para los selects de responsables
+            $('select[name^="responsables-"]').select2({
+                placeholder: "Selecciona responsables",
+                allowClear: true
+            });
+
             // Capturar el evento de clic en el botón de guardar
             $('.guardar-btn').click(function() {
-                var compromisoId = $(this).data('id');
                 var formData = $('#compromisos-form').serialize(); // Obtener los datos del formulario
 
                 // Enviar la solicitud de actualización a través de AJAX

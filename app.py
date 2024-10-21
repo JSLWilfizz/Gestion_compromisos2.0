@@ -15,9 +15,9 @@ UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Registrar los Blueprints
-app.register_blueprint(auth)  # El prefijo es importante aquí
-app.register_blueprint(home)
-app.register_blueprint(reunion)
+app.register_blueprint(auth) # Registrar el blueprint de autenticación
+app.register_blueprint(home) # Registrar el blueprint de la página principal
+app.register_blueprint(reunion) # Registrar el blueprint de las reuniones
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True) # Ejecutar la aplicación en modo debug
