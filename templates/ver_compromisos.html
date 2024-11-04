@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Ver Compromisos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .container {
+            margin: 20px auto;
+            max-width: 1200px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ver Compromisos</h1>
+
+        <!-- Botón para volver al home -->
+        <a href="{{ url_for('home.home_view') }}" class="btn-secondary">Volver al Home</a>
+
+        <form id="compromisos-form" method="POST" action="{{ url_for('home.ver_compromisos') }}">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Descripción</th>
+                        <th>Estado</th>
+                        <th>Nivel de Avance (%)</th>
+                        <th>Fecha Límite</th>
+                        <th>Responsables</th>
+                        {% if es_director %}
+                        <th>Nuevos Responsables</th> <!-- Nueva columna para directores -->
+                        {% endif %}
+                        <th>Comentario</th>
+                        <th>Comentario Dirección</th> <!-- Solo visualización -->
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for compromiso in compromisos %}
+                    <tr>
+                        <td>{{ compromiso.descripcion }}</td>
+                        <td>
+                            <select name="estado-{{ compromiso.compromiso_id }}">
+                                <option value="Pendiente" {% if compromiso.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                <option value="Completado" {% if compromiso.estado == 'Completado' %}selected{% endif %}>Completado</option>
+                            </select>
+                        </td>
+                        <td><input type="number" name="nivel_avance-{{ compromiso.compromiso_id }}" value="{{ compromiso.avance }}" min="0" max="100"></td>
+                        <td>{{ compromiso.fecha_limite.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ compromiso.responsables }}</td>
+                        {% if es_director %}
+                        <td>
+                            <select name="nuevos_responsables-{{ compromiso.compromiso_id }}" multiple>
+                                {% for value, label in todos_responsables %}
+                                    <option value="{{ value }}" {% if value|string in compromiso.responsables_ids|string %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        {% endif %}
+                        <td><textarea name="comentario-{{ compromiso.compromiso_id }}">{{ compromiso.comentario }}</textarea></td>
+                        <td><textarea disabled>{{ compromiso.comentario_direccion }}</textarea></td> <!-- Comentario Dirección solo visible -->
+                        <td><button type="submit" class="btn-primary guardar-btn" data-id="{{ compromiso.compromiso_id }}">Guardar</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Inicializar Select2 solo si es director
+            {% if es_director %}
+            $('select[name^="nuevos_responsables-"]').select2({
+                placeholder: "Selecciona nuevos responsables",
+                allowClear: true,
+                width: '300px'
+            });
+            {% endif %}
+
+            // Capturar el evento de clic en el botón de guardar
+            $('.guardar-btn').click(function(event) {
+                event.preventDefault(); // Evitar el comportamiento predeterminado del botón de submit
+                var formData = $('#compromisos-form').serialize();
+
+                $.ajax({
+                    url: "{{ url_for('home.ver_compromisos', month=request.args.get('month'), departamento_id=request.args.get('departamento_id')) }}",
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        alert('Cambios guardados con éxito');  // Mostrar alerta de éxito
+                        location.reload();
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error al guardar los cambios');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

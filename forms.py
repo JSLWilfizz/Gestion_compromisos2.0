@@ -27,15 +27,15 @@ class MultiSelectField(SelectMultipleField):
 
 class CompromisoForm(FlaskForm):
     nombre = StringField('Nombre', validators=[DataRequired()])  # Eliminar DataRequired() para hacerlo opcional
-    estado = SelectField('Estado', choices=[('Pendiente', 'Pendiente'), ('Completado', 'Completado')])  # Opcional
+    estado = SelectField('Estado', choices=[('Pendiente', 'Pendiente'), ('Completado', 'Completado')],default="Pendiente")  # Opcional
     prioridad = SelectField('Prioridad', choices=[('Alta', 'Alta'), ('Media', 'Media'), ('Baja', 'Baja')])  # Opcional
-    fecha_limite = DateField('Fecha Límite', format='%Y-%m-%d')  # Opcional
+    fecha_limite = DateField('Fecha Límite', format='%Y-%m-%d',validators=[DataRequired()])  # Opcional
     fecha_creacion = DateField('Fecha Creación', default=datetime.now(),
                                format='%Y-%m-%d')  # Mantener la fecha de creación pero opcional
 
     departamento = SelectField('Departamento', choices=[])  # Opcional, choices cargados dinámicamente
     nivel_avance = IntegerField('Nivel de Avance',
-                                validators=[NumberRange(min=0, max=100)])  # Opcional, manteniendo el rango de 0 a 100
+                                validators=[NumberRange(min=0, max=100)],default=0)  # Opcional, manteniendo el rango de 0 a 100
 
     responsables = MultiSelectField('Responsables', choices=[])  # Opcional, choices cargados dinámicamente
 

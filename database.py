@@ -1,21 +1,33 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
+import os
 
-
+load_dotenv()
+""" 
+    Función para obtener una conexión a la base de datos
+    Retorna una conexión a la base de datos
+"""
 def get_db_connection():
     conn = psycopg2.connect(
-        host="localhost",
-        database="PyCG",
-        user="postgres",
-        password="fede0628"
+        host=os.getenv("DB_HOST"),
+        database=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD")
     )
     return conn
 
+
+"""
+    Función para obtener un usuario por su nombre de usuario
+"""
 def get_user_by_username(conn, username):
     with conn.cursor(cursor_factory=RealDictCursor) as cursor:
         cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
         return cursor.fetchone()
-
+"""
+    Función para obtener un usuario por su ID
+"""
 def get_user_compromisos(conn, user_id):
     with conn.cursor(cursor_factory=RealDictCursor) as cursor:
         cursor.execute("""
@@ -26,7 +38,9 @@ def get_user_compromisos(conn, user_id):
         """, (user_id,))
         return cursor.fetchall()
 
-
+"""
+    Función para obtener los compromisos de un departamento
+"""
 def get_departamento_compromisos(conn, user_id):
     with conn.cursor(cursor_factory=RealDictCursor) as cursor:
         cursor.execute("""

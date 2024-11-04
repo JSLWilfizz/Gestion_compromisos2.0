@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Compromisos - Directora</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Existing CSS styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            color: #333;
+            padding: 0 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 40px auto;
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            color: #007bff;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .summary-box {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .summary-item {
+            flex: 1;
+            background-color: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-right: 10px;
+        }
+        .summary-item:last-child {
+            margin-right: 0;
+        }
+        .summary-item h3 {
+            font-size: 18px;
+            color: #333;
+        }
+        .summary-item p {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .filter-box {
+            margin-bottom: 20px;
+        }
+        .filter-box select {
+            padding: 8px;
+            font-size: 16px;
+            margin-right: 10px;
+            border-radius: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        td select, td input[type="number"], td textarea {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        td textarea {
+            height: 60px;
+            resize: vertical;
+            padding: 5px;
+            font-size: 14px;
+        }
+        .btn-primary, .btn-secondary {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Editor de Compromisos - Directora</h1>
+
+        <form id="compromisos-form" method="POST" action="{{ url_for('director.ver_compromisos_director', month=request.args.get('month'), departamento_id=request.args.get('departamento_id')) }}">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Descripción</th>
+                        <th>Estado</th>
+                        <th>Nivel de Avance (%)</th>
+                        <th>Fecha Límite</th>
+                        <th>Responsables</th>
+                        <th>Comentario</th>
+                        <th>Comentario Dirección</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for compromiso in compromisos %}
+                    <tr>
+                        <td>{{ compromiso.descripcion }}</td>
+                        <td>
+                            <select name="estado-{{ compromiso.compromiso_id }}">
+                                <option value="Pendiente" {% if compromiso.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                <option value="Completado" {% if compromiso.estado == 'Completado' %}selected{% endif %}>Completado</option>
+                            </select>
+                        </td>
+                        <td><input type="number" name="nivel_avance-{{ compromiso.compromiso_id }}" value="{{ compromiso.avance }}" min="0" max="100"></td>
+                        <td>{{ compromiso.fecha_limite.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <select name="responsables-{{ compromiso.compromiso_id }}" multiple class="select2">
+                                {% for value, label in todos_responsables %}
+                                    <option value="{{ value }}" {% if value in compromiso.responsables_ids %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td><textarea name="comentario-{{ compromiso.compromiso_id }}">{{ compromiso.comentario }}</textarea></td>
+                        <td><textarea name="comentario_direccion-{{ compromiso.compromiso_id }}">{{ compromiso.comentario_direccion }}</textarea></td>
+                        <td>
+                            <button type="submit" class="btn-primary guardar-btn" data-id="{{ compromiso.compromiso_id }}">
+                                <i class="fas fa-save"></i> Guardar
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+
+        <div class="footer">
+            <a href="{{ url_for('home.home_view') }}" class="btn-secondary"><i class="fas fa-home"></i> Volver al Inicio</a>
+        </div>
+    </div>
+
+    <!-- Include FontAwesome, jQuery, and Select2 scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Apply Select2 to all multiple select elements with the class 'select2'
+            $('.select2').select2({
+                placeholder: "Selecciona responsables",
+                allowClear: true
+            });
+        });
+    </script>
+</body>
+
+</html>

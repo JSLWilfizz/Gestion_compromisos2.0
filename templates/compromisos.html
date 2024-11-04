@@ -56,57 +56,69 @@
     </style>
 </head>
 <body>
+{% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
     <div class="container">
         <h1>Ver Compromisos</h1>
 
         <!-- Botón para volver al home -->
         <a href="{{ url_for('home.home_view') }}" class="btn-secondary">Volver al Home</a>
 
-        <form id="compromisos-form" method="POST" action="{{ url_for('home.ver_compromisos') }}">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Descripción</th>
-                        <th>Estado</th>
-                        <th>Nivel de Avance (%)</th>
-                        <th>Fecha Límite</th>
-                        <th>Responsables</th>
-                        <th>Comentario</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for compromiso in compromisos %}
-                    <tr>
-                        <td>{{ compromiso.descripcion }}</td>
-                        <td>
-                            <select name="estado-{{ compromiso.compromiso_id }}">
-                                <option value="Pendiente" {% if compromiso.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-                                <option value="Completado" {% if compromiso.estado == 'Completado' %}selected{% endif %}>Completado</option>
-                            </select>
-                        </td>
-                        <td><input type="number" name="nivel_avance-{{ compromiso.compromiso_id }}" value="{{ compromiso.avance }}" min="0" max="100"></td>
-                        <td>{{ compromiso.fecha_limite.strftime('%Y-%m-%d') }}</td>
-                        <td>
-    {% if es_director %}
-        <select name="responsables-{{ compromiso.compromiso_id }}" multiple>
-            {% for value, label in todos_responsables %}
-                <option value="{{ value }}" {% if value in compromiso.responsables_ids %}selected{% endif %}>
-                    {{ label }}
-                </option>
+        <form id="compromisos-form" method="POST" action="{{ url_for('director.ver_compromisos_director', mes=request.args.get('month'), departamento_id=request.args.get('departamento_id')) }}">
+    <!-- Campos ocultos para enviar el mes y el departamento -->
+    <input type="hidden" name="mes" value="{{ request.args.get('month') }}">
+    <input type="hidden" name="departamento_id" value="{{ request.args.get('departamento_id') }}">
+
+    <table>
+        <thead>
+            <tr>
+                <th>Descripción</th>
+                <th>Estado</th>
+                <th>Nivel de Avance (%)</th>
+                <th>Fecha Límite</th>
+                <th>Responsables</th>
+                <th>Comentario</th>
+                <th>Comentario Dirección</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for compromiso in compromisos %}
+            <tr>
+                <td>{{ compromiso.descripcion }}</td>
+                <td>
+                    <select name="estado-{{ compromiso.compromiso_id }}">
+                        <option value="Pendiente" {% if compromiso.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                        <option value="Completado" {% if compromiso.estado == 'Completado' %}selected{% endif %}>Completado</option>
+                    </select>
+                </td>
+                <td><input type="number" name="nivel_avance-{{ compromiso.compromiso_id }}" value="{{ compromiso.avance }}" min="0" max="100"></td>
+                <td>{{ compromiso.fecha_limite.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <select name="responsables-{{ compromiso.compromiso_id }}" multiple>
+                        {% for value, label in responsables %}
+                            <option value="{{ value }}" {% if value in compromiso.responsables_ids %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td><textarea name="comentario-{{ compromiso.compromiso_id }}">{{ compromiso.comentario }}</textarea></td>
+                <td><textarea name="comentario_direccion-{{ compromiso.compromiso_id }}">{{ compromiso.comentario_director }}</textarea></td>
+                <td><button type="button" class="btn-primary guardar-btn" data-id="{{ compromiso.compromiso_id }}">Guardar</button></td>
+            </tr>
             {% endfor %}
-        </select>
-    {% else %}
-        {{ compromiso.responsables }}
-    {% endif %}
-</td>
-                        <td><textarea name="comentario-{{ compromiso.compromiso_id }}">{{ compromiso.comentario_director }}</textarea></td>
-                        <td><button type="button" class="btn-primary guardar-btn" data-id="{{ compromiso.compromiso_id }}">Guardar</button></td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </form>
+        </tbody>
+    </table>
+</form>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -116,11 +128,13 @@
             // Inicializar Select2 para los selects de responsables
             $('select[name^="responsables-"]').select2({
                 placeholder: "Selecciona responsables",
-                allowClear: true
+                allowClear: true,
+                width: '300px'
             });
 
             // Capturar el evento de clic en el botón de guardar
             $('.guardar-btn').click(function() {
+                var compromiso_id = $(this).data('id');  // Obtener el id del compromiso
                 var formData = $('#compromisos-form').serialize(); // Obtener los datos del formulario
 
                 // Enviar la solicitud de actualización a través de AJAX
