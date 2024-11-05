@@ -40,7 +40,7 @@ class CompromisoRepository:
     def fetch_compromisos_by_departamento(self, departamento_id):
         with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
-                SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.avance, c.fecha_limite, 
+                SELECT c.id AS compromiso_id,c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
                        c.comentario, c.comentario_direccion,
                        ARRAY_AGG(DISTINCT p.id) AS responsables_ids, -- Obtenemos una lista de IDs de responsables
                        STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables -- Nombres concatenados
@@ -55,7 +55,7 @@ class CompromisoRepository:
     def fetch_compromisos_by_responsable(self, user_id):
         with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
-                SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.avance, c.fecha_limite,
+                SELECT c.id AS compromiso_id,c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite,
                        c.comentario, c.comentario_direccion,
                        ARRAY_AGG(DISTINCT p.id) AS responsables_ids,
                        STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
@@ -104,7 +104,7 @@ class CompromisoRepository:
     def fetch_compromisos_by_departamento(self, departamento_id):
         with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
-                SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.avance, c.fecha_limite, 
+                SELECT c.id AS compromiso_id,c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
                        c.comentario, c.comentario_direccion,
                        ARRAY_AGG(DISTINCT p.id) AS responsables_ids, -- IDs de los responsables
                        STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables -- Nombres de los responsables
@@ -119,7 +119,7 @@ class CompromisoRepository:
     def fetch_compromisos_by_month(self, month, year):
         with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
-                SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.avance, c.fecha_limite, 
+                SELECT c.id AS compromiso_id,c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
                        c.comentario_director, d.name AS departamento, 
                        STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
                 FROM compromiso c

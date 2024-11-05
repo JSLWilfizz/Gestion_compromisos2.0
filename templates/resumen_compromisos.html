@@ -135,9 +135,21 @@
             text-align: center;
             margin-top: 20px;
             color: #666;
-            font-size: 0.9em;
+            font-size: 14px;
+        }
+        .footer {
+            background-color: #f8f9fa;
             padding: 20px 0;
-            background-color: #f4f4f4;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+
+        .footer img {
+            width: 80px;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -214,13 +226,11 @@
     </div>
 
     <!-- Logo en la esquina inferior izquierda -->
-    <div class="logo-container">
-        <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
-    </div>
-
-    <!-- Footer con el nombre del Servicio -->
-    <div class="footer">
+    <footer class="footer">
         Servicio de Salud del Maule
-    </div>
+        <div>
+            <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
+        </div>
+    </footer>
 </body>
 </html>

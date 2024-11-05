@@ -123,6 +123,20 @@
             color: #666;
             font-size: 14px;
         }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+
+        .footer img {
+            width: 80px;
+            margin-top: 10px;
+        }
 
         /* Estilos responsivos */
         @media (max-width: 768px) {
@@ -159,6 +173,20 @@
             .logo-container img {
                 width: 60px;
             }
+            .footer {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+
+        .footer img {
+            width: 80px;
+            margin-top: 10px;
+        }
         }
 
         @media (max-width: 480px) {
@@ -204,14 +232,12 @@
     {% endif %}
 
     <!-- Logo en la esquina inferior izquierda -->
-    <div class="logo-container">
-        <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
-    </div>
-
-    <!-- Footer con el nombre del Servicio -->
-    <div class="footer">
+    <footer class="footer">
         Servicio de Salud del Maule
-    </div>
+        <div>
+            <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
+        </div>
+    </footer>
 
     <script>
         // Mostrar el menú lateral si el usuario es director

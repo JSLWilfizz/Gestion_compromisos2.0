@@ -91,6 +91,20 @@
             color: #666;
             font-size: 14px;
         }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+
+        .footer img {
+            width: 80px;
+            margin-top: 10px;
+        }
 
         .table th, .table td {
             padding: 10px;
@@ -213,14 +227,13 @@
     </div>
 
     <!-- Logo en la esquina inferior izquierda -->
-    <div class="logo-container">
-        <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
-    </div>
-
-    <!-- Footer con el nombre del Servicio -->
-    <div class="footer">
+    <footer class="footer">
         Servicio de Salud del Maule
-    </div>
+        <div>
+            <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
+        </div>
+    </footer>
+
 
     <!-- Incluir jQuery y Select2 -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

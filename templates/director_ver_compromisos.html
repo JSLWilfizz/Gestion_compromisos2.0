@@ -9,119 +9,126 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
-        /* Existing CSS styling */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f6f8;
-            color: #333;
-            padding: 0 20px;
-        }
+        /* Responsive Container Styling */
         .container {
             width: 100%;
             max-width: 1100px;
-            margin: 40px auto;
-            background-color: white;
+            margin: 20px auto;
             padding: 20px;
+            background-color: white;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
         }
+
         h1 {
             color: #007bff;
             margin-bottom: 20px;
             text-align: center;
         }
-        .summary-box {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 20px;
-        }
-        .summary-item {
-            flex: 1;
-            background-color: #e9ecef;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            margin-right: 10px;
-        }
-        .summary-item:last-child {
-            margin-right: 0;
-        }
-        .summary-item h3 {
-            font-size: 18px;
-            color: #333;
-        }
-        .summary-item p {
-            font-size: 24px;
-            font-weight: bold;
-            color: #007bff;
-        }
-        .filter-box {
-            margin-bottom: 20px;
-        }
-        .filter-box select {
-            padding: 8px;
-            font-size: 16px;
-            margin-right: 10px;
-            border-radius: 4px;
-        }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            font-size: 14px;
         }
+
         th, td {
             border: 1px solid #ddd;
-            padding: 10px;
+            padding: 8px;
             text-align: center;
         }
+
         th {
             background-color: #007bff;
             color: white;
         }
-        td select, td input[type="number"], td textarea {
-            width: 100%;
-            box-sizing: border-box;
+
+        /* Styling for Priorities */
+        .priority-alta {
+            background-color: #ffcccc;
         }
-        td textarea {
-            height: 60px;
-            resize: vertical;
-            padding: 5px;
-            font-size: 14px;
+
+        .priority-media {
+            background-color: #ffe6cc;
         }
+
+        .priority-baja {
+            background-color: #ccffcc;
+        }
+
+        /* Styling for Date Limit */
+        .date-limit-soon {
+            background-color: #fff3cd;
+        }
+
+        .date-limit-overdue {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Button Styling */
         .btn-primary, .btn-secondary {
             padding: 8px 12px;
             border: none;
             border-radius: 4px;
             color: white;
-            text-align: center;
             display: inline-flex;
             align-items: center;
             gap: 5px;
             font-size: 14px;
+            margin-top: 10px;
         }
+
         .btn-primary {
             background-color: #007bff;
         }
+
         .btn-secondary {
             background-color: #6c757d;
         }
-        .btn-primary:hover {
-            background-color: #0056b3;
+
+        .btn-save {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #28a745;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
         }
-        .btn-secondary:hover {
-            background-color: #5a6268;
-        }
+
         .footer {
+            background-color: #f8f9fa;
+            padding: 20px 0;
             text-align: center;
-            margin-top: 20px;
             color: #666;
             font-size: 14px;
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+
+        .footer img {
+            width: 80px;
+            margin-top: 10px;
+        }
+
+        .responsables-wrapper {
+            position: relative;
+        }
+
+        .select2-container {
+            width: 100% !important;
+        }
+
+        /* Hide additional responsables table by default */
+        #new-responsables-table {
+            display: none;
         }
     </style>
 </head>
 
 <body>
-
     <div class="container">
         <h1>Editor de Compromisos - Directora</h1>
 
@@ -131,12 +138,12 @@
                     <tr>
                         <th>Descripción</th>
                         <th>Estado</th>
+                        <th>Prioridad</th>
                         <th>Nivel de Avance (%)</th>
                         <th>Fecha Límite</th>
                         <th>Responsables</th>
                         <th>Comentario</th>
                         <th>Comentario Dirección</th>
-                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -149,33 +156,38 @@
                                 <option value="Completado" {% if compromiso.estado == 'Completado' %}selected{% endif %}>Completado</option>
                             </select>
                         </td>
+                        <td class="priority-{{ compromiso.prioridad | lower }}">{{ compromiso.prioridad }}</td>
                         <td><input type="number" name="nivel_avance-{{ compromiso.compromiso_id }}" value="{{ compromiso.avance }}" min="0" max="100"></td>
-                        <td>{{ compromiso.fecha_limite.strftime('%Y-%m-%d') }}</td>
+                        <td class="date-limit" data-fecha="{{ compromiso.fecha_limite.strftime('%Y-%m-%d') }}">{{ compromiso.fecha_limite.strftime('%Y-%m-%d') }}</td>
                         <td>
-                            <select name="responsables-{{ compromiso.compromiso_id }}" multiple class="select2">
-                                {% for value, label in todos_responsables %}
-                                    <option value="{{ value }}" {% if value in compromiso.responsables_ids %}selected{% endif %}>
-                                        {{ label }}
-                                    </option>
-                                {% endfor %}
-                            </select>
+                            <div class="responsables-wrapper">
+                                <select name="responsables-{{ compromiso.compromiso_id }}" multiple class="select2">
+                                    {% for value, label in todos_responsables %}
+                                        <option value="{{ value }}" {% if value in compromiso.responsables_ids %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                         </td>
                         <td><textarea name="comentario-{{ compromiso.compromiso_id }}">{{ compromiso.comentario }}</textarea></td>
                         <td><textarea name="comentario_direccion-{{ compromiso.compromiso_id }}">{{ compromiso.comentario_direccion }}</textarea></td>
-                        <td>
-                            <button type="submit" class="btn-primary guardar-btn" data-id="{{ compromiso.compromiso_id }}">
-                                <i class="fas fa-save"></i> Guardar
-                            </button>
-                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-        </form>
 
-        <div class="footer">
-            <a href="{{ url_for('home.home_view') }}" class="btn-secondary"><i class="fas fa-home"></i> Volver al Inicio</a>
-        </div>
+            <!-- Botón Guardar Cambios Global -->
+            <div style="text-align: center;">
+                <button type="submit" class="btn-save"><i class="fas fa-save"></i> Guardar Cambios</button>
+            </div>
+
+            <footer class="footer">
+                <div><a href="{{ url_for('director.resumen_compromisos') }}" class="btn-secondary"><i class="fas fa-home"></i> Volver al Resumen</a></div>
+                Servicio de Salud del Maule
+                <div>
+                    <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
+                </div>
+            </footer>
+        </form>
     </div>
 
     <!-- Include FontAwesome, jQuery, and Select2 scripts -->
@@ -185,12 +197,28 @@
 
     <script>
         $(document).ready(function() {
-            // Apply Select2 to all multiple select elements with the class 'select2'
             $('.select2').select2({
                 placeholder: "Selecciona responsables",
                 allowClear: true
             });
+
+            // Color coding for date limit
+            $('.date-limit').each(function() {
+                const fechaLimite = new Date($(this).data('fecha'));
+                const hoy = new Date();
+                const diferenciaDias = Math.floor((fechaLimite - hoy) / (1000 * 60 * 60 * 24));
+
+                if (diferenciaDias <= 0) {
+                    $(this).addClass('date-limit-overdue');
+                } else if (diferenciaDias <= 7) {
+                    $(this).addClass('date-limit-soon');
+                }
+            });
         });
+
+        function toggleNewResponsablesTable() {
+            $('#new-responsables-table').toggle();
+        }
     </script>
 </body>
 
