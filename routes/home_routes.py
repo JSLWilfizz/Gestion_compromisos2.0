@@ -71,6 +71,8 @@ def ver_compromisos():
             if the_big_boss:
                 nuevos_responsables = request.form.getlist(f'nuevos_responsables-{compromiso_id}')
                 comentario_director = request.form.get(f'comentario_direccion-{compromiso_id}')
+                if nuevos_responsables == []:
+                    nuevos_responsables = compromiso['responsables_ids']
             else:
                 nuevos_responsables = compromiso['responsables_ids']  # Mantiene los responsables actuales
                 comentario_director = compromiso['comentario_direccion']  # Mantiene el comentario actual
