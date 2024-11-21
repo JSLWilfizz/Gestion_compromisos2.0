@@ -10,29 +10,18 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         /* Responsive Container Styling */
-        .container {
-            width: 100%;
-            max-width: 1100px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-        }
 
         h1 {
             color: #007bff;
             margin-bottom: 20px;
             text-align: center;
         }
-
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
             font-size: 14px;
         }
-
         th, td {
             border: 1px solid #ddd;
             padding: 8px;
@@ -129,7 +118,7 @@
 </head>
 
 <body>
-    <div class="container">
+    <div>
         <h1>Editor de Compromisos - Directora</h1>
 
         <form id="compromisos-form" method="POST" action="{{ url_for('director.ver_compromisos_director', month=request.args.get('month'), departamento_id=request.args.get('departamento_id')) }}">
@@ -199,7 +188,9 @@
         $(document).ready(function() {
             $('.select2').select2({
                 placeholder: "Selecciona responsables",
-                allowClear: true
+                allowClear: false,
+                width: 'style',
+                display: 'table'
             });
 
             // Color coding for date limit

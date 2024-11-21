@@ -20,15 +20,18 @@ def home_view():
         return redirect(url_for('auth.login'))
 
     user_id = session.get('user_id')
+    print(f"User ID: {user_id}")
     user = compromiso_service.get_user_info(user_id)
     es_director_info = compromiso_service.get_director_info(user_id)
     if user["position"] == 'DIRECTOR DE SERVICIO':
         the_big_boss = True
         session['the_big_boss'] = the_big_boss
+        es_director = False
     else:
         the_big_boss = False
-    es_director = es_director_info['es_director']
-    session['es_director'] = es_director  # Guardamos esta info en la sesión
+        es_director_info = compromiso_service.get_director_info(user_id)
+        es_director = es_director_info['es_director']
+        session['es_director'] = es_director  # Guardamos esta info en la sesión
 
     if not user:
         return redirect(url_for('auth.login'))
@@ -46,13 +49,15 @@ def ver_compromisos():
     if request.method == 'POST':
         # Obtener compromisos actuales (directores ven todos, usuarios solo sus compromisos)
         if es_director:
-            print("Es director")
             departamento_id = compromiso_service.get_director_info(user_id)['id_departamento']
             compromisos = compromiso_service.get_compromisos_by_departamento(departamento_id)
+        if the_big_boss:
+            print("es el jefe")
+            compromisos = compromiso_service.get_all_compromisos()
         else:
             print("No es director")
             compromisos = compromiso_service.get_compromisos_by_user(user_id)
-
+        print(compromisos)
         # Actualizar los compromisos
         for compromiso in compromisos:
             compromiso_id = compromiso['compromiso_id']
@@ -65,7 +70,7 @@ def ver_compromisos():
 
             if the_big_boss:
                 nuevos_responsables = request.form.getlist(f'nuevos_responsables-{compromiso_id}')
-                comentario_director = request.form.get(f'comentario-{compromiso_id}')
+                comentario_director = request.form.get(f'comentario_direccion-{compromiso_id}')
             else:
                 nuevos_responsables = compromiso['responsables_ids']  # Mantiene los responsables actuales
                 comentario_director = compromiso['comentario_direccion']  # Mantiene el comentario actual
@@ -74,17 +79,21 @@ def ver_compromisos():
             nuevo_estado = request.form.get(f'estado-{compromiso_id}')
             nuevo_avance = request.form.get(f'nivel_avance-{compromiso_id}')
             nuevo_comentario = request.form.get(f'comentario-{compromiso_id}')
-
+            print(f"Actualizando compromiso {compromiso_id}")
             # Actualizar el compromiso
-            compromiso_service.update_compromiso(
-                compromiso_id,
-                nuevo_estado,
-                nuevo_avance,
-                nuevo_comentario,
-                user_id,
-                comentario_director,
-                nuevos_responsables
-            )
+            try:
+                print(f"Actualizando compromiso {compromiso_id}")
+                compromiso_service.update_compromiso(
+                    compromiso_id,
+                    nuevo_estado,
+                    nuevo_avance,
+                    nuevo_comentario,
+                    user_id,
+                    comentario_director,
+                    nuevos_responsables
+                )
+            except Exception as e:
+                print(e)
 
         flash('Compromisos actualizados con éxito.', 'success')
         return redirect(url_for('home.ver_compromisos'))

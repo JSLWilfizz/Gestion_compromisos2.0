@@ -58,14 +58,19 @@ class CompromisoService:
 
             # Verificar los valores y actualizar el compromiso
             if nuevo_estado and nuevo_avance and nuevo_comentario:
-                self.repo.update_compromiso(compromiso_id, nuevo_estado, nuevo_avance,nuevo_comentario, nuevo_comentario_direccion)
-                self.repo.log_modificacion(compromiso_id, user_id)
+                try:
+                    self.repo.update_compromiso(compromiso_id, nuevo_estado, nuevo_avance,nuevo_comentario, nuevo_comentario_direccion)
+                    self.repo.log_modificacion(compromiso_id, user_id)
 
-                # Si es director, actualizar responsables
-                if es_director and nuevos_responsables:
-                    self.repo.update_responsables(compromiso_id, nuevos_responsables)
+                    # Si es director, actualizar responsables
+                    if es_director and nuevos_responsables:
+                        self.repo.update_responsables(compromiso_id, nuevos_responsables)
+                    self.repo.commit()
+                except Exception as e:
+                    self.repo.rollback()
+                    raise e
 
-        self.repo.commit()
+
 
     def get_resumen_compromisos(self, month=None):
         departamentos = self.repo.fetch_departamentos_resumen(month)
@@ -104,10 +109,14 @@ class CompromisoService:
 
     def update_compromiso(self, compromiso_id, estado, avance, comentario, user_id,comentario_direccion,nuevos_responsables):
         # Actualizar los campos modificables por el usuario
-        self.repo.update_compromiso(compromiso_id, estado, avance, comentario,comentario_direccion)
-        self.repo.update_responsables(compromiso_id, nuevos_responsables)
-        self.repo.log_modificacion(compromiso_id, user_id)
-        self.repo.commit()
+        try:
+            self.repo.update_compromiso(compromiso_id, estado, avance, comentario,comentario_direccion)
+            self.repo.update_responsables(compromiso_id, nuevos_responsables)
+            self.repo.log_modificacion(compromiso_id, user_id)
+            self.repo.commit()
+        except Exception as e:
+            self.repo.rollback()
+            raise e
 
     def get_compromisos_by_departamento(self, departamento_id):
         """
