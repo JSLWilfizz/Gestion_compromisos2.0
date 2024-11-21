@@ -67,6 +67,8 @@ def ver_compromisos():
             if es_director:
                 nuevos_responsables = request.form.getlist(f'nuevos_responsables-{compromiso_id}')
                 comentario_director = request.form.get(f'comentario-{compromiso_id}')
+                if nuevos_responsables == []:
+                    nuevos_responsables = compromiso['responsables_ids']
 
             if the_big_boss:
                 nuevos_responsables = request.form.getlist(f'nuevos_responsables-{compromiso_id}')
