@@ -365,3 +365,17 @@ class CompromisoRepository:
 
     def close(self):
         self.conn.close()
+
+    def fetch_all_compromisos(self):
+        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("""
+                SELECT c.id AS compromiso_id,c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
+                       c.comentario, c.comentario_direccion,
+                       ARRAY_AGG(DISTINCT p.id) AS responsables_ids, -- Obtenemos una lista de IDs de responsables
+                       STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables -- Nombres concatenados
+                FROM compromiso c
+                LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+                LEFT JOIN persona p ON pc.id_persona = p.id
+                GROUP BY c.id
+            """)
+            return cursor.fetchall()

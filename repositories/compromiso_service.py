@@ -158,5 +158,9 @@ class CompromisoService:
     def get_meses(self):
         return self.repo.fetch_meses()
 
+    def get_all_compromisos(self):
+        return self.repo.fetch_all_compromisos()
+        pass
+
 
 

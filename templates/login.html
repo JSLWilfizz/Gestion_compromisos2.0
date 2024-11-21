@@ -3,149 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - Servicio de Salud del Maule</title>
+    <title>Login - Servicio de Salud del Maule</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f6f8;
-            color: #333;
-            margin: 0;
-            padding: 0;
-        }
-
         .container {
-            width: 100%;
             max-width: 400px;
             margin: 50px auto;
             padding: 20px;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background: #fff;
             border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-
-        h2 {
+        .container h1 {
             text-align: center;
             color: #007bff;
-            margin-bottom: 20px;
         }
-
-        .form-group {
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        input[type="text"], button {
+            padding: 10px;
             margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            color: #555;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
+            border: 1px solid #ddd;
             border-radius: 4px;
-            box-sizing: border-box;
         }
-
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            background-color: #007bff;
-            border: none;
-            color: white;
-            border-radius: 4px;
+        button {
+            background: #007bff;
+            color: #fff;
+            font-size: 16px;
             cursor: pointer;
         }
-
-        .btn:hover {
-            background-color: #0056b3;
+        button:hover {
+            background: #0056b3;
         }
-
-        /* Estilo para el logo */
-        .logo-container {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-        }
-
-        .logo-container img {
-            width: 100px; /* Ajusta el tamaño del logo */
-        }
-
-        /* Pie de página para el nombre del servicio */
         .footer {
             text-align: center;
             margin-top: 20px;
-            color: #666;
-            font-size: 14px;
-        }
-
-        /* Mensajes Flash */
-        .flash-messages {
-            margin: 10px 0;
-        }
-
-        .alert {
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-        }
-
-        .alert-danger {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
         }
     </style>
 </head>
 <body>
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        <div class="flash-messages">
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
+    <div class="container">
+        <h1>Iniciar Sesión</h1>
+        <form method="POST" action="{{ url_for('auth.login') }}">
+            <label for="rut">RUT</label>
+            <input type="text" id="rut" name="rut" placeholder="Ingrese su RUT" required>
+            <button type="submit">Iniciar Sesión</button>
+        </form>
+        <div class="footer">
+            Servicio de Salud del Maule
         </div>
-    {% endif %}
-{% endwith %}
-
-<div class="container">
-    <h2>Iniciar Sesión</h2>
-    <form method="POST" action="{{ url_for('auth.login') }}">
-        {{ form.hidden_tag() }}
-
-        <div class="form-group">
-            {{ form.username.label }}
-            {{ form.username(class="form-control") }}
-        </div>
-
-        <div class="form-group">
-            {{ form.password.label }}
-            {{ form.password(class="form-control") }}
-        </div>
-
-        <div class="form-group">
-            {{ form.submit(class="btn btn-primary") }}
-        </div>
-    </form>
-
-    <!-- Nombre del Servicio en el pie de página -->
-    <div class="footer">
-        Servicio de Salud del Maule
     </div>
-</div>
-
-<!-- Logo en la esquina inferior izquierda -->
-<div class="logo-container">
-    <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo">
-</div>
-
 </body>
 </html>

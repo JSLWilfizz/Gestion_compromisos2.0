@@ -8,15 +8,15 @@ load_dotenv()
     Función para obtener una conexión a la base de datos
     Retorna una conexión a la base de datos
 """
+
 def get_db_connection():
     conn = psycopg2.connect(
-        host=os.getenv("DB_HOST"),
-        database=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD")
+        host=os.getenv('DB_HOST'),
+        database=os.getenv('DB_NAME'),
+        user=os.getenv('DB_USER'),
+        password=os.getenv('DB_PASSWORD')
     )
     return conn
-
 
 """
     Función para obtener un usuario por su nombre de usuario

@@ -1,34 +1,85 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home - Servicio de Salud del Maule</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
+        /* General Styles */
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f6f8;
-            color: #333;
             margin: 0;
             padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; /* Ensure body fills the viewport */
+        }
+
+        .wrapper {
+            display: flex;
+            flex: 1;
+            /* Ensures the main layout stretches to the height of the viewport */
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 200px;
+            background-color: #343a40;
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            height: 100vh; /* Full height of the screen */
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        .sidebar h3 {
+            color: #ffffff;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #495057;
+            border-radius: 4px;
+        }
+
+        .sidebar a:hover {
+            background-color: #6c757d;
+        }
+
+        /* Main content styles */
+        .main-content {
+            margin-left: 220px; /* Adjust this to match the sidebar width */
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
 
         .container {
-            width: 90%;
-            max-width: 600px;
-            margin: 20px auto;
+            text-align: center;
             background-color: white;
             padding: 20px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
-            text-align: center; /* Centrar el contenido */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
         }
 
         h1 {
             color: #007bff;
             margin-bottom: 20px;
-            font-size: 24px;
         }
 
         p {
@@ -73,63 +124,13 @@
             background-color: #c82333;
         }
 
-        /* Estilos del menú lateral (solo visible para el director) */
-        .sidebar {
-            position: fixed;
-            right: 0;
-            top: 0;
-            width: 250px;
-            height: 100%;
-            background-color: #343a40;
-            color: white;
-            padding: 20px;
-            display: none; /* Oculto por defecto */
-        }
-
-        .sidebar h3 {
-            color: #ffffff;
-            margin-bottom: 20px;
-        }
-
-        .sidebar a {
-            color: white;
-            text-decoration: none;
-            display: block;
-            margin-bottom: 10px;
-            padding: 10px;
-            background-color: #495057;
-            border-radius: 4px;
-        }
-
-        .sidebar a:hover {
-            background-color: #6c757d;
-        }
-
-        /* Logo en la esquina inferior izquierda */
-        .logo-container {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-        }
-
-        .logo-container img {
-            width: 80px;
-        }
-
-        /* Footer con el nombre del servicio */
-        .footer {
-            text-align: center;
-            margin-top: 20px;
-            color: #666;
-            font-size: 14px;
-        }
+        /* Footer Styles */
         .footer {
             background-color: #f8f9fa;
             padding: 20px 0;
             text-align: center;
             color: #666;
             font-size: 14px;
-            margin-top: 20px;
             border-top: 1px solid #ddd;
         }
 
@@ -138,58 +139,18 @@
             margin-top: 10px;
         }
 
-        /* Estilos responsivos */
+        /* Responsive Styles */
         @media (max-width: 768px) {
-            .container {
-                width: 95%;
+            .sidebar {
+                width: 160px;
                 padding: 15px;
             }
 
-            h1 {
-                font-size: 20px;
-            }
-
-            .btn {
-                max-width: 100%;
+            .main-content {
+                margin-left: 180px;
                 padding: 10px;
             }
 
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                padding: 10px;
-            }
-
-            .sidebar h3 {
-                font-size: 18px;
-            }
-
-            .sidebar a {
-                padding: 8px;
-                font-size: 14px;
-            }
-
-            .logo-container img {
-                width: 60px;
-            }
-            .footer {
-            background-color: #f8f9fa;
-            padding: 20px 0;
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-            margin-top: 20px;
-            border-top: 1px solid #ddd;
-        }
-
-        .footer img {
-            width: 80px;
-            margin-top: 10px;
-        }
-        }
-
-        @media (max-width: 480px) {
             .btn {
                 padding: 8px 12px;
                 font-size: 14px;
@@ -200,50 +161,53 @@
                 padding: 6px;
             }
 
-            .logo-container img {
-                width: 50px;
+            .footer img {
+                width: 60px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .sidebar {
+                width: 140px;
+                padding: 10px;
+            }
+
+            .main-content {
+                margin-left: 160px;
+                padding: 10px;
             }
         }
     </style>
 </head>
+
 <body>
-
-    <!-- Mensaje de bienvenida -->
-    <div class="container">
-        <h1>Bienvenido, {{ user.name }} {{ user.lastname }}</h1>
-        <p>Departamento: {{ user.departamento_name }}</p>
-        <p>Cargo: {{ user.position }}</p>
-
-        <a href="{{ url_for('reunion.crear_reunion_paso1') }}" class="btn btn-primary">Crear Reunión</a>
-        <a href="{{ url_for('home.ver_compromisos') }}" class="btn btn-secondary">Ver Compromisos</a>
-        <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">Cerrar Sesión</a>
-    </div>
-
-    <!-- Menú lateral solo visible para el director -->
-    {% if es_director %}
-    <div class="sidebar">
-        <h3>Panel del Director</h3>
-
-        <!-- Placeholder visible si no hay enlaces disponibles -->
-        {% if es_director %}
-        <a href="{{ url_for('director.resumen_compromisos') }}" class="btn btn-primary">Resumen de Compromisos</a>
+    <div class="wrapper">
+        {% if the_big_boss %}
+        <div class="sidebar">
+            <h3>Panel del Director</h3>
+            <a href="{{ url_for('director.resumen_compromisos') }}" class="btn btn-primary">Resumen de Compromisos</a>
+        </div>
         {% endif %}
-    </div>
-    {% endif %}
 
-    <!-- Logo en la esquina inferior izquierda -->
+        <div class="main-content">
+            <div class="container">
+                <h1>Bienvenido, {{ user.name }} {{ user.lastname }}</h1>
+                <p>Departamento: {{ user.departamento_name }}</p>
+                <p>Cargo: {{ user.position }}</p>
+
+                <a href="{{ url_for('reunion.crear_reunion_paso1') }}" class="btn btn-primary">Crear Reunión</a>
+                <a href="{{ url_for('home.ver_compromisos') }}" class="btn btn-secondary">Ver Compromisos</a>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">Cerrar Sesión</a>
+            </div>
+        </div>
+    </div>
+
     <footer class="footer">
         Servicio de Salud del Maule
         <div>
             <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
         </div>
     </footer>
-
-    <script>
-        // Mostrar el menú lateral si el usuario es director
-        {% if es_director %}
-        document.querySelector('.sidebar').style.display = 'block';
-        {% endif %}
-    </script>
 </body>
+
 </html>
