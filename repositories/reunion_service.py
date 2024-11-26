@@ -41,6 +41,11 @@ class ReunionService:
         origen_id = self.get_origen_id(form, request_data)
         area_id = self.get_area_id(form, request_data)
 
+        if not origen_id:
+            raise ValueError("El campo 'origen' es requerido")
+        if not area_id:
+            raise ValueError("El campo 'area' es requerido")
+
         asistentes_str = request_data.get('asistentes', '')
         reunion_id = self.repo.insert_reunion(
             "test", area_id, origen_id, asistentes_str, acta_pdf_path
@@ -59,6 +64,14 @@ class ReunionService:
 
     def create_compromiso(self, compromiso_form):
         # Acceso correcto a los datos de los campos del formulario de compromisos
+        if not compromiso_form.nombre.data:
+            raise ValueError("El campo 'nombre' es requerido")
+        if not compromiso_form.prioridad.data:
+            raise ValueError("El campo 'prioridad' es requerido")
+        if not compromiso_form.fecha_limite.data:
+            raise ValueError("El campo 'fecha_limite' es requerido")
+        if not compromiso_form.departamento.data:
+            raise ValueError("El campo 'departamento' es requerido")
         return self.repo.insert_compromiso(
             compromiso_form.nombre.data,
             compromiso_form.prioridad.data,

@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS persona (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255),
     lastname VARCHAR(255),
+	rut VARCHAR(255),
+	dv CHAR,
     position VARCHAR(255)
 );
 
