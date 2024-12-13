@@ -136,6 +136,12 @@
         <h1>Crear Reunión y Agregar Compromisos</h1>
         <form method="POST" action="{{ url_for('reunion.crear_reunion_paso1') }}" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
+            <!-- Campo para el Nombre de la Reunión -->
+
+            <div class="form-group-horizontal">
+                <label for="nombre_reunion">Nombre de la Reunión</label>
+                <input type="text" id="nombre_reunion" name="nombre_reunion" class="form-control" placeholder="Introduce el nombre de la reunión" required>
+            </div>
 
             <!-- Sección de Origen y Área en paralelo -->
             <div class="form-group-pair">
@@ -154,11 +160,39 @@
                 </div>
             </div>
 
-            <!-- Campo para seleccionar asistentes con Select2 -->
             <div class="form-group-horizontal" id="asistentes-group">
-                <label for="asistentes">Asistentes</label>
-                <input type="text" id="asistentes" name="asistentes" class="form-control" placeholder="Ingresa los nombres de los asistentes separados por comas" />
-            </div>
+    <label for="asistentes-select">Asistentes</label>
+    <!-- Select2 para seleccionar asistentes -->
+    <select id="asistentes-select" name="asistentes[]" class="form-control select2" multiple>
+        {% for value, label in form.compromisos[0].responsables.choices %}
+            <option value="{{ value }}">{{ label }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<!-- Tabla dinámica para añadir correos a los asistentes -->
+<div id="asistentes-correos">
+    <h3>Correos de Asistentes</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Asistente</th>
+                <th>Correo</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="correos-body">
+            <!-- Aquí se añadirán dinámicamente los asistentes seleccionados con su correo -->
+        </tbody>
+    </table>
+</div>
+            <hr style="margin: 20px 0; border: 1px solid #ddd;">
+            <textarea id="descripcion" name="descripcion_markdown"></textarea>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+            <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+            <script>
+                var easyMDE = new EasyMDE({ element: document.getElementById('descripcion') });
+            </script>
 
             <!-- Tabla para agregar compromisos -->
             <h2>Agregar Compromisos</h2>
@@ -328,6 +362,50 @@
                 $(this).closest('tr').remove();
             });
         });
+        document.addEventListener("DOMContentLoaded", function () {
+        // Inicializar Select2
+        $("#asistentes-select").select2({
+            placeholder: "Selecciona asistentes",
+            allowClear: true,
+            width: '100%'
+        });
+
+        const asistentesSelect = document.getElementById("asistentes-select");
+        const correosBody = document.getElementById("correos-body");
+
+        // Evento cuando se selecciona un asistente
+        $(asistentesSelect).on("change", function () {
+            const seleccionados = $(this).val(); // Obtener asistentes seleccionados
+            correosBody.innerHTML = ""; // Limpiar tabla
+
+            // Iterar por los seleccionados y añadir filas dinámicamente
+            seleccionados.forEach(function (id) {
+                const nombre = $(`#asistentes-select option[value="${id}"]`).text();
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${nombre}</td>
+                    <td>
+                        <input type="email" name="correo-${id}" class="form-control" placeholder="Correo del asistente" required>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-danger btn-remove-correo" data-id="${id}">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </td>
+                `;
+                correosBody.appendChild(row);
+            });
+        });
+
+        // Evento para eliminar una fila de asistente
+        correosBody.addEventListener("click", function (e) {
+            if (e.target && e.target.classList.contains("btn-remove-correo")) {
+                const id = e.target.getAttribute("data-id");
+                $(`#asistentes-select option[value="${id}"]`).prop("selected", false); // Desmarcar en Select2
+                $(asistentesSelect).trigger("change"); // Actualizar Select2
+            }
+        });
+    });
     </script>
 
 </body>

@@ -1,4 +1,8 @@
 # /services/reunion_service.py
+import re
+
+from psutil import users
+
 from repositories.reunion_repository import ReunionRepository
 from datetime import datetime
 
@@ -18,6 +22,9 @@ class ReunionService:
         if new_area:
             return self.repo.insert_area(new_area)
         return form.area.data
+
+    def get_user_info(self, user_id):
+        return self.repo.fetch_user_info(user_id)
 
     def get_initial_form_data(self, form):
         origenes = self.repo.fetch_origenes()
@@ -46,9 +53,36 @@ class ReunionService:
         if not area_id:
             raise ValueError("El campo 'area' es requerido")
 
-        asistentes_str = request_data.get('asistentes', '')
+            # Obtener los asistentes como una lista
+        asistentes_list = request_data.getlist('asistentes[]')
+        temas_analizados = request_data.get('descripcion_markdown')
+        name_list = []
+        for asistentes in asistentes_list:
+            if not asistentes:
+                raise ValueError("El campo 'asistentes' es requerido")
+            user = self.repo.fetch_user_info(asistentes)
+            if not user:
+                raise ValueError(f"No se encontró información del usuario con ID {asistentes}")
+            name_list.append(f"{user['name']} {user['lastname']}")
+
+        # Concatenar los asistentes en un único string separado por ";"
+        asistentes_concatenados = ';'.join(name_list)
+        correos_concatenados = []
+
+        correo_pattern = re.compile(r'correo-\d+')  # Patrón para buscar "correo-{id}"
+
+        for key, value in request_data.items():
+            if correo_pattern.match(key) and value.strip():  # Si la clave coincide con el patrón y no está vacía
+                correos_concatenados.append(value.strip())
+
+        # Concatenar todos los correos con ";"
+        correos_final = ';'.join(correos_concatenados)
+
+        # Guardar o procesar los correos concatenados
+        print("Correos concatenados:", correos_final)
+
         reunion_id = self.repo.insert_reunion(
-            "test", area_id, origen_id, asistentes_str, acta_pdf_path
+            request_data.get('nombre_reunion'), area_id, origen_id, asistentes_concatenados,correos_final,temas_analizados, acta_pdf_path
         )
 
         # Iterar sobre la lista de formularios de compromisos

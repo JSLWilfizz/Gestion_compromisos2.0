@@ -64,6 +64,7 @@ class CompromisoService:
 
                     # Si es director, actualizar responsables
                     if es_director and nuevos_responsables:
+                        print("en espanol")
                         self.repo.update_responsables(compromiso_id, nuevos_responsables)
                     self.repo.commit()
                 except Exception as e:
@@ -110,6 +111,7 @@ class CompromisoService:
     def update_compromiso(self, compromiso_id, estado, avance, comentario, user_id,comentario_direccion,nuevos_responsables):
         # Actualizar los campos modificables por el usuario
         try:
+            print("en ingles")
             self.repo.update_compromiso(compromiso_id, estado, avance, comentario,comentario_direccion)
             self.repo.update_responsables(compromiso_id, nuevos_responsables)
             self.repo.log_modificacion(compromiso_id, user_id)

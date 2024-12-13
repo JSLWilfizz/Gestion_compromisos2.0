@@ -1,4 +1,5 @@
 # /routes/reunion_routes.py
+import traceback
 
 from flask import Blueprint, render_template, redirect, url_for, flash, session, request
 from .auth_routes import login_required
@@ -42,9 +43,18 @@ def crear_reunion_paso1():
                 acta_pdf_path = os.path.join(UPLOAD_FOLDER, acta_pdf_filename)
 
             service.create_reunion(form, request.form, acta_pdf_path)
+            print(request.form)
             return redirect(url_for('home.home_view'))
 
         except Exception as e:
+            error_line = traceback.format_exc().splitlines()[-1]  # Última línea con detalle del error
+            detailed_trace = traceback.format_exc()  # Traza completa del error
+
+            # Mensaje de error para el usuario
+            flash(f"Ocurrió un error al crear la reunión: {e} en {error_line}", 'danger')
+
+            # Opcional: imprimir la traza completa en los logs o consola para depuración
+            print("Detalles del error:\n", detailed_trace)
             flash(f'Ocurrió un error al crear la reunión: {e}', 'danger')
 
     return render_template('crear_reunion.html', form=form)
