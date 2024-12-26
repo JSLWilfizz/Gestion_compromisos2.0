@@ -154,6 +154,8 @@ CREATE TABLE compromiso_modificaciones (
 ALTER TABLE reunion ADD COLUMN acta_pdf VARCHAR(255);
 ALTER TABLE compromiso ADD COLUMN comentario TEXT;
 ALTER TABLE reunion ADD COLUMN asistentes TEXT;
+ALTER TABLE reunion ADD COLUMN correos TEXT;
+ALTER TABLE reunion ADD COLUMN temas_analizado TEXT;
 ALTER TABLE compromiso ADD COLUMN comentario_direccion TEXT;
 
 -- Inserciones de ejemplo
@@ -240,3 +242,30 @@ INSERT INTO reunion_compromiso (id_reunion, id_compromiso)
 VALUES
 (1, 1),
 (2, 2);
+
+-- Crear función para el trigger
+CREATE OR REPLACE FUNCTION crear_usuario()
+RETURNS TRIGGER AS $$
+DECLARE
+    password_aleatoria VARCHAR(12);
+BEGIN
+    -- Generar una contraseña aleatoria de 12 caracteres
+    SELECT string_agg(
+        chr((trunc(random() * 62 + 48)::int)),
+        ''
+    )
+    FROM generate_series(1, 12) INTO password_aleatoria;
+
+    -- Insertar en la tabla users, asociando el id de persona
+    INSERT INTO users (id_persona, username, password)
+    VALUES (NEW.id, NEW.rut, password_aleatoria);
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Crear el trigger
+CREATE TRIGGER trigger_crear_usuario
+AFTER INSERT ON persona
+FOR EACH ROW
+EXECUTE FUNCTION crear_usuario();
