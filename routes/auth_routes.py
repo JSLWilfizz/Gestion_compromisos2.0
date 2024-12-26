@@ -39,23 +39,31 @@ def is_director(f):
 def login():
     if request.method == 'POST':
         rut = request.form['rut']
+        password = request.form['password']  # Capturamos la contraseña desde el formulario
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Query to fetch user via RUT in the persona table
+        # Query para buscar el usuario en la tabla users usando el rut como username
         cursor.execute("""
-            SELECT * 
-            FROM persona
-            WHERE persona.rut = %s
+            SELECT u.id_persona, u.username, u.password, p.name, p.lastname
+            FROM users u
+            INNER JOIN persona p ON u.id_persona = p.id
+            WHERE u.username = %s
         """, (rut,))
-        user = cursor.fetchone()
+        user = cursor.fetchone()  # Recupera el usuario si existe
         print(user)
 
         if user:
-            # Set session or handle authenticated state
-            session['user_id'] = user[0]
-            flash('Bienvenido/a!', 'success')
-            return redirect(url_for('home.home_view'))
+            # Validar la contraseña ingresada con la almacenada
+            stored_password = user[2]  # Contraseña almacenada en la base de datos
+            if password == stored_password:  # Cambiar a `check_password_hash` si están encriptadas
+                # Autenticación exitosa: configurar la sesión
+                session['user_id'] = user[0]  # ID del usuario
+                print(user[0])
+                flash('Bienvenido/a, {}!'.format(user[3]), 'success')
+                return redirect(url_for('home.home_view'))
+            else:
+                flash('Contraseña incorrecta.', 'danger')
         else:
             flash('RUT inválido o no registrado.', 'danger')
 

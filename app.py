@@ -31,7 +31,8 @@ def create_app(config_class=Config):
 
     # Registrar los Blueprints
     app.register_blueprint(auth)  # Registrar el blueprint de autenticación
-    app.register_blueprint(home)  # Registrar el blueprint de la página principal
+    app.register_blueprint(home, url_prefix='/home')
+
     app.register_blueprint(reunion)  # Registrar el blueprint de las reuniones
     app.register_blueprint(director_bp)  # Registrar el blueprint del director
 
@@ -40,4 +41,5 @@ def create_app(config_class=Config):
 
 if __name__ == '__main__':
     app = create_app()  # Usar la función create_app para crear la aplicación
-    app.run()  # Ejecutar la aplicación
+    app.secret_key = 'clave_super_segura'
+    app.run(debug=True)

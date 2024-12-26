@@ -1,58 +1,146 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <!-- Mensaje de notificación -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-messages">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Servicio de Salud del Maule</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <style>
+        /* Estilo general */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
         .container {
             max-width: 400px;
-            margin: 50px auto;
-            padding: 20px;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
+
         .container h1 {
             text-align: center;
+            margin-bottom: 20px;
             color: #007bff;
+            font-size: 24px;
         }
+
         form {
             display: flex;
             flex-direction: column;
         }
-        input[type="text"], button {
-            padding: 10px;
+
+        .form-group {
             margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
             border: 1px solid #ddd;
-            border-radius: 4px;
+            border-radius: 5px;
+            font-size: 14px;
+            background-color: #f9f9f9;
+            transition: border-color 0.3s ease;
         }
+
+        input[type="text"]:focus, input[type="password"]:focus {
+            border-color: #007bff;
+            outline: none;
+            background-color: #ffffff;
+        }
+
         button {
-            background: #007bff;
-            color: #fff;
+            width: 100%;
+            padding: 10px;
             font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            background: #007bff;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
+            transition: background-color 0.3s ease;
         }
+
         button:hover {
             background: #0056b3;
         }
+
         .footer {
             text-align: center;
             margin-top: 20px;
+            font-size: 14px;
+            color: #777;
+        }
+
+        .footer p {
+            margin: 0;
+        }
+
+        /* Responsividad */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 20px;
+            }
         }
     </style>
+
 </head>
 <body>
     <div class="container">
         <h1>Iniciar Sesión</h1>
         <form method="POST" action="{{ url_for('auth.login') }}">
-            <label for="rut">RUT</label>
-            <input type="text" id="rut" name="rut" placeholder="Ingrese su RUT" required>
-            <button type="submit">Iniciar Sesión</button>
+            <!-- Campo RUT -->
+            <div class="form-group">
+                <label for="rut">RUT</label>
+                <input type="text" id="rut" name="rut" placeholder="Ingrese su RUT" required>
+            </div>
+
+            <!-- Campo Contraseña -->
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" placeholder="Ingrese su Contraseña" required>
+            </div>
+
+            <!-- Botón de Iniciar Sesión -->
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+            </div>
         </form>
+
+        <!-- Pie de página -->
         <div class="footer">
-            Servicio de Salud del Maule
+            <p>Servicio de Salud del Maule</p>
         </div>
     </div>
 </body>
