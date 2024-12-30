@@ -31,7 +31,7 @@ def create_app(config_class=Config):
 
     # Registrar los Blueprints
     app.register_blueprint(auth)  # Registrar el blueprint de autenticación
-    app.register_blueprint(home, url_prefix='/home')
+    app.register_blueprint(home)
 
     app.register_blueprint(reunion)  # Registrar el blueprint de las reuniones
     app.register_blueprint(director_bp)  # Registrar el blueprint del director

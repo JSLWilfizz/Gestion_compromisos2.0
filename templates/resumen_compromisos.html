@@ -176,6 +176,14 @@
                     <option value="{{ area.id }}" {% if area.id == selected_area %}selected{% endif %}>{{ area.name }}</option>
                     {% endfor %}
                 </select>
+
+                <!-- Filtro por año -->
+                <label for="year">Filtrar por Año:</label>
+                <select name="year" id="year" onchange="this.form.submit()">
+                    {% for year in ['2023', '2024', '2025', 'Todos'] %}
+                    <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
             </form>
         </div>
 
@@ -214,7 +222,7 @@
                     <td>{{ departamento.completados }}</td>
                     <td>{{ departamento.pendientes }}</td>
                     <td>
-                        <a href="{{ url_for('director.ver_compromisos_director', departamento_id=departamento.departamento_id, month=selected_mes) }}" class="btn btn-primary">Ver Compromisos</a>
+                        <a href="{{ url_for('director.ver_compromisos_director', departamento_id=departamento.departamento_id, month=selected_mes, year = selected_year) }}" class="btn btn-primary">Ver Compromisos</a>
                     </td>
                 </tr>
                 {% endfor %}

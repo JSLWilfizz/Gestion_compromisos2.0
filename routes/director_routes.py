@@ -12,10 +12,12 @@ compromiso_service = CompromisoService()
 def resumen_compromisos():
     mes = request.args.get('month', 'Todos')
     area_id = request.args.get('area_id', None)
-    departamento_id = session.get('departamento_id', None)
-
+    year = request.args.get('year','Todos')
+    print(year)
     # Obtener el resumen de compromisos filtrados por departamento, mes y área
     resumen = compromiso_service.get_resumen_compromisos(mes, area_id)
+
+    print(resumen)
 
     # Obtener todas las áreas para el filtro
     areas = compromiso_service.get_areas()
@@ -36,6 +38,7 @@ def ver_compromisos_director():
     # Obtener el mes y el departamento de los parámetros de consulta
     mes = request.args.get('month')
     departamento_id = request.args.get('departamento_id')
+    year = request.args.get("year")
 
     # Comprobar si ambos parámetros están presentes
     print(mes, departamento_id)
@@ -51,10 +54,10 @@ def ver_compromisos_director():
         "Octubre": 10, "Noviembre": 11, "Diciembre": 12, "Todos": "Todos"
     }
     mes_numero = mappeo_meses.get(mes)
-
+    print(year)
     if request.method == 'POST':
         # Si se está enviando el formulario, procesar la actualización de los compromisos
-        compromisos = compromiso_service.get_compromisos_by_mes_departamento(mes_numero, departamento_id)
+        compromisos = compromiso_service.get_compromisos_by_mes_departamento(mes_numero, departamento_id,year)
         try:
 
             compromiso_service.actualizar_compromisos(request, compromisos, session['user_id'], es_director=True)
@@ -80,6 +83,8 @@ def resumen_compromisos_por_mes():
     month = request.args.get('month', None)
     year = request.args.get('year', None)
 
+    print(year)
+
     if month and year:
         compromisos = compromiso_service.get_compromisos_by_month(month, year)
     else:
@@ -95,6 +100,7 @@ def editar_compromisos():
     departamento_id = request.args.get('departamento_id')
     mes = request.args.get('month')
     area_id = request.args.get('area_id')
+    print(area_id,mes,departamento_id)
 
     # Obtener compromisos filtrados por mes, departamento y área
     compromisos = compromiso_service.get_compromisos_by_filtro(departamento_id, mes, area_id)

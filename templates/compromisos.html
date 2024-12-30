@@ -80,10 +80,11 @@
     <table>
         <thead>
             <tr>
-                <th>Descripción</th>
+                <th>Nombre</th>
                 <th>Estado</th>
                 <th>Nivel de Avance (%)</th>
                 <th>Fecha Límite</th>
+                <th>Departamento</th>
                 <th>Responsables</th>
                 <th>Comentario</th>
                 <th>Comentario Dirección</th>
@@ -102,6 +103,9 @@
                 </td>
                 <td><input type="number" name="nivel_avance-{{ compromiso.compromiso_id }}" value="{{ compromiso.avance }}" min="0" max="100"></td>
                 <td>{{ compromiso.fecha_limite.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    {{ compromiso.departamento}}
+                </td>
                 <td>
                     <select name="responsables-{{ compromiso.compromiso_id }}" multiple>
                         {% for value, label in responsables %}

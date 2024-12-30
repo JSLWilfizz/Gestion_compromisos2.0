@@ -40,35 +40,39 @@ class CompromisoRepository:
     def fetch_compromisos_by_departamento(self, departamento_id):
         with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
-                SELECT c.id AS compromiso_id,c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
+                SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
                        c.comentario, c.comentario_direccion,
+                       d.name AS departamento_name, -- Nombre del departamento
                        ARRAY_AGG(DISTINCT p.id) AS responsables_ids, -- Obtenemos una lista de IDs de responsables
                        STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables -- Nombres concatenados
                 FROM compromiso c
                 LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                 LEFT JOIN persona p ON pc.id_persona = p.id
+                LEFT JOIN departamento d ON c.id_departamento = d.id -- Relación con la tabla departamento
                 WHERE c.id_departamento = %s
-                GROUP BY c.id
+                GROUP BY c.id, d.name
             """, (departamento_id,))
             return cursor.fetchall()
 
     def fetch_compromisos_by_responsable(self, user_id):
         with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
-                SELECT c.id AS compromiso_id,c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite,
+                SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite,
                        c.comentario, c.comentario_direccion,
+                       d.name AS departamento_name, -- Nombre del departamento
                        ARRAY_AGG(DISTINCT p.id) AS responsables_ids,
                        STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
                 FROM compromiso c
                 LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                 LEFT JOIN persona p ON pc.id_persona = p.id
+                LEFT JOIN departamento d ON c.id_departamento = d.id -- Relación con la tabla departamento
                 WHERE c.id IN (
                     SELECT c2.id
                     FROM compromiso c2
                     LEFT JOIN persona_compromiso pc2 ON c2.id = pc2.id_compromiso
                     WHERE pc2.id_persona = %s -- Filtrar por el ID del usuario responsable
                 )
-                GROUP BY c.id
+                GROUP BY c.id, d.name
             """, (user_id,))
             return cursor.fetchall()
 
@@ -182,7 +186,7 @@ class CompromisoRepository:
             """, (month,))
             return cursor.fetchone()[0]
 
-    def fetch_departamentos_resumen(self, month=None):
+    def fetch_departamentos_resumen(self, month=None,area_id=None):
         # Diccionario que convierte el nombre del mes en su número correspondiente
         month_mapping = {
             'Enero': 1,
@@ -234,18 +238,35 @@ class CompromisoRepository:
             cursor.execute("SELECT DISTINCT EXTRACT(MONTH FROM fecha_limite) AS month FROM compromiso")
             return cursor.fetchall()
 
-    def fetch_compromisos_by_mes_departamento(self, mes, departamento_id):
+    def fetch_compromisos_by_mes_departamento(self, mes, year, departamento_id):
         with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("""
-                SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.avance, c.fecha_limite,c.comentario, c.comentario_direccion, 
+            # Base de la consulta
+            base_query = """
+                SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.avance, c.fecha_limite, c.comentario, c.comentario_direccion, 
                        ARRAY_AGG(DISTINCT p.id) AS responsables_ids, 
                        STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
                 FROM compromiso c
                 LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                 LEFT JOIN persona p ON pc.id_persona = p.id
-                WHERE c.id_departamento = %s AND EXTRACT(MONTH FROM c.fecha_limite) = %s
-                GROUP BY c.id
-            """, (departamento_id, mes))
+                WHERE c.id_departamento = %s
+            """
+            params = [departamento_id]
+
+            # Filtros dinámicos
+            if mes and mes != 'Todos':
+                base_query += " AND EXTRACT(MONTH FROM c.fecha_limite) = %s"
+                params.append(int(mes))
+
+            if year and year != 'Todos':
+                print("Entro al año")
+                base_query += " AND EXTRACT(YEAR FROM c.fecha_limite) = %s"
+                params.append(int(year))
+
+            # Agregar agrupamiento
+            base_query += " GROUP BY c.id"
+
+            # Ejecutar la consulta
+            cursor.execute(base_query, params)
             return cursor.fetchall()
 
     def fetch_compromisos_by_filtro(self, mes=None, area_id=None):
@@ -369,13 +390,15 @@ class CompromisoRepository:
     def fetch_all_compromisos(self):
         with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
-                SELECT c.id AS compromiso_id,c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
+                SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
                        c.comentario, c.comentario_direccion,
+                       d.name AS departamento_name, -- Nombre del departamento
                        ARRAY_AGG(DISTINCT p.id) AS responsables_ids, -- Obtenemos una lista de IDs de responsables
                        STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables -- Nombres concatenados
                 FROM compromiso c
                 LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                 LEFT JOIN persona p ON pc.id_persona = p.id
-                GROUP BY c.id
+                LEFT JOIN departamento d ON c.id_departamento = d.id -- Relación con la tabla departamento
+                GROUP BY c.id, d.name
             """)
             return cursor.fetchall()

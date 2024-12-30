@@ -92,6 +92,7 @@
                 <th>Prioridad</th>
                 <th>Avance (%)</th>
                 <th>Fecha Límite</th>
+                <th>Departamento</th>
                 <th>Responsables</th>
                 {% if es_director %}
                 <th>Nuevos Responsables</th>
@@ -116,6 +117,9 @@
                 </td>
                 <td><input type="number" name="nivel_avance-{{ compromiso.compromiso_id }}" value="{{ compromiso.avance }}" min="0" max="100"></td>
                 <td>{{ compromiso.fecha_limite.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    {{ compromiso.departamento_name}}
+                </td>
                 <td>{{ compromiso.responsables }}</td>
                 {% if es_director %}
                 <td>

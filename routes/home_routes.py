@@ -46,17 +46,18 @@ def ver_compromisos():
     es_director = session.get('es_director')
     the_big_boss = session.get('the_big_boss')
     print(request.method)
+    print(es_director)
     if request.method == 'POST':
         # Obtener compromisos actuales (directores ven todos, usuarios solo sus compromisos)
         if es_director:
             departamento_id = compromiso_service.get_director_info(user_id)['id_departamento']
             compromisos = compromiso_service.get_compromisos_by_departamento(departamento_id)
-        if the_big_boss:
-            print("es el jefe")
-            compromisos = compromiso_service.get_all_compromisos()
         else:
             print("No es director")
             compromisos = compromiso_service.get_compromisos_by_user(user_id)
+        if the_big_boss:
+            print("es el jefe")
+            compromisos = compromiso_service.get_all_compromisos()
         print(compromisos)
         # Actualizar los compromisos
         for compromiso in compromisos:
@@ -104,15 +105,15 @@ def ver_compromisos():
 
     # Si es un GET, obtener los compromisos para mostrar
     if es_director:
-        print("No es director")
+        print("es director")
         departamento_id = compromiso_service.get_director_info(user_id)['id_departamento']
         compromisos = compromiso_service.get_compromisos_by_departamento(departamento_id)
-    if the_big_boss:
-        print("es el jefe")
-        compromisos = compromiso_service.get_all_compromisos()
     else:
         print("No es director")
         compromisos = compromiso_service.get_compromisos_by_user(user_id)
+    if the_big_boss:
+        print("es el jefe")
+        compromisos = compromiso_service.get_all_compromisos()
     print(compromisos)
     todos_responsables = compromiso_service.get_responsables()
 

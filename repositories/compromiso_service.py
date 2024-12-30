@@ -91,11 +91,11 @@ class CompromisoService:
         }
         return months.get(month, None)
 
-    def get_compromisos_by_mes_departamento(self, mes, departamento_id):
+    def get_compromisos_by_mes_departamento(self, mes, departamento_id,year):
         # Filtrar compromisos por mes y departamento en el repositorio
-        if mes == "Todos":
+        if mes == "Todos" and year  == "Todos" :
             return self.repo.fetch_compromisos_by_departamento(departamento_id)
-        return self.repo.fetch_compromisos_by_mes_departamento(mes, departamento_id)
+        return self.repo.fetch_compromisos_by_mes_departamento(mes,year,departamento_id)
 
     def get_responsables(self):
         responsables = self.repo.fetch_responsables()
