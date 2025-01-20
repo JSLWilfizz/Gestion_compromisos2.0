@@ -23,10 +23,10 @@ def home_view():
     print(f"User ID: {user_id}")
     user = compromiso_service.get_user_info(user_id)
     es_director_info = compromiso_service.get_director_info(user_id)
-    if user["position"] == 'DIRECTOR DE SERVICIO':
+    if user['cargo'] == 'DIRECTOR DE SERVICIO':
         the_big_boss = True
         session['the_big_boss'] = the_big_boss
-        es_director = False
+        es_director = True
     else:
         the_big_boss = False
         es_director_info = compromiso_service.get_director_info(user_id)
@@ -52,6 +52,7 @@ def ver_compromisos():
         if es_director:
             departamento_id = compromiso_service.get_director_info(user_id)['id_departamento']
             compromisos = compromiso_service.get_compromisos_by_departamento(departamento_id)
+            
         else:
             print("No es director")
             compromisos = compromiso_service.get_compromisos_by_user(user_id)
@@ -67,7 +68,7 @@ def ver_compromisos():
             # Directores pueden cambiar responsables y comentario de dirección
             if es_director:
                 nuevos_responsables = request.form.getlist(f'nuevos_responsables-{compromiso_id}')
-                comentario_director = request.form.get(f'comentario-{compromiso_id}')
+                comentario_director = request.form.get(f'comentario-{compromiso_id}') # director es parte de direccion?
                 if nuevos_responsables == []:
                     nuevos_responsables = compromiso['responsables_ids']
 
@@ -124,3 +125,12 @@ def ver_compromisos():
         es_director=es_director,
         the_big_boss=the_big_boss
     )
+
+@home.route('/ver_compromisos_compartidos')
+@login_required
+def ver_compromisos_compartidos():
+    user_id = session['user_id']
+    es_director = session.get('es_director')
+    the_big_boss = session.get('the_big_boss')
+    compromisos_compartidos = compromiso_service.get_compromisos_compartidos(user_id, the_big_boss or es_director)
+    return render_template('ver_compromisos_compartidos.html', compromisos=compromisos_compartidos)

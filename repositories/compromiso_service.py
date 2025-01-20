@@ -6,7 +6,10 @@ class CompromisoService:
         self.repo = CompromisoRepository()
 
     def get_user_info(self, user_id):
+        
         return self.repo.fetch_user_info(user_id)
+    
+    
 
     def get_director_info(self, user_id):
         return self.repo.fetch_director_info(user_id)
@@ -24,11 +27,11 @@ class CompromisoService:
         responsables = self.repo.fetch_responsables()
 
         responsables = [
-            (p['id'], f"{p['name']} {p['lastname']} - {p['departamento']} - {p['position']}")
+            (p['id'], f"{p['name']} {p['lastname']} - {p['departamento']} - {p['profesion']}")
             for p in responsables
         ]
         # Si el usuario es director, obtener los compromisos del departamento
-        if es_director:
+        if (es_director):
             compromisos = self.repo.fetch_compromisos_by_departamento(id_departamento)
         else:
             # Si el usuario no es director, obtener los compromisos donde es responsable
@@ -73,16 +76,31 @@ class CompromisoService:
 
 
 
-    def get_resumen_compromisos(self, month=None):
-        departamentos = self.repo.fetch_departamentos_resumen(month)
+    def get_resumen_compromisos(self, mes=None, area_id=None, year=None):
+        """
+        Obtiene el resumen de compromisos por departamento, incluyendo el total,
+        los completados y los pendientes.
+        """
+        # Si el mes no es "Todos", convertirlo a número
+        if mes and mes != "Todos":
+            mes = self.convert_month_to_number(mes)
 
-        total_compromisos = sum(dep['total_compromisos'] for dep in departamentos)
-        completados = sum(dep['completados'] for dep in departamentos)
-        pendientes = sum(dep['pendientes'] for dep in departamentos)
+        # Llamar al repositorio para obtener el resumen por departamento
+        # Agregamos el parámetro year a la llamada
+        departamentos_resumen = self.repo.fetch_departamentos_resumen(mes=mes, area_id=area_id, year=year)
 
-        return total_compromisos, completados, pendientes, departamentos
+        # Calcular el total de compromisos, completados y pendientes globalmente
+        total_compromisos = sum(dep['total_compromisos'] for dep in departamentos_resumen)
+        total_completados = sum(dep['completados'] for dep in departamentos_resumen)
+        total_pendientes = sum(dep['pendientes'] for dep in departamentos_resumen)
 
-
+        return {
+            'total_compromisos': total_compromisos,
+            'completados': total_completados,
+            'pendientes': total_pendientes,
+            'departamentos': departamentos_resumen
+        }
+        
     def convert_month_to_number(self, month):
         months = {
             "Enero": 1, "Febrero": 2, "Marzo": 3, "Abril": 4, "Mayo": 5,
@@ -91,16 +109,20 @@ class CompromisoService:
         }
         return months.get(month, None)
 
-    def get_compromisos_by_mes_departamento(self, mes, departamento_id,year):
-        # Filtrar compromisos por mes y departamento en el repositorio
-        if mes == "Todos" and year  == "Todos" :
+    def get_compromisos_by_mes_departamento(self, mes, departamento_id, year):
+        """
+        Obtiene compromisos por departamento aplicando filtros de mes y año.
+        """
+        # Manejar el caso 'Todos' para mes y año
+        if mes == "Todos" and year == "Todos":
             return self.repo.fetch_compromisos_by_departamento(departamento_id)
-        return self.repo.fetch_compromisos_by_mes_departamento(mes,year,departamento_id)
-
+        
+        return self.repo.fetch_compromisos_by_mes_departamento(mes, departamento_id, year)
+    
     def get_responsables(self):
         responsables = self.repo.fetch_responsables()
         return [
-            (p['id'], f"{p['name']} {p['lastname']} - {p['departamento']} - {p['position']}")
+            (p['id'], f"{p['name']} {p['lastname']} - {p['departamento']} - {p['profesion']}")
             for p in responsables
         ]
 
@@ -136,30 +158,6 @@ class CompromisoService:
         # Realizar la consulta en el repositorio con estos parámetros
         return self.repo.fetch_compromisos_by_filtro(departamento_id, mes, area_id)
 
-    def get_resumen_compromisos(self, mes=None, area_id=None):
-        """
-        Obtiene el resumen de compromisos por departamento, incluyendo el total,
-        los completados y los pendientes.
-        """
-        # Si el mes no es "Todos", convertirlo a número
-        if mes and mes != "Todos":
-            mes = self.convert_month_to_number(mes)
-
-        # Llamar al repositorio para obtener el resumen por departamento
-        departamentos_resumen = self.repo.fetch_departamentos_resumen(mes, area_id)
-
-        # Calcular el total de compromisos, completados y pendientes globalmente
-        total_compromisos = sum(dep['total_compromisos'] for dep in departamentos_resumen)
-        total_completados = sum(dep['completados'] for dep in departamentos_resumen)
-        total_pendientes = sum(dep['pendientes'] for dep in departamentos_resumen)
-
-        return {
-            'total_compromisos': total_compromisos,
-            'completados': total_completados,
-            'pendientes': total_pendientes,
-            'departamentos': departamentos_resumen
-        }
-
     def obtener_compromisos_por_mes_y_anio(self,mes, year=None):
         return self.repo.obtener_compromisos_por_mes_y_anio(mes, year)
 
@@ -172,6 +170,9 @@ class CompromisoService:
     def get_all_compromisos(self):
         return self.repo.fetch_all_compromisos()
         pass
+
+    def get_compromisos_compartidos(self, user_id, is_director):
+        return self.repo.fetch_compromisos_compartidos(user_id, is_director)
 
 
 

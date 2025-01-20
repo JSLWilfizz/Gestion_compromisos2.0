@@ -59,7 +59,7 @@
 
         /* Main content styles */
         .main-content {
-            margin-left: 220px; /* Adjust this to match the sidebar width */
+            margin-left: 0px; /* Adjust this to match the sidebar width */
             flex: 1;
             display: flex;
             justify-content: center;
@@ -132,6 +132,7 @@
             color: #666;
             font-size: 14px;
             border-top: 1px solid #ddd;
+            margin-bottom: 0px;
         }
 
         .footer img {
@@ -193,10 +194,11 @@
             <div class="container">
                 <h1>Bienvenido, {{ user.name }} {{ user.lastname }}</h1>
                 <p>Departamento: {{ user.departamento_name }}</p>
-                <p>Cargo: {{ user.position }}</p>
+                <p>Cargo: {{ user.cargo }}</p>
 
                 <a href="{{ url_for('reunion.crear_reunion_paso1') }}" class="btn btn-primary">Crear Reunión</a>
                 <a href="{{ url_for('home.ver_compromisos') }}" class="btn btn-secondary">Ver Compromisos</a>
+                <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn btn-secondary">Ver Compromisos Compartidos</a> <!-- Nuevo botón -->
                 <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">Cerrar Sesión</a>
             </div>
         </div>

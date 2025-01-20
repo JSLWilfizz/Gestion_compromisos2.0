@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
+
     <!-- Mensaje de notificación -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -15,6 +15,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Servicio de Salud del Maule</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
     <style>
         /* Estilo general */
         body {
@@ -22,7 +23,7 @@
             background-color: #f4f6f9;
             margin: 0;
             padding: 0;
-            display: flex;
+            display: flex;  
             justify-content: center;
             align-items: center;
             height: 100vh;
@@ -80,6 +81,7 @@
             width: 100%;
             padding: 10px;
             font-size: 16px;
+            margin-left:8px;
             font-weight: bold;
             color: #ffffff;
             background: #007bff;
@@ -103,7 +105,10 @@
         .footer p {
             margin: 0;
         }
-
+        .footer img {
+            width: 80px;
+            margin-top: 10px;
+        }
         /* Responsividad */
         @media (max-width: 600px) {
             .container {
@@ -115,10 +120,11 @@
         }
     </style>
 
-</head>
+
 <body>
     <div class="container">
         <h1>Iniciar Sesión</h1>
+        
         <form method="POST" action="{{ url_for('auth.login') }}">
             <!-- Campo RUT -->
             <div class="form-group">
@@ -141,6 +147,7 @@
         <!-- Pie de página -->
         <div class="footer">
             <p>Servicio de Salud del Maule</p>
+            <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
         </div>
     </div>
 </body>

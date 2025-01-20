@@ -1,8 +1,3 @@
-# /services/reunion_service.py
-import re
-
-from psutil import users
-
 from repositories.reunion_repository import ReunionRepository
 from datetime import datetime
 
@@ -35,7 +30,7 @@ class ReunionService:
 
         personas = self.repo.fetch_personas()
         responsables_choices = [
-            (p['id'], f"{p['name']} {p['lastname']} - {p['departamento']} - {p['position']}")
+            (p['id'], f"{p['name']} {p['lastname']} - {p['departamento']} - {p['profesion']}", p['correo'])
             for p in personas
         ]
         form.compromisos[0].responsables.choices = responsables_choices
@@ -44,7 +39,7 @@ class ReunionService:
         departamentos = self.repo.fetch_departamentos()
         form.compromisos[0].departamento.choices = [(d['id'], d['name']) for d in departamentos]
 
-    def create_reunion(self, form, request_data, acta_pdf_path):
+    def create_reunion(self, form, request_data, acta_pdf_path, tema_concatenado, temas_analizado_concatenado, proximas_reuniones_concatenado, fecha_creacion):
         origen_id = self.get_origen_id(form, request_data)
         area_id = self.get_area_id(form, request_data)
 
@@ -53,36 +48,58 @@ class ReunionService:
         if not area_id:
             raise ValueError("El campo 'area' es requerido")
 
-            # Obtener los asistentes como una lista
-        asistentes_list = request_data.getlist('asistentes[]')
-        temas_analizados = request_data.get('descripcion_markdown')
         name_list = []
-        for asistentes in asistentes_list:
-            if not asistentes:
-                raise ValueError("El campo 'asistentes' es requerido")
-            user = self.repo.fetch_user_info(asistentes)
+        correo_list = []
+        # Obtener los asistentes existentes
+        asistentes_list = request_data.getlist('asistentes[]')
+        for asistente_id in asistentes_list:
+            user = self.repo.fetch_user_info(asistente_id)
             if not user:
-                raise ValueError(f"No se encontró información del usuario con ID {asistentes}")
+                raise ValueError(f"No se encontró información del usuario con ID {asistente_id}")
             name_list.append(f"{user['name']} {user['lastname']}")
+            correo_list.append(user['correo'] or '')
 
-        # Concatenar los asistentes en un único string separado por ";"
-        asistentes_concatenados = ';'.join(name_list)
-        correos_concatenados = []
-
-        correo_pattern = re.compile(r'correo-\d+')  # Patrón para buscar "correo-{id}"
-
+        # Recoger invitados y crearlos en la tabla persona
+        invitado_nombres = []
+        invitado_correos = []
         for key, value in request_data.items():
-            if correo_pattern.match(key) and value.strip():  # Si la clave coincide con el patrón y no está vacía
-                correos_concatenados.append(value.strip())
+            if key.startswith('invitado-nombre-') and value.strip():
+                index = key.split('-')[-1]
+                invitado_nombres.append(value.strip())
+                correo_key = f'invitado-correo-{index}'
+                if request_data.get(correo_key):
+                    invitado_correos.append(request_data[correo_key].strip())
 
-        # Concatenar todos los correos con ";"
-        correos_final = ';'.join(correos_concatenados)
+        for i, nombre_invitado in enumerate(invitado_nombres):
+            # Insertar invitado
+            invitado_id = self.repo.insert_invitado(nombre_invitado, invitado_correos[i])
+            invitado_user = self.repo.fetch_user_info(invitado_id)
+            name_list.append(f"{invitado_user['name']} {invitado_user['lastname']}")
+            correo_list.append(invitado_user['correo'] or '')
 
-        # Guardar o procesar los correos concatenados
-        print("Correos concatenados:", correos_final)
+        asistentes_concatenados = ';'.join(name_list)
+        correos_final = ';'.join(correo_list)
+
+        lugar = request_data.get('lugar')
+        temas = request_data.get('temas')
+        proximas_fechas = request_data.get('proximas_fechas')
+
+        tema_values = request_data.getlist('tema')
+        descripcion_markdown_values = request_data.getlist('descripcion_markdown')
+        proximas_reuniones_values = request_data.getlist('proximas_fechas')
 
         reunion_id = self.repo.insert_reunion(
-            request_data.get('nombre_reunion'), area_id, origen_id, asistentes_concatenados,correos_final,temas_analizados, acta_pdf_path
+            request_data.get('nombre_reunion'),
+            area_id,
+            origen_id,
+            asistentes_concatenados,
+            correos_final,
+            acta_pdf_path,
+            lugar,
+            tema_concatenado,
+            temas_analizado_concatenado,
+            proximas_reuniones_concatenado,
+            fecha_creacion
         )
 
         # Iterar sobre la lista de formularios de compromisos

@@ -1,7 +1,7 @@
 # /routes/reunion_routes.py
 import traceback
 
-from flask import Blueprint, render_template, redirect, url_for, flash, session, request
+from flask import Blueprint, render_template, redirect, url_for, flash, session, request, jsonify
 from .auth_routes import login_required
 from repositories.reunion_service import ReunionService
 from validators.reunion_validator import ReunionValidator
@@ -37,12 +37,22 @@ def crear_reunion_paso1():
         try:
             acta_pdf = request.files.get('acta_pdf')
             acta_pdf_path = None
-            if acta_pdf and allowed_file(acta_pdf.filename):
+            if (acta_pdf and allowed_file(acta_pdf.filename)):
                 acta_pdf_filename = secure_filename(acta_pdf.filename)
                 acta_pdf.save(os.path.join(UPLOAD_FOLDER, acta_pdf_filename))
                 acta_pdf_path = os.path.join(UPLOAD_FOLDER, acta_pdf_filename)
 
-            service.create_reunion(form, request.form, acta_pdf_path)
+            tema_values = [value.replace('\n', ';') for value in request.form.getlist('tema')]
+            temas_analizados_values = [value.replace('\n', ';') for value in request.form.getlist('temas_analizado')]
+            proximas_reuniones_values = [value.replace('\n', ';') for value in request.form.getlist('proximas_fechas')]
+
+            tema_concatenado = ';'.join(tema_values)
+            temas_analizados_concatenado = ';'.join(temas_analizados_values)
+            proximas_reuniones_concatenado = ';'.join(proximas_reuniones_values)
+
+            fecha_creacion = request.form.get('fecha_reunion')
+
+            service.create_reunion(form, request.form, acta_pdf_path, tema_concatenado, temas_analizados_concatenado, proximas_reuniones_concatenado, fecha_creacion)
             print(request.form)
             return redirect(url_for('home.home_view'))
 
@@ -58,3 +68,7 @@ def crear_reunion_paso1():
             flash(f'Ocurrió un error al crear la reunión: {e}', 'danger')
 
     return render_template('crear_reunion.html', form=form)
+
+
+
+

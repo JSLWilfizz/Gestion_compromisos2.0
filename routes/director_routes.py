@@ -11,26 +11,25 @@ compromiso_service = CompromisoService()
 @is_director
 def resumen_compromisos():
     mes = request.args.get('month', 'Todos')
-    area_id = request.args.get('area_id', None)
-    year = request.args.get('year','Todos')
-    print(year)
-    # Obtener el resumen de compromisos filtrados por departamento, mes y área
-    resumen = compromiso_service.get_resumen_compromisos(mes, area_id)
+    area_id = request.args.get('area_id')
+    year = request.args.get('year', 'Todos')
 
-    print(resumen)
+    # Convertir area_id a entero si existe
+    if area_id:
+        area_id = int(area_id)
+
+    # Obtener el resumen de compromisos con todos los filtros
+    resumen = compromiso_service.get_resumen_compromisos(mes, area_id, year)
 
     # Obtener todas las áreas para el filtro
     areas = compromiso_service.get_areas()
 
-    # Definir los meses disponibles manualmente
-    meses = ['Todos', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-
-    # Convertir area_id a entero si existe, para compararlo correctamente con el ID del área
-    if area_id:
-        area_id = int(area_id)
-
-    return render_template('resumen_compromisos.html', resumen=resumen, areas=areas, meses=meses, selected_area=area_id, selected_mes=mes)
-
+    return render_template('resumen_compromisos.html', 
+                         resumen=resumen,
+                         areas=areas,
+                         selected_area=area_id,
+                         selected_mes=mes,
+                         selected_year=year)
 
 @director_bp.route('/director/ver_compromisos', methods=['GET', 'POST'])
 @is_director
@@ -54,7 +53,7 @@ def ver_compromisos_director():
         "Octubre": 10, "Noviembre": 11, "Diciembre": 12, "Todos": "Todos"
     }
     mes_numero = mappeo_meses.get(mes)
-    print(year)
+    print(year) 
     if request.method == 'POST':
         # Si se está enviando el formulario, procesar la actualización de los compromisos
         compromisos = compromiso_service.get_compromisos_by_mes_departamento(mes_numero, departamento_id,year)
@@ -69,7 +68,7 @@ def ver_compromisos_director():
         return redirect(url_for('director.ver_compromisos_director', mes=mes, departamento_id=departamento_id))
 
     # Obtener los compromisos filtrados por mes y departamento
-    compromisos = compromiso_service.get_compromisos_by_mes_departamento(mes_numero, departamento_id)
+    compromisos = compromiso_service.get_compromisos_by_mes_departamento(mes_numero, departamento_id,year)
     print(f"Compromisos: {compromisos}")
     todos_responsables = compromiso_service.get_responsables()
 

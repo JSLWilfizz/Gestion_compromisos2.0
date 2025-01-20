@@ -180,7 +180,7 @@
                 <!-- Filtro por año -->
                 <label for="year">Filtrar por Año:</label>
                 <select name="year" id="year" onchange="this.form.submit()">
-                    {% for year in ['2023', '2024', '2025', 'Todos'] %}
+                    {% for year in ['2024', '2025', 'Todos'] %}
                     <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
                     {% endfor %}
                 </select>
@@ -228,11 +228,12 @@
                 {% endfor %}
             </tbody>
         </table>
-
+        <br>
+        <br>
         <!-- Botón para volver al home -->
-        <a href="{{ url_for('home.home_view') }}" class="btn btn-secondary" style="margin-top: 20px;">Volver al inicio</a>
+        <a href="{{ url_for('home.home_view') }}" class="btn btn-secondary" style="margin-top: 40px;">Volver al inicio</a>
     </div>
-
+    
     <!-- Logo en la esquina inferior izquierda -->
     <footer class="footer">
         Servicio de Salud del Maule

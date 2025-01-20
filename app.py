@@ -1,9 +1,10 @@
 import os
-from flask import Flask
+from flask import Flask, request, jsonify
 from flask_wtf import CSRFProtect
 from flask_bcrypt import Bcrypt
 from config import Config
 from routes import auth, home, reunion, director_bp
+from repositories.reunion_service import ReunionService
 
 
 def secure_headers(response):  # Función para aplicar cabeceras de seguridad
@@ -32,7 +33,6 @@ def create_app(config_class=Config):
     # Registrar los Blueprints
     app.register_blueprint(auth)  # Registrar el blueprint de autenticación
     app.register_blueprint(home)
-
     app.register_blueprint(reunion)  # Registrar el blueprint de las reuniones
     app.register_blueprint(director_bp)  # Registrar el blueprint del director
 
@@ -42,4 +42,4 @@ def create_app(config_class=Config):
 if __name__ == '__main__':
     app = create_app()  # Usar la función create_app para crear la aplicación
     app.secret_key = 'clave_super_segura'
-    app.run(debug=True)
+    app.run(debug=False)

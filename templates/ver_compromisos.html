@@ -1,147 +1,283 @@
-{% extends "base.html" %}
-
-{% block title %}Ver Compromisos{% endblock %}
+{% block title %}<title>Ver Compromisos</title>{% endblock %}
 
 {% block stylesheets %}
 <style>
     .container {
-        max-width: 1200px;
+        font-family: sans-serif;
+        max-width: 98%;
         margin: 20px auto;
-        background-color: #ffffff;
         padding: 20px;
+        background-color: #f8f9fa;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         border-radius: 8px;
     }
 
     h1 {
+        font-family: sans-serif;
         color: #007bff;
         text-align: center;
-        font-size: 1.5em;
+        font-size: 2em;
+        margin-bottom: 1.5rem;
+    }
+    .responsables-wrapper {
+            position: relative;
+            
+        }
+
+
+    .back-button {
+        font-family: sans-serif;
+        display: block;
+        background-color: #6c757d;
+        color: white;
+        padding: 10px 15px;
+        text-decoration: none;
+        border-radius: 4px;
+        margin-bottom: 20px;
+        width: fit-content;
+    }
+
+    .back-button:hover {
+        background-color: #5a6268;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+        margin-top: 1rem;
+        padding: 0.5rem;
     }
 
     table {
+        font-family: sans-serif;
         width: 100%;
         border-collapse: collapse;
-        margin-top: 10px;
         font-size: 0.9em;
+        background-color: white;
     }
 
     th, td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        text-align: center;
+        font-family: sans-serif;
+        border: 1px solid #dee2e6;
+        padding: 15px;
+        text-align: left;
+        vertical-align: top;
     }
 
     th {
+        font-family: sans-serif;
         background-color: #007bff;
         color: white;
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    tr:nth-child(even) {
+        font-family: sans-serif;
+        background-color: #f8f9fa;
     }
 
     .priority-low {
         background-color: #d4edda;
         color: #155724;
+        text-align: center;
+        font-weight: 500;
     }
 
     .priority-medium {
         background-color: #fff3cd;
         color: #856404;
+        text-align: center;
+        font-weight: 500;
     }
 
     .priority-high {
         background-color: #f8d7da;
         color: #721c24;
+        text-align: center;
+        font-weight: 500;
     }
 
-    .btn-primary, .btn-secondary {
-        padding: 5px 10px;
-        font-size: 0.9em;
+    select, input[type="number"] {
+        font-family: sans-serif;
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid #ced4da;
         border-radius: 4px;
-        color: white;
-        cursor: pointer;
+        background-color: white;
     }
 
-    .btn-primary {
+    textarea {
+        font-family: sans-serif;
+        width: 100%;
+        min-height: 80px;
+        padding: 6px 8px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        resize: vertical;
+    }
+
+    .btn-guardar {
+        font-family: sans-serif;
         background-color: #007bff;
+        color: white;
+        padding: 6px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        width: auto;
+        min-width: 100px;
+        white-space: nowrap;
     }
 
-    .btn-primary:hover {
+    .btn-guardar:hover {
+        font-family: sans-serif;
         background-color: #0056b3;
     }
 
-    .btn-secondary {
-        background-color: #6c757d;
-    }
+    /* Column widths */
+    .col-descripcion { width: 15%; }
+    .col-estado { width: 8%; }
+    .col-prioridad { width: 8%; }
+    .col-avance { width: 8%; }
+    .col-fecha { width: 8%; }
+    .col-departamento { width: 12%; }
+    .col-responsables { width: 12%; }
+    .col-comentario { width: 12%; }
+    .col-acciones { width: 8%; }
 
-    .btn-secondary:hover {
-        background-color: #5a6268;
+    @media screen and (max-width: 1200px) {
+        .container {
+            margin: 10px;
+            padding: 10px;
+        }
     }
+    .footer {
+            background-color: #f8f9fa;
+            padding: 20px 0;
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            border-top: 1px solid #ddd;
+            margin-bottom: 0px;
+        }
+
+        .footer img {
+            width: 80px;
+            margin-top: 10px;
+        }
+
 </style>
 {% endblock %}
 
 {% block content %}
-<h1><i class="fas fa-tasks"></i> Ver Compromisos</h1>
+<div class="container"></div>
+    <h1><i class="fas fa-tasks"></i>Compromisos</h1>
+    
+    <a href="{{ url_for('home.home_view') }}" class="back-button">
+        <i class="fas fa-home"></i> Volver al Inicio
+    </a>
 
-<a href="{{ url_for('home.home_view') }}" class="btn-secondary"><i class="fas fa-home"></i> Volver al Inicio</a>
 
-<form id="compromisos-form" method="POST" action="{{ url_for('home.ver_compromisos') }}">
-    <table>
-        <thead>
-            <tr>
-                <th>Descripción</th>
-                <th>Estado</th>
-                <th>Prioridad</th>
-                <th>Avance (%)</th>
-                <th>Fecha Límite</th>
-                <th>Departamento</th>
-                <th>Responsables</th>
-                {% if es_director %}
-                <th>Nuevos Responsables</th>
-                {% endif %}
-                <th>Comentario</th>
-                <th>Comentario Dirección</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for compromiso in compromisos %}
-            <tr>
-                <td>{{ compromiso.descripcion }}</td>
-                <td>
-                    <select name="estado-{{ compromiso.compromiso_id }}">
-                        <option value="Pendiente" {% if compromiso.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-                        <option value="Completado" {% if compromiso.estado == 'Completado' %}selected{% endif %}>Completado</option>
-                    </select>
-                </td>
-                <td class="{% if compromiso.prioridad == 'Alta' %}priority-high{% elif compromiso.prioridad == 'Media' %}priority-medium{% else %}priority-low{% endif %}">
-                    {{ compromiso.prioridad }}
-                </td>
-                <td><input type="number" name="nivel_avance-{{ compromiso.compromiso_id }}" value="{{ compromiso.avance }}" min="0" max="100"></td>
-                <td>{{ compromiso.fecha_limite.strftime('%Y-%m-%d') }}</td>
-                <td>
-                    {{ compromiso.departamento_name}}
-                </td>
-                <td>{{ compromiso.responsables }}</td>
-                {% if es_director %}
-                <td>
-                    <select name="nuevos_responsables-{{ compromiso.compromiso_id }}" multiple class="responsables-select">
-                        {% for value, label in todos_responsables %}
-                            <option value="{{ value }}" {% if value in compromiso.responsables_ids %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </td>
-                {% endif %}
-                <td><textarea name="comentario-{{ compromiso.compromiso_id }}">{{ compromiso.comentario }}</textarea></td>
-                <td><textarea name="comentario_direccion-{{ compromiso.compromiso_id }}" readonly>{{ compromiso.comentario_direccion }}</textarea></td>
-                <td>
-                    <button type="submit" class="btn-primary guardar-btn" data-id="{{ compromiso.compromiso_id }}">
-                        <i class="fas fa-save"></i> Guardar
-                    </button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</form>
+        <form id="compromisos-form" method="POST" action="{{ url_for('home.ver_compromisos') }}">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="col-descripcion">Descripción</th>
+                        <th class="col-estado">Estado</th>
+                        <th class="col-prioridad">Prioridad</th>
+                        <th class="col-avance">Avance (%)</th>
+                        <th class="col-fecha">Fecha Límite</th>
+                        <th class="col-departamento">Departamento</th>
+                        <th class="col-responsables">Responsables</th>
+                        {% if es_director %}
+                        <th class="col-responsables">Nuevos Responsables</th>
+                        {% endif %}
+                        <th class="col-comentario">Comentario Referente</th>
+                        <th class="col-comentario">Comentario Dirección</th>
+                        <th class="col-acciones">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for compromiso in compromisos %}
+                    <tr>
+                        <td>{{ compromiso.descripcion }}</td>
+                        <td>
+                            <select name="estado-{{ compromiso.compromiso_id }}">
+                                <option value="Pendiente" {% if compromiso.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                <option value="Completado" {% if compromiso.estado == 'Completado' %}selected{% endif %}>Completado</option>
+                            </select>
+                        </td>
+                        <td class="{% if compromiso.prioridad == 'Alta' %}priority-high{% elif compromiso.prioridad == 'Media' %}priority-medium{% else %}priority-low{% endif %}">
+                            {{ compromiso.prioridad }}
+                        </td>
+                        <td>
+                            <input type="number" 
+                                   name="nivel_avance-{{ compromiso.compromiso_id }}" 
+                                   value="{{ compromiso.avance }}" 
+                                   min="0" 
+                                   max="100">
+                        </td>
+                        <td>{{ compromiso.fecha_limite.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ compromiso.departamento_name }}</td>
+                        <td>
+                            {% if es_director %}
+                            <select name="nuevos_responsables-{{ compromiso.compromiso_id }}" 
+                                    multiple 
+                                    class="responsables-select">
+                                {% for value, label in todos_responsables %}
+                                    <option value="{{ value }}" 
+                                            {% if value in compromiso.responsables_ids %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% else %}
+                            {{ compromiso.responsables }}
+                            {% endif %}
+                        </td>
+                        {% if es_director %}
+                        <td>
+                            <select name="nuevos_responsables-{{ compromiso.compromiso_id }}" 
+                                    multiple 
+                                    class="responsables-select">
+                                {% for value, label in todos_responsables %}
+                                    <option value="{{ value }}" 
+                                            {% if value in compromiso.responsables_ids %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        {% endif %}
+                        <td>
+                            <textarea name="comentario-{{ compromiso.compromiso_id }}">{{ compromiso.comentario }}</textarea>
+                        </td>
+                        <td>
+                            <textarea name="comentario_direccion-{{ compromiso.compromiso_id }}" readonly>{{ compromiso.comentario_direccion }}</textarea>
+                        </td>
+                        <td>
+                            <button type="submit" 
+                                    class="btn-guardar" 
+                                    data-id="{{ compromiso.compromiso_id }}">
+                                <i class="fas fa-save"></i> Guardar
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+    <footer class="footer">
+        Servicio de Salud del Maule
+        <div>
+            <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
+        </div>
+    </footer>
+
+
 {% endblock %}
 
 {% block javascripts %}
@@ -151,9 +287,11 @@
         $('.responsables-select').select2({
             placeholder: "Selecciona responsables",
             allowClear: true,
-            width: '100%'
+            width: '100%',
+            dropdownParent: $('#compromisos-form')
         });
         {% endif %}
     });
 </script>
 {% endblock %}
+

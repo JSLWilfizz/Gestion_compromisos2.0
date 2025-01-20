@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compromisos Compartidos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Compromisos Compartidos</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Compromiso</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    <th>Prioridad</th>
+                    <th>Fecha Creación</th>
+                    <th>Avance</th>
+                    <th>Fecha Límite</th>
+                    <th>Comentario</th>
+                    <th>Comentario Dirección</th>
+                    <th>ID Departamento</th>
+                    <th>Nombre Departamento</th>
+                    <th>ID Persona</th>
+                    <th>Nombre Persona</th>
+                    <th>Apellido Persona</th>
+                    <th>Nivel Jerárquico Persona</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for compromiso in compromisos %}
+                <tr>
+                    <td>{{ compromiso.compromiso_id }}</td>
+                    <td>{{ compromiso.descripcion }}</td>
+                    <td>{{ compromiso.estado }}</td>
+                    <td>{{ compromiso.prioridad }}</td>
+                    <td>{{ compromiso.fecha_creacion }}</td>
+                    <td>{{ compromiso.avance }}</td>
+                    <td>{{ compromiso.fecha_limite }}</td>
+                    <td>{{ compromiso.comentario }}</td>
+                    <td>{{ compromiso.comentario_direccion }}</td>
+                    <td>{{ compromiso.departamento_id }}</td>
+                    <td>{{ compromiso.departamento_name }}</td>
+                    <td>{{ compromiso.persona_id }}</td>
+                    <td>{{ compromiso.persona_name }}</td>
+                    <td>{{ compromiso.persona_lastname }}</td>
+                    <td>{{ compromiso.persona_nivel_jerarquico }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
