@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resumen de Compromisos - Directora</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -68,16 +69,6 @@
             color: #007bff;
         }
 
-        .filter-box {
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .filter-box label, select {
-            font-size: 1em;
-            margin-right: 10px;
-            padding: 10px;
-        }
 
         table {
             width: 100%;
@@ -151,6 +142,18 @@
             width: 80px;
             margin-top: 10px;
         }
+        .filter-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: Arial, sans-serif;
+        }
+        .filter-box label {
+            margin-right: 5px;
+        }
+        .filter-box select {
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
@@ -159,34 +162,36 @@
 
         <!-- Filtros de meses y áreas -->
         <div class="filter-box">
-           <form method="GET" action="{{ url_for('director.resumen_compromisos') }}">
-                <!-- Filtro por mes -->
-                <label for="month">Filtrar por Mes:</label>
+            <form method="GET" action="{{ url_for('director.resumen_compromisos') }}">
+                <label for="month">Filtro por Mes:</label>
                 <select name="month" id="month" onchange="this.form.submit()">
                     {% for month in ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre', 'Todos'] %}
                     <option value="{{ month }}" {% if month == selected_mes %}selected{% endif %}>{{ month }}</option>
                     {% endfor %}
                 </select>
-
-                <!-- Filtro por área -->
-                <label for="area_id">Filtrar por Área:</label>
-                <select name="area_id" id="area_id" onchange="this.form.submit()">
-                    <option value="">Todas las Áreas</option>
-                    {% for area in areas %}
-                    <option value="{{ area.id }}" {% if area.id == selected_area %}selected{% endif %}>{{ area.name }}</option>
-                    {% endfor %}
-                </select>
-
-                <!-- Filtro por año -->
-                <label for="year">Filtrar por Año:</label>
+                <label for="year">Filtro por Año:</label>
                 <select name="year" id="year" onchange="this.form.submit()">
                     {% for year in ['2024', '2025', 'Todos'] %}
                     <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
                     {% endfor %}
                 </select>
+                <label for="area_id">Filtro por Área:</label>
+                <select name="area_id" id="area_id" onchange="this.form.submit()">
+                    <option value="">Todas</option>
+                    {% for area in areas %}
+                    <option value="{{ area.id }}" {% if area.id == selected_area %}selected{% endif %}>{{ area.name }}</option>
+                    {% endfor %}
+                </select>
+                <label for="departamento_id">Filtro por Departamento:</label>
+                <select name="departamento_id" id="departamento_id" onchange="this.form.submit()">
+                    <option value="">Todos</option>
+                    {% for departamento in departamentos %}
+                    <option value="{{ departamento.id }}" {% if departamento.id == selected_departamento %}selected{% endif %}>{{ departamento.name }}</option>
+                    {% endfor %}
+                </select>
             </form>
         </div>
-
+        <br>
         <div class="summary-box">
             <div class="summary-item">
                 <h3>Compromisos Totales</h3>

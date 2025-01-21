@@ -144,3 +144,9 @@ class ReunionService:
         if new_area:
             return self.repo.insert_area(new_area)
         return form.area.data
+
+    def get_mis_reuniones(self, user_id):
+        return self.repo.fetch_mis_reuniones(user_id)
+
+    def get_compromisos_por_reunion(self, reunion_id):
+        return self.repo.fetch_compromisos_by_reunion(reunion_id)

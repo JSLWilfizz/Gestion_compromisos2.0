@@ -9,6 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">    <meta name="description" content="Formulario para crear reuniones y compromisos.">
     <style>
         .btn {
             padding: 0.5rem 1rem;
@@ -113,7 +114,6 @@
     {% endwith %}
 
 
-    <div class="container mx-auto px-4 py-8 flex-grow" id="acta-content">
         <div class="bg-white shadow-lg rounded-lg overflow-hidden">
             <div class="bg-blue-600 text-white p-4">
                 <h1 class="text-2xl font-bold">Acta de Reunión DSSM</h1>
@@ -171,13 +171,13 @@
                                 <option value="{{ value }}" data-correo="{{ correo }}">{{ label }}</option>
                                 {% endfor %}
                             </select>
-                            <label for="invitados-select" class="col-span-2">Invitados</label>
+                            <label for="invitados-select" class="col-span-2">Invitados (Pronto)</label>
                             <select name="invitados[]" id="invitados-select" class="form-control select2 w-full" multiple>
                                 {% for invitado in invitados %}
                                 <option value="{{ invitado.id_invitado }}">{{ invitado.nombre_completo }}</option>
                                 {% endfor %}
                             </select>
-                            <button type="button" id="btn-add-invitado" class="btn btn-secondary mt-2">Añadir invitado</button>
+                            <button type="button" id="btn-add-invitado" class="btn btn-secondary mt-2">Añadir invitado (Pronto)</button>
 
                     <br>
                     <div id="asistentes-correos" class="mt-6">
@@ -240,8 +240,7 @@
                                 {% for compromiso_form in form.compromisos %}
                                 <tr>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <input type="text" name="compromisos-{{ loop.index }}-nombre"
-                                            class="form-control" />
+                                        <textarea name="compromisos-{{ loop.index }}-nombre" class="form-control resize-both" rows="2"></textarea>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <select name="compromisos-{{ loop.index }}-prioridad" class="form-control">
@@ -281,7 +280,7 @@
                         </table>
                         <button type="button" id="add-compromiso" class="btn btn-secondary mt-4">Agregar otro
                             compromiso</button>
-                        <button type="button" id="export-pdf" class="btn-pdf">Exportar Acta en PDF</button>
+                        <button type="button" id="export-pdf" class="btn-pdf">Exportar Acta en PDF (Pronto)</button>
                     </div>
                     <br>
                     <div class="mt-6 flex justify-between items-center" style="display: center;">
@@ -297,16 +296,14 @@
                             Compromisos</button>
                     </div>
                 </form>
+                <div class="container mx-auto px-4 flex justify-between items-center">
+                    <p class="text-gray-600">Servicio de Salud del Maule</p>
+                    <img src="{{ url_for('static', filename='logo_ministerio.png') }}"
+                        alt="Logotipo del Servicio de Salud del Maule" class="h-16">
+                </div>
             </div>
-        </div>
 
-        <footer class="bg-white border-t border-gray-200 py-4 mt-8">
-            <div class="container mx-auto px-4 flex justify-between items-center">
-                <p class="text-gray-600">Servicio de Salud del Maule</p>
-                <img src="{{ url_for('static', filename='logo_ministerio.png') }}"
-                    alt="Logo Servicio de Salud del Maule" class="h-16">
-            </div>
-        </footer>
+
 </body>
 </div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -321,39 +318,26 @@
         var easyMDE1 = new EasyMDE({ element: document.getElementById('descripcion1') });
 
         document.getElementById('export-pdf').addEventListener('click', function() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('p', 'mm', 'a4');
+            const actaContent = document.getElementById('acta-content').innerHTML;
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{{ url_for('exportar_pdf') }}";
 
-            // Obtener el contenido del acta
-            const actaContent = document.getElementById('acta-content');
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'acta_content';
+            input.value = actaContent;
 
-            // Usar html2canvas para capturar el contenido
-            html2canvas(actaContent, { scale: 2 }).then(canvas => {
-                const imgData = canvas.toDataURL('image/png');
-                const imgWidth = 210; // Ancho en mm para A4
-                const pageHeight = 297; // Alto en mm para A4
-                const imgHeight = canvas.height * imgWidth / canvas.width;
-                let heightLeft = imgHeight;
-                let position = 0;
-
-                doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-
-                while (heightLeft > 0) {
-                    position = heightLeft - imgHeight;
-                    doc.addPage();
-                    doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
-                }
-
-                doc.save('acta_reunion.pdf');
-            });
+            form.appendChild(input);
+            document.body.appendChild(form);
+            form.submit();
         });
 
         // Inicializar select2
         $('.select2').select2({
             placeholder: "Selecciona asistentes",
-            allowClear: true
+            allowClear: true,
+            width: '100%'
         });
 
         let compromisoIndex = $('#compromisos-table tbody tr').length + 1;
@@ -391,7 +375,7 @@
         $('#add-compromiso').on('click', function () {
             const newRow = `
                     <tr>
-                        <td class="px-6 py-4 whitespace-nowrap"><input type="text" name="compromisos-${compromisoIndex}-nombre" class="form-control" /></td>
+                        <td class="px-6 py-4 whitespace-nowrap"><textarea name="compromisos-${compromisoIndex}-nombre" class="form-control resize-both" rows="2"></textarea></td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <select name="compromisos-${compromisoIndex}-prioridad" class="form-control">
                                 <option value="Alta">Alta</option>
@@ -408,7 +392,7 @@
                             </select>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <select name="compromisos-${compromisoIndex}-responsables" class="form-control select2" multiple="multiple">
+                            <select name="compromisos-${compromisoIndex}-responsables" class="form-control select2" multiple="multiple" style="width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; allowClear: true;">
                                 {% for value, label, correo in form.compromisos[0].responsables.choices %}
                                     <option value="{{ value }}">{{ label }}</option>
                                 {% endfor %}
@@ -435,7 +419,7 @@
         });
 
         $("#asistentes-select").select2({
-            placeholder: "Selecciona asistentes",
+            placeholder: "Selecciona Responsables",
             allowClear: true,
             width: '100%'
         });
@@ -478,6 +462,7 @@
         var now = new Date();
         var localDatetime = now.toISOString().slice(0, 16);
         document.getElementById('fecha_reunion').value = localDatetime -3; 
+        
     });
 </script>
 </body>

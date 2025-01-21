@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compromisos de la Reunión - Servicio de Salud del Maule</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+        }
+        .wrapper {
+            display: flex;
+            flex: 1;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #1a202c;
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        .sidebar h3 {
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            color: #e2e8f0;
+        }
+        .sidebar a {
+            display: block;
+            color: #cbd5e0;
+            text-decoration: none;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .sidebar a:hover {
+            background-color: #2d3748;
+        }
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        h1 {
+            color: #2b6cb0;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #edf2f7;
+            font-weight: bold;
+        }
+        .btn {
+            display: inline-block;
+            padding: 8px 12px;
+            background-color: #4299e1;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-right: 5px;
+            transition: background-color 0.3s;
+        }
+        .btn:hover {
+            background-color: #3182ce;
+        }
+        .footer {
+            background-color: #edf2f7;
+            text-align: center;
+            padding: 20px;
+            font-size: 14px;
+            color: #4a5568;
+            margin-top: auto;
+        }
+        .footer img {
+            width: 80px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="sidebar">
+            <h3>Panel de Navegación</h3>
+            <a href="{{ url_for('home.home_view') }}">Inicio</a>
+            <a href="{{ url_for('home.ver_compromisos') }}">Mis Compromisos</a>
+            <a href="{{ url_for('home.ver_compromisos_compartidos') }}">Compromisos Departamentales</a>
+            <a href="{{ url_for('auth.logout') }}" style="color: #fc8181;">Cerrar Sesión</a>
+        </div>
+
+        <div class="main-content">
+            <div class="container">
+                <h1>Compromisos de la Reunión</h1>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Descripción</th>
+                            <th>Estado</th>
+                            <th>Fecha Límite</th>
+                            <th>Avance</th>
+                            <th>Departamento</th>
+                            <th>Responsables</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in compromisos %}
+                        <tr>
+                            <td>{{ c.descripcion }}</td>
+                            <td>{{ c.estado }}</td>
+                            <td>{{ c.fecha_limite }}</td>
+                            <td>{{ c.avance }}</td>
+                            <td>{{ c.departamento }}</td>
+                            <td>{{ c.responsables }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <a href="/mis_reuniones" class="btn">Volver al Inicio</a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        Servicio de Salud del Maule
+        <div>
+            <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
+        </div>
+    </footer>
+</body>
+</html>

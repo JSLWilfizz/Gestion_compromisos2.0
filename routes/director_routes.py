@@ -2,10 +2,8 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 from repositories.compromiso_service import CompromisoService
 from .auth_routes import is_director
 
-
 director_bp = Blueprint('director', __name__)
 compromiso_service = CompromisoService()
-
 
 @director_bp.route('/director/resumen_compromisos', methods=['GET', 'POST'])
 @is_director
@@ -13,23 +11,29 @@ def resumen_compromisos():
     mes = request.args.get('month', 'Todos')
     area_id = request.args.get('area_id')
     year = request.args.get('year', 'Todos')
+    departamento_id = request.args.get('departamento_id', '')
 
-    # Convertir area_id a entero si existe
+    # Convertir area_id y departamento_id a entero si existen
     if area_id:
         area_id = int(area_id)
+    if departamento_id:
+        departamento_id = int(departamento_id)
 
     # Obtener el resumen de compromisos con todos los filtros
-    resumen = compromiso_service.get_resumen_compromisos(mes, area_id, year)
+    resumen = compromiso_service.get_resumen_compromisos(mes, area_id, year, departamento_id)
 
-    # Obtener todas las áreas para el filtro
+    # Obtener todas las áreas y departamentos para los filtros
     areas = compromiso_service.get_areas()
+    departamentos = compromiso_service.get_departamentos()
 
     return render_template('resumen_compromisos.html', 
                          resumen=resumen,
                          areas=areas,
+                         departamentos=departamentos,
                          selected_area=area_id,
                          selected_mes=mes,
-                         selected_year=year)
+                         selected_year=year,
+                         selected_departamento=departamento_id)
 
 @director_bp.route('/director/ver_compromisos', methods=['GET', 'POST'])
 @is_director
@@ -56,9 +60,8 @@ def ver_compromisos_director():
     print(year) 
     if request.method == 'POST':
         # Si se está enviando el formulario, procesar la actualización de los compromisos
-        compromisos = compromiso_service.get_compromisos_by_mes_departamento(mes_numero, departamento_id,year)
+        compromisos = compromiso_service.get_compromisos_by_mes_departamento(mes_numero, departamento_id, year)
         try:
-
             compromiso_service.actualizar_compromisos(request, compromisos, session['user_id'], es_director=True)
             flash("Los compromisos se han actualizado con éxito.", "success")
         except Exception as e:
@@ -68,13 +71,11 @@ def ver_compromisos_director():
         return redirect(url_for('director.ver_compromisos_director', mes=mes, departamento_id=departamento_id))
 
     # Obtener los compromisos filtrados por mes y departamento
-    compromisos = compromiso_service.get_compromisos_by_mes_departamento(mes_numero, departamento_id,year)
+    compromisos = compromiso_service.get_compromisos_by_mes_departamento(mes_numero, departamento_id, year)
     print(f"Compromisos: {compromisos}")
     todos_responsables = compromiso_service.get_responsables()
 
     return render_template('director_ver_compromisos.html', compromisos=compromisos, todos_responsables=todos_responsables)
-
-
 
 @director_bp.route('/director/compromisos_por_mes', methods=['GET', 'POST'])
 @is_director
@@ -90,7 +91,6 @@ def resumen_compromisos_por_mes():
         compromisos = []
 
     return render_template('resumen_compromisos_mes.html', compromisos=compromisos, month=month, year=year)
-
 
 @director_bp.route('/director/editar_compromisos', methods=['GET', 'POST'])
 @is_director

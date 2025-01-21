@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar/Derivar Compromiso</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #6c757d;
+            --background-color: #f4f4f4;
+            --text-color: #333;
+            --border-color: #ddd;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            background-color: var(--background-color);
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            text-align: center;
+            transition: background-color 0.3s;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .btn-secondary {
+            background-color: var(--secondary-color);
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+            .btn {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ title }}</h1>
+        <form method="POST" action="{{ url_for('home.editar_compromiso', compromiso_id=compromiso.compromiso_id) }}" id="compromiso-form">
+            <label for="descripcion">Descripción</label>
+            <textarea id="descripcion" name="descripcion" {% if derivar %}readonly{% endif %} required>{{ compromiso.descripcion }}</textarea>
+
+            <label for="estado">Estado</label>
+            <select id="estado" name="estado" {% if derivar %}disabled{% endif %} required>
+                <option value="Pendiente" {% if compromiso.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                <option value="Completado" {% if compromiso.estado == 'Completado' %}selected{% endif %}>Completado</option>
+            </select>
+
+            <label for="prioridad">Prioridad</label>
+            <select id="prioridad" name="prioridad" {% if derivar %}disabled{% endif %} required>
+                <option value="Alta" {% if compromiso.prioridad == 'Alta' %}selected{% endif %}>Alta</option>
+                <option value="Media" {% if compromiso.prioridad == 'Media' %}selected{% endif %}>Media</option>
+                <option value="Baja" {% if compromiso.prioridad == 'Baja' %}selected{% endif %}>Baja</option>
+            </select>
+
+            <label for="avance">Avance (%)</label>
+            <input type="number" id="avance" name="avance" value="{{ compromiso.avance }}" min="0" max="100" {% if derivar %}readonly{% endif %} required>
+
+            <label for="fecha_limite">Fecha Límite</label>
+            <input type="date" id="fecha_limite" name="fecha_limite" value="{{ compromiso.fecha_limite.strftime('%Y-%m-%d') }}" {% if derivar %}readonly{% endif %} required>
+
+            <label for="responsables">Responsables</label>
+            <select id="responsables" name="responsables" multiple class="form-control" required>
+                {% for value, label in todos_responsables %}
+                    <option value="{{ value }}" {% if value in compromiso.responsables_ids %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="comentario">Comentario Referente</label>
+            <textarea id="comentario" name="comentario" {% if derivar %}readonly{% endif %}>{{ compromiso.comentario }}</textarea>
+
+            <label for="comentario_direccion">Comentario Dirección</label>
+            <textarea id="comentario_direccion" name="comentario_direccion" {% if not direccion %}readonly{% endif %}>{{ compromiso.comentario_direccion }}</textarea>
+
+            <div class="btn-group">
+                <button type="submit" class="btn">Guardar</button>
+                <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#responsables').select2({
+                placeholder: "Selecciona responsables",
+                allowClear: true,
+                width: '100%'
+            });
+
+            $('#compromiso-form').on('submit', function(e) {
+                var responsables = $('#responsables').val();
+                if (responsables.length === 0) {
+                    e.preventDefault();
+                    alert('Por favor, selecciona al menos un responsable.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

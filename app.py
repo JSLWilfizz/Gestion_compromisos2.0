@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_wtf import CSRFProtect
 from flask_bcrypt import Bcrypt
 from config import Config
@@ -35,6 +35,11 @@ def create_app(config_class=Config):
     app.register_blueprint(home)
     app.register_blueprint(reunion)  # Registrar el blueprint de las reuniones
     app.register_blueprint(director_bp)  # Registrar el blueprint del director
+
+    @app.route('/exportar_pdf', methods=['POST'])
+    def exportar_pdf():
+        acta_content = request.form.get('acta_content')
+        return render_template('acta_pdf.html', acta_content=acta_content)
 
     return app
 

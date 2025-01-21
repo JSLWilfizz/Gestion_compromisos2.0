@@ -7,148 +7,198 @@ class CompromisoRepository:
         self.conn = get_db_connection()
 
     def fetch_user_info(self, user_id):
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("""
-                SELECT p.id, p.name, p.lastname, p.profesion, p.cargo ,d.name AS departamento_name
-                FROM persona p
-                JOIN persona_departamento pd ON p.id = pd.id_persona
-                JOIN departamento d ON pd.id_departamento = d.id
-                WHERE p.id = %s
-            """, (user_id,))
-            return cursor.fetchone()
+        if not user_id:
+            raise ValueError("Invalid user_id")
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT p.id, p.name, p.lastname, p.profesion, p.cargo, pd.id_departamento, d.name AS departamento_name , p.nivel_jerarquico
+                    FROM persona p
+                    JOIN persona_departamento pd ON p.id = pd.id_persona
+                    JOIN departamento d ON pd.id_departamento = d.id
+                    WHERE p.id = %s
+                """, (user_id,))
+                return cursor.fetchone()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def fetch_director_info(self, user_id):
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("""
-                SELECT pd.es_director, pd.id_departamento
-                FROM persona_departamento pd
-                JOIN persona p ON p.id = pd.id_persona
-                WHERE p.id = %s
-            """, (user_id,))
-            return cursor.fetchone()
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT pd.es_director, pd.id_departamento
+                    FROM persona_departamento pd
+                    JOIN persona p ON p.id = pd.id_persona
+                    WHERE p.id = %s
+                """, (user_id,))
+                return cursor.fetchone()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def fetch_responsables(self):
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("""
-                SELECT p.id, p.name, p.lastname, d.name AS departamento, p.profesion, p.cargo
-                FROM persona p
-                JOIN persona_departamento pd ON p.id = pd.id_persona
-                JOIN departamento d ON pd.id_departamento = d.id
-            """)
-            return cursor.fetchall()
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT p.id, p.name, p.lastname, d.name AS departamento, p.profesion, p.cargo
+                    FROM persona p
+                    JOIN persona_departamento pd ON p.id = pd.id_persona
+                    JOIN departamento d ON pd.id_departamento = d.id
+                """)
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def fetch_compromisos_by_departamento(self, departamento_id):
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("""
-                SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
-                       c.comentario, c.comentario_direccion,
-                       d.name AS departamento_name, -- Nombre del departamento
-                       ARRAY_AGG(DISTINCT p.id) AS responsables_ids, -- Obtenemos una lista de IDs de responsables
-                       STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables -- Nombres concatenados
-                FROM compromiso c
-                LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
-                LEFT JOIN persona p ON pc.id_persona = p.id
-                LEFT JOIN departamento d ON c.id_departamento = d.id -- Relación con la tabla departamento
-                WHERE c.id_departamento = %s
-                GROUP BY c.id, d.name
-            """, (departamento_id,))
-            return cursor.fetchall()
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
+                           c.comentario, c.comentario_direccion,
+                           d.name AS departamento_name, -- Nombre del departamento
+                           ARRAY_AGG(DISTINCT p.id) AS responsables_ids, -- Obtenemos una lista de IDs de responsables
+                           STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables -- Nombres concatenados
+                    FROM compromiso c
+                    LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+                    LEFT JOIN persona p ON pc.id_persona = p.id
+                    LEFT JOIN departamento d ON c.id_departamento = d.id -- Relación con la tabla departamento
+                    WHERE c.id_departamento = %s
+                    GROUP BY c.id, d.name
+                """, (departamento_id,))
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def fetch_compromisos_by_responsable(self, user_id):
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("""
-                SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite,
-                       c.comentario, c.comentario_direccion,
-                       d.name AS departamento_name, -- Nombre del departamento
-                       ARRAY_AGG(DISTINCT p.id) AS responsables_ids,
-                       STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
-                FROM compromiso c
-                LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
-                LEFT JOIN persona p ON pc.id_persona = p.id
-                LEFT JOIN departamento d ON c.id_departamento = d.id -- Relación con la tabla departamento
-                WHERE c.id IN (
-                    SELECT c2.id
-                    FROM compromiso c2
-                    LEFT JOIN persona_compromiso pc2 ON c2.id = pc2.id_compromiso
-                    WHERE pc2.id_persona = %s -- Filtrar por el ID del usuario responsable
-                )
-                GROUP BY c.id, d.name
-            """, (user_id,))
-            return cursor.fetchall()
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite,
+                           c.comentario, c.comentario_direccion,
+                           d.name AS departamento_name, -- Nombre del departamento
+                           ARRAY_AGG(DISTINCT p.id) AS responsables_ids,
+                           STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
+                    FROM compromiso c
+                    LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+                    LEFT JOIN persona p ON pc.id_persona = p.id
+                    LEFT JOIN departamento d ON c.id_departamento = d.id -- Relación con la tabla departamento
+                    WHERE c.id IN (
+                        SELECT c2.id
+                        FROM compromiso c2
+                        LEFT JOIN persona_compromiso pc2 ON c2.id = pc2.id_compromiso
+                        WHERE pc2.id_persona = %s -- Filtrar por el ID del usuario responsable
+                    )
+                    GROUP BY c.id, d.name
+                """, (user_id,))
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
-    def update_compromiso(self, compromiso_id, estado, avance, comentario,comentario_director):
-        with self.conn.cursor() as cursor:
-            cursor.execute("""
-                UPDATE compromiso
-                SET estado = %s, avance = %s, comentario = %s, comentario_direccion = %s
-                WHERE id = %s
-            """, (estado, avance, comentario, comentario_director,compromiso_id))
+    def update_compromiso(self, compromiso_id, estado, avance, comentario, comentario_director):
+        try:
+            with self.conn.cursor() as cursor:
+                cursor.execute("""
+                    UPDATE compromiso
+                    SET estado = %s, avance = %s, comentario = %s, comentario_direccion = %s
+                    WHERE id = %s
+                """, (estado, avance, comentario, comentario_director, compromiso_id))
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def update_responsables(self, compromiso_id, nuevos_responsables):
-        with self.conn.cursor() as cursor:
-            cursor.execute("DELETE FROM persona_compromiso WHERE id_compromiso = %s", (compromiso_id,))
-            for responsable_id in nuevos_responsables:
-                cursor.execute("""
-                    INSERT INTO persona_compromiso (id_persona, id_compromiso)
-                    VALUES (%s, %s)
-                """, (responsable_id, compromiso_id))
+        try:
+            with self.conn.cursor() as cursor:
+                cursor.execute("DELETE FROM persona_compromiso WHERE id_compromiso = %s", (compromiso_id,))
+                for responsable_id in nuevos_responsables:
+                    cursor.execute("""
+                        INSERT INTO persona_compromiso (id_persona, id_compromiso)
+                        VALUES (%s, %s)
+                    """, (responsable_id, compromiso_id))
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def log_modificacion(self, compromiso_id, user_id):
-        with self.conn.cursor() as cursor:
-            cursor.execute("""
-                INSERT INTO compromiso_modificaciones (id_compromiso, id_usuario)
-                VALUES (%s, %s)
-            """, (compromiso_id, user_id))
+        try:
+            with self.conn.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO compromiso_modificaciones (id_compromiso, id_usuario)
+                    VALUES (%s, %s)
+                """, (compromiso_id, user_id))
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def fetch_departamentos(self):
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("SELECT id, name FROM departamento")
-            return cursor.fetchall()
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT id, name FROM departamento")
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def fetch_compromisos_by_departamento(self, departamento_id):
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("""
-                SELECT c.id AS compromiso_id,c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
-                       c.comentario, c.comentario_direccion,
-                       ARRAY_AGG(DISTINCT p.id) AS responsables_ids, -- IDs de los responsables
-                       STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables -- Nombres de los responsables
-                FROM compromiso c
-                LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
-                LEFT JOIN persona p ON pc.id_persona = p.id
-                WHERE c.id_departamento = %s
-                GROUP BY c.id
-            """, (departamento_id,))
-            return cursor.fetchall()
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
+                           c.comentario, c.comentario_direccion,
+                           ARRAY_AGG(DISTINCT p.id) AS responsables_ids, -- IDs de los responsables
+                           STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables -- Nombres de los responsables
+                    FROM compromiso c
+                    LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+                    LEFT JOIN persona p ON pc.id_persona = p.id
+                    WHERE c.id_departamento = %s
+                    GROUP BY c.id
+                """, (departamento_id,))
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def fetch_compromisos_by_month(self, month, year):
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("""
-                SELECT c.id AS compromiso_id,c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
-                       c.comentario_director, d.name AS departamento, 
-                       STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
-                FROM compromiso c
-                JOIN departamento d ON c.id_departamento = d.id
-                LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
-                LEFT JOIN persona p ON pc.id_persona = p.id
-                WHERE EXTRACT(MONTH FROM c.fecha_limite) = %s
-                AND EXTRACT(YEAR FROM c.fecha_limite) = %s
-                GROUP BY c.id, d.name
-            """, (month, year))
-            return cursor.fetchall()
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
+                           c.comentario_director, d.name AS departamento, 
+                           STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
+                    FROM compromiso c
+                    JOIN departamento d ON c.id_departamento = d.id
+                    LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+                    LEFT JOIN persona p ON pc.id_persona = p.id
+                    WHERE EXTRACT(MONTH FROM c.fecha_limite) = %s
+                    AND EXTRACT(YEAR FROM c.fecha_limite) = %s
+                    GROUP BY c.id, d.name
+                """, (month, year))
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def get_resumen_compromisos(self, month):
-        # Convertir el nombre del mes en su número (Ej: "Enero" -> 1)
-        month_number = self.convert_month_to_number(month) if month else None
+        try:
+            # Convertir el nombre del mes en su número (Ej: "Enero" -> 1)
+            month_number = self.convert_month_to_number(month) if month else None
 
-        # Obtener el resumen general
-        total_compromisos = self.repo.count_total_compromisos(month_number)
-        completados = self.repo.count_compromisos_completados(month_number)
-        pendientes = self.repo.count_compromisos_pendientes(month_number)
+            # Obtener el resumen general
+            total_compromisos = self.repo.count_total_compromisos(month_number)
+            completados = self.repo.count_compromisos_completados(month_number)
+            pendientes = self.repo.count_compromisos_pendientes(month_number)
 
-        # Obtener el resumen por departamento
-        departamentos = self.repo.fetch_compromisos_por_departamento(month_number)
+            # Obtener el resumen por departamento
+            departamentos = self.repo.fetch_compromisos_por_departamento(month_number)
 
-        return total_compromisos, completados, pendientes, departamentos
+            return total_compromisos, completados, pendientes, departamentos
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def convert_month_to_number(self, month):
         months = {
@@ -159,188 +209,234 @@ class CompromisoRepository:
         return months.get(month, None)
 
     def count_total_compromisos(self, month):
-        with self.conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT COUNT(*) FROM compromiso
-                WHERE EXTRACT(MONTH FROM fecha_limite) = %s
-            """, (month,))
-            result = cursor.fetchone()
-            print(result)
-            return result
+        try:
+            with self.conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT COUNT(*) FROM compromiso
+                    WHERE EXTRACT(MONTH FROM fecha_limite) = %s
+                """, (month,))
+                result = cursor.fetchone()
+                print(result)
+                return result
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def count_compromisos_completados(self, month):
-        with self.conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT COUNT(*) FROM compromiso
-                WHERE EXTRACT(MONTH FROM fecha_limite) = %s
-                AND estado = 'Completado'
-            """, (month,))
-            return cursor.fetchone()[0]
+        try:
+            with self.conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT COUNT(*) FROM compromiso
+                    WHERE EXTRACT(MONTH FROM fecha_limite) = %s
+                    AND estado = 'Completado'
+                """, (month,))
+                return cursor.fetchone()[0]
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def count_compromisos_pendientes(self, month):
-        with self.conn.cursor() as cursor:
-            cursor.execute("""
-                SELECT COUNT(*) FROM compromiso
-                WHERE EXTRACT(MONTH FROM fecha_limite) = %s
-                AND estado = 'Pendiente'
-            """, (month,))
-            return cursor.fetchone()[0]
+        try:
+            with self.conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT COUNT(*) FROM compromiso
+                    WHERE EXTRACT(MONTH FROM fecha_limite) = %s
+                    AND estado = 'Pendiente'
+                """, (month,))
+                return cursor.fetchone()[0]
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
-    def fetch_departamentos_resumen(self, mes=None, area_id=None, year=None):
-        """
-        Obtiene el resumen de compromisos por departamento filtrado por mes, área y año.
-        """
-        query = """
-            SELECT d.id AS departamento_id, d.name AS nombre_departamento,
-                COUNT(c.id) AS total_compromisos,
-                SUM(CASE WHEN c.estado = 'Completado' THEN 1 ELSE 0 END) AS completados,
-                SUM(CASE WHEN c.estado != 'Completado' THEN 1 ELSE 0 END) AS pendientes
-            FROM departamento d
-            LEFT JOIN compromiso c ON d.id = c.id_departamento
-            LEFT JOIN reunion_compromiso rc ON c.id = rc.id_compromiso
-            LEFT JOIN reunion r ON rc.id_reunion = r.id
-            LEFT JOIN area a ON r.id_area = a.id
-            WHERE 1=1 AND c.fecha_limite IS NOT NULL
-        """
-        params = []
+    def fetch_departamentos_resumen(self, mes=None, area_id=None, year=None, departamento_id=None):
+        try:
+            """
+            Obtiene el resumen de compromisos por departamento filtrado por mes, área y año.
+            """
+            query = """
+                SELECT d.id AS departamento_id, d.name AS nombre_departamento,
+                    COUNT(c.id) AS total_compromisos,
+                    SUM(CASE WHEN c.estado = 'Completado' THEN 1 ELSE 0 END) AS completados,
+                    SUM(CASE WHEN c.estado != 'Completado' THEN 1 ELSE 0 END) AS pendientes
+                FROM departamento d
+                LEFT JOIN compromiso c ON d.id = c.id_departamento
+                LEFT JOIN reunion_compromiso rc ON c.id = rc.id_compromiso
+                LEFT JOIN reunion r ON rc.id_reunion = r.id
+                LEFT JOIN area a ON r.id_area = a.id
+                WHERE 1=1 AND c.fecha_limite IS NOT NULL
+            """
+            params = []
 
-        # Filtro por mes
-        if mes and mes != "Todos":
-            query += " AND EXTRACT(MONTH FROM c.fecha_limite) = %s"
-            params.append(mes)
+            # Filtro por mes
+            if mes and mes != "Todos":
+                query += " AND EXTRACT(MONTH FROM c.fecha_limite) = %s"
+                params.append(mes)
 
-        # Filtro por área
-        if area_id:
-            query += " AND a.id = %s"
-            params.append(area_id)
-        
-        # Filtro por año
-        if year and year != "Todos":
-            query += " AND EXTRACT(YEAR FROM c.fecha_limite) = %s"
-            params.append(int(year))
+            # Filtro por área
+            if area_id:
+                query += " AND a.id = %s"
+                params.append(area_id)
+            
+            # Filtro por año
+            if year and year != "Todos":
+                query += " AND EXTRACT(YEAR FROM c.fecha_limite) = %s"
+                params.append(int(year))
 
-        query += """
-            GROUP BY d.id, d.name
-            ORDER BY d.name
-        """
+            # Filtro por departamento
+            if departamento_id:
+                query += " AND c.id_departamento = %s"
+                params.append(departamento_id)
 
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute(query, params)
-            return cursor.fetchall()
+            query += """
+                GROUP BY d.id, d.name
+                ORDER BY d.name
+            """
+
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute(query, params)
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
         
     def get_months(self):
-        with self.conn.cursor() as cursor:
-            cursor.execute("SELECT DISTINCT EXTRACT(MONTH FROM fecha_limite) AS month FROM compromiso")
-            return cursor.fetchall()
+        try:
+            with self.conn.cursor() as cursor:
+                cursor.execute("SELECT DISTINCT EXTRACT(MONTH FROM fecha_limite) AS month FROM compromiso")
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def fetch_compromisos_by_mes_departamento(self, mes, departamento_id, year=None):
-        """
-        Obtiene compromisos filtrados por mes, año y departamento.
-        """
-        query = """
-            SELECT 
-                c.id AS compromiso_id,
-                c.descripcion,
-                c.estado,
-                c.avance,
-                c.fecha_limite,
-                c.comentario,
-                c.comentario_direccion,
-                ARRAY_AGG(DISTINCT p.id) AS responsables_ids,
-                STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
-            FROM compromiso c
-            LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
-            LEFT JOIN persona p ON pc.id_persona = p.id
-            WHERE c.id_departamento = %s
-        """
-        params = [departamento_id]
+        try:
+            """
+            Obtiene compromisos filtrados por mes, año y departamento.
+            """
+            query = """
+                SELECT 
+                    c.id AS compromiso_id,
+                    c.descripcion,
+                    c.estado,
+                    c.avance,
+                    c.fecha_limite,
+                    c.comentario,
+                    c.comentario_direccion,
+                    ARRAY_AGG(DISTINCT p.id) AS responsables_ids,
+                    STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
+                FROM compromiso c
+                LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+                LEFT JOIN persona p ON pc.id_persona = p.id
+                WHERE c.id_departamento = %s
+            """
+            params = [departamento_id]
 
-        # Aplicar filtros solo si no son 'Todos'
-        if mes and mes != "Todos":
-            query += " AND EXTRACT(MONTH FROM c.fecha_limite) = %s"
-            params.append(int(mes))
-        
-        if year and year != "Todos":
-            query += " AND EXTRACT(YEAR FROM c.fecha_limite) = %s"
-            params.append(int(year))
+            # Aplicar filtros solo si no son 'Todos'
+            if mes and mes != "Todos":
+                query += " AND EXTRACT(MONTH FROM c.fecha_limite) = %s"
+                params.append(int(mes))
+            
+            if year and year != "Todos":
+                query += " AND EXTRACT(YEAR FROM c.fecha_limite) = %s"
+                params.append(int(year))
 
-        query += " GROUP BY c.id ORDER BY c.fecha_limite"
+            query += " GROUP BY c.id ORDER BY c.fecha_limite"
 
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute(query, params)
-            return cursor.fetchall()
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute(query, params)
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
         
     def fetch_compromisos_by_filtro(self, mes=None, area_id=None):
-        # Debug: Mostrar los parámetros que se están pasando
-        print(f" Mes: {mes}, Área ID: {area_id}")
+        try:
+            # Debug: Mostrar los parámetros que se están pasando
+            print(f" Mes: {mes}, Área ID: {area_id}")
 
-        query = """
-            SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.avance, c.fecha_limite, 
-                   c.comentario, c.comentario_direccion, 
-                   STRING_AGG(DISTINCT p.id::text, ', ') AS responsables_ids,
-                   STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
-            FROM compromiso c
-            LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
-            LEFT JOIN persona p ON pc.id_persona = p.id
-            LEFT JOIN reunion_compromiso rc ON c.id = rc.id_compromiso
-            LEFT JOIN reunion r ON rc.id_reunion = r.id
-            LEFT JOIN area a ON r.id_area = a.id
-            WHERE 1=1
-        """
-        params = []
+            query = """
+                SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.avance, c.fecha_limite, 
+                    c.comentario, c.comentario_direccion, 
+                    STRING_AGG(DISTINCT p.id::text, ', ') AS responsables_ids,
+                    STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
+                FROM compromiso c
+                LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+                LEFT JOIN persona p ON pc.id_persona = p.id
+                LEFT JOIN reunion_compromiso rc ON c.id = rc.id_compromiso
+                LEFT JOIN reunion r ON rc.id_reunion = r.id
+                LEFT JOIN area a ON r.id_area = a.id
+                WHERE 1=1
+            """
+            params = []
 
-        # Filtro por mes
-        if mes and mes != "Todos":
-            query += " AND EXTRACT(MONTH FROM c.fecha_limite) = %s"
-            params.append(self.convert_month_to_number(mes))
-            print(f"Aplicando filtro por mes: {mes}")
+            # Filtro por mes
+            if mes and mes != "Todos":
+                query += " AND EXTRACT(MONTH FROM c.fecha_limite) = %s"
+                params.append(self.convert_month_to_number(mes))
+                print(f"Aplicando filtro por mes: {mes}")
 
-        # Filtro por área
-        if area_id:
-            query += " AND r.id_area = %s"
-            params.append(area_id)
-            print(f"Aplicando filtro por área: {area_id}")
+            # Filtro por área
+            if area_id:
+                query += " AND r.id_area = %s"
+                params.append(area_id)
+                print(f"Aplicando filtro por área: {area_id}")
 
-        query += """
-            GROUP BY c.id
-            ORDER BY c.fecha_limite ASC
-        """
+            query += """
+                GROUP BY c.id
+                ORDER BY c.fecha_limite ASC
+            """
 
-        # Debug: Mostrar la consulta generada
-        print(f"Query final: {query}")
-        print(f"Parámetros de la query: {params}")
+            # Debug: Mostrar la consulta generada
+            print(f"Query final: {query}")
+            print(f"Parámetros de la query: {params}")
 
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute(query, params)
-            result = cursor.fetchall()
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute(query, params)
+                result = cursor.fetchall()
 
-        # Debug: Verificar los resultados obtenidos
-        print(f"Resultados obtenidos: {result}")
+            # Debug: Verificar los resultados obtenidos
+            print(f"Resultados obtenidos: {result}")
 
-        return result
+            return result
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def fetch_areas(self):
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("SELECT id, name FROM area")
-            return cursor.fetchall()
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT id, name FROM area")
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def obtener_compromisos_por_mes_y_anio(mes, year=None):
-        conn = get_db_connection()
-        with conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            if year:
-                cursor.execute("""
-                    SELECT * FROM compromiso
-                    WHERE EXTRACT(MONTH FROM fecha_limite) = %s AND EXTRACT(YEAR FROM fecha_limite) = %s
-                """, (mes, year))
-            else:
-                cursor.execute("""
-                    SELECT * FROM compromiso
-                    WHERE EXTRACT(MONTH FROM fecha_limite) = %s
-                """, (mes,))
-            return cursor.fetchall()
+        try:
+            conn = get_db_connection()
+            with conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                if year:
+                    cursor.execute("""
+                        SELECT * FROM compromiso
+                        WHERE EXTRACT(MONTH FROM fecha_limite) = %s AND EXTRACT(YEAR FROM fecha_limite) = %s
+                    """, (mes, year))
+                else:
+                    cursor.execute("""
+                        SELECT * FROM compromiso
+                        WHERE EXTRACT(MONTH FROM fecha_limite) = %s
+                    """, (mes,))
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def get_meses(self):
-        meses = {}
+        try:
+            meses = {}
+            return meses
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def commit(self):
         self.conn.commit()
@@ -352,85 +448,153 @@ class CompromisoRepository:
         self.conn.close()
 
     def fetch_all_compromisos(self):
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
+                        c.comentario, c.comentario_direccion,
+                        d.name AS departamento_name, -- Nombre del departamento
+                        ARRAY_AGG(DISTINCT p.id) AS responsables_ids, -- Obtenemos una lista de IDs de responsables
+                        STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables -- Nombres concatenados
+                    FROM compromiso c
+                    LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+                    LEFT JOIN persona p ON pc.id_persona = p.id
+                    LEFT JOIN departamento d ON c.id_departamento = d.id -- Relación con la tabla departamento
+                    GROUP BY c.id, d.name
+                """)
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+
+    def fetch_compromisos_compartidos(self, user_id, is_director, search='', estado='', avance='', fecha_limite=''):
+        user_info = self.fetch_user_info(user_id)
+        query = """
+            WITH RECURSIVE jerarquia_departamentos AS (
+                -- Punto de partida: departamento asociado al usuario actual
+                SELECT
+                    d.id AS id_departamento,
+                    d.id_departamento_padre,
+                    d.name AS nombre_departamento,
+                    1 as nivel  -- Agregamos un nivel para controlar la profundidad
+                FROM
+                    departamento d
+                JOIN persona_departamento pd ON d.id = pd.id_departamento
+                JOIN persona p ON pd.id_persona = p.id
+                WHERE
+                    pd.id_persona = %s
+
+                UNION ALL
+
+                -- Recorre jerárquicamente hacia abajo solo si no es FUNCIONARIO
+                SELECT
+                    d.id AS id_departamento,
+                    d.id_departamento_padre,
+                    d.name AS nombre_departamento,
+                    jd.nivel + 1  -- Incrementamos el nivel
+                FROM
+                    departamento d
+                JOIN jerarquia_departamentos jd ON d.id_departamento_padre = jd.id_departamento
+                JOIN persona p ON p.id = %s  -- Joins para verificar el nivel jerárquico
+                WHERE
+                    p.nivel_jerarquico != 'FUNCIONARIO/A'  -- Solo continúa la recursión si no es FUNCIONARIO
+            )
+            SELECT DISTINCT  -- Agregamos DISTINCT para evitar duplicados
+                c.id AS compromiso_id,
+                c.descripcion,
+                c.estado,
+                c.prioridad,
+                c.fecha_creacion,
+                c.fecha_limite,
+                c.avance,
+                c.comentario,
+                c.comentario_direccion,
+                d.id AS departamento_id,
+                d.name AS departamento_name,
+                STRING_AGG( p.name || ' ' || p.lastname, ', ') AS responsables,
+                STRING_AGG( p.nivel_jerarquico, ', ' ORDER BY p.name || ' ' || p.lastname) AS niveles_jerarquicos,
+                CASE
+                    WHEN %s = c.id_departamento AND %s != 'FUNCIONARIO/A' THEN TRUE
+                    ELSE FALSE
+                END AS permiso_editar,
+                CASE
+                    WHEN %s = c.id_departamento AND %s != 'FUNCIONARIO/A' THEN TRUE
+                    ELSE FALSE
+                END AS permiso_derivar
+            FROM
+                compromiso c
+            JOIN departamento d ON c.id_departamento = d.id
+            LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+            LEFT JOIN persona p ON pc.id_persona = p.id
+            JOIN persona usuario_actual ON usuario_actual.id = %s  -- Join para acceder al nivel jerárquico del usuario actual
+            WHERE
+                CASE
+                    WHEN usuario_actual.nivel_jerarquico = 'FUNCIONARIO/A' THEN
+                        -- Para FUNCIONARIO: solo ver compromisos de su departamento directo
+                        c.id_departamento = (
+                            SELECT pd2.id_departamento
+                            FROM persona_departamento pd2
+                            WHERE pd2.id_persona = %s
+                            LIMIT 1
+                        )
+                    ELSE
+                        -- Para otros niveles: ver compromisos según la jerarquía
+                        d.id IN (SELECT id_departamento FROM jerarquia_departamentos)
+                END
+        """
+        params = [user_id, user_id, user_info['id_departamento'], user_info['nivel_jerarquico'], user_info['id_departamento'], user_info['nivel_jerarquico'], user_id, user_id]
+
+        # Add search filter
+        if search:
+            query += " AND (p.name ILIKE %s OR p.lastname ILIKE %s OR d.name ILIKE %s OR c.descripcion ILIKE %s)"
+            params.extend([f"%{search}%", f"%{search}%", f"%{search}%", f"%{search}%"])
+
+        # Add estado filter
+        if estado:
+            query += " AND c.estado = %s"
+            params.append(estado)
+
+        # Add avance filter
+        if avance:
+            min_avance, max_avance = map(int, avance.split('-'))
+            query += " AND c.avance BETWEEN %s AND %s"
+            params.extend([min_avance, max_avance])
+
+        query += " GROUP BY c.id, d.id"
+
+        # Add fecha_limite sorting
+        if fecha_limite:
+            query += " ORDER BY c.fecha_limite " + ("ASC" if fecha_limite == 'asc' else "DESC")
+
+        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(query, params)
+            return cursor.fetchall()
+
+    def es_jefe_de_departamento(self, user_id, departamento_id):
         with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
-                SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
-                       c.comentario, c.comentario_direccion,
-                       d.name AS departamento_name, -- Nombre del departamento
-                       ARRAY_AGG(DISTINCT p.id) AS responsables_ids, -- Obtenemos una lista de IDs de responsables
-                       STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables -- Nombres concatenados
+                SELECT 1
+                FROM persona_departamento pd
+                JOIN persona p ON pd.id_persona = p.id
+                WHERE pd.id_persona = %s
+                AND pd.id_departamento = %s
+                AND (p.nivel_jerarquico = 'DIRECTOR DE SERVICIO' OR p.nivel_jerarquico = 'SUBDIRECTOR/A' OR p.nivel_jerarquico = 'JEFE/A DE DEPARTAMENTO')
+            """, (user_id, departamento_id))
+            return cursor.fetchone() is not None
+
+    def fetch_compromiso_by_id(self, compromiso_id):
+        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute("""
+                SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.prioridad, c.fecha_creacion, c.fecha_limite, 
+                       c.avance, c.comentario, c.comentario_direccion, c.id_departamento,
+                       STRING_AGG(p.name || ' ' || p.lastname, ', ') AS responsables,
+                       ARRAY_AGG(p.id) AS responsables_ids
                 FROM compromiso c
                 LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                 LEFT JOIN persona p ON pc.id_persona = p.id
-                LEFT JOIN departamento d ON c.id_departamento = d.id -- Relación con la tabla departamento
-                GROUP BY c.id, d.name
-            """)
-            return cursor.fetchall()
+                WHERE c.id = %s
+                GROUP BY c.id
+            """, (compromiso_id,))
+            return cursor.fetchone()
 
-    def fetch_compromisos_compartidos(self, user_id, is_director):
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("""
-                WITH RECURSIVE jerarquia_departamentos AS (
-                    -- Punto de partida: departamento asociado al usuario actual
-                    SELECT
-                        d.id AS id_departamento,
-                        d.id_departamento_padre,
-                        d.name AS nombre_departamento
-                    FROM
-                        departamento d
-                    JOIN
-                        persona_departamento pd ON d.id = pd.id_departamento
-                    JOIN
-                        persona p ON pd.id_persona = p.id
-                    WHERE
-                        pd.id_persona = %s -- ID de la persona actual
 
-                    UNION ALL
-
-                    -- Recorre jerárquicamente hacia abajo
-                    SELECT
-                        d.id AS id_departamento,
-                        d.id_departamento_padre,
-                        d.name AS nombre_departamento
-                    FROM
-                        departamento d
-                    JOIN
-                        jerarquia_departamentos jd ON d.id_departamento_padre = jd.id_departamento
-                )
-                SELECT
-                    c.id AS compromiso_id,
-                    c.descripcion,
-                    c.estado,
-                    c.prioridad,
-                    c.fecha_creacion,
-                    c.fecha_limite,
-                    c.avance,
-                    c.comentario,
-                    c.comentario_direccion,
-                    d.id AS departamento_id,
-                    d.name AS departamento_name,
-                    p.id AS persona_id,
-                    p.name AS persona_name,
-                    p.lastname AS persona_lastname,
-                    p.nivel_jerarquico as persona_nivel_jerarquico
-                FROM
-                    compromiso c
-                JOIN
-                    departamento d ON c.id_departamento = d.id
-                LEFT JOIN
-                    persona_departamento pd ON d.id = pd.id_departamento
-                LEFT JOIN
-                    persona p ON pd.id_persona = p.id
-                WHERE
-                    (
-                        -- Si no es FUNCIONARIO, puede ver los compromisos según toda su jerarquía
-                        (SELECT nivel_jerarquico FROM persona WHERE id = %s) != 'FUNCIONARIO'
-                        AND d.id IN (SELECT id_departamento FROM jerarquia_departamentos)
-                    )
-                    OR (
-                        -- Si es FUNCIONARIO, solo compromisos del departamento directo
-                        (SELECT nivel_jerarquico FROM persona WHERE id = %s) = 'FUNCIONARIO'
-                        AND c.id_departamento = (SELECT id_departamento FROM persona_departamento WHERE id_persona = %s)
-                    )
-            """, (user_id, user_id, user_id, user_id))
-            return cursor.fetchall()

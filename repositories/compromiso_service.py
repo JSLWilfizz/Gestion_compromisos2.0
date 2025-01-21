@@ -76,7 +76,7 @@ class CompromisoService:
 
 
 
-    def get_resumen_compromisos(self, mes=None, area_id=None, year=None):
+    def get_resumen_compromisos(self, mes=None, area_id=None, year=None, departamento_id=None):
         """
         Obtiene el resumen de compromisos por departamento, incluyendo el total,
         los completados y los pendientes.
@@ -87,7 +87,7 @@ class CompromisoService:
 
         # Llamar al repositorio para obtener el resumen por departamento
         # Agregamos el parámetro year a la llamada
-        departamentos_resumen = self.repo.fetch_departamentos_resumen(mes=mes, area_id=area_id, year=year)
+        departamentos_resumen = self.repo.fetch_departamentos_resumen(mes=mes, area_id=area_id, year=year, departamento_id=departamento_id)
 
         # Calcular el total de compromisos, completados y pendientes globalmente
         total_compromisos = sum(dep['total_compromisos'] for dep in departamentos_resumen)
@@ -130,11 +130,11 @@ class CompromisoService:
         # Obtener los compromisos del usuario (director o no director)
         return self.repo.fetch_compromisos_by_responsable(user_id)
 
-    def update_compromiso(self, compromiso_id, estado, avance, comentario, user_id,comentario_direccion,nuevos_responsables):
+    def update_compromiso(self, compromiso_id, estado, avance, comentario, user_id, comentario_direccion, nuevos_responsables):
         # Actualizar los campos modificables por el usuario
         try:
             print("en ingles")
-            self.repo.update_compromiso(compromiso_id, estado, avance, comentario,comentario_direccion)
+            self.repo.update_compromiso(compromiso_id, estado, avance, comentario, comentario_direccion)
             self.repo.update_responsables(compromiso_id, nuevos_responsables)
             self.repo.log_modificacion(compromiso_id, user_id)
             self.repo.commit()
@@ -166,13 +166,24 @@ class CompromisoService:
 
     def get_meses(self):
         return self.repo.fetch_meses()
+    
+    def get_departamentos(self):
+        return self.repo.fetch_departamentos()
 
     def get_all_compromisos(self):
         return self.repo.fetch_all_compromisos()
         pass
 
-    def get_compromisos_compartidos(self, user_id, is_director):
-        return self.repo.fetch_compromisos_compartidos(user_id, is_director)
+    def get_compromisos_compartidos(self, user_id, is_director, search='', estado='', avance='', fecha_limite=''):
+        if not user_id:
+            raise ValueError("Invalid user_id")
+        return self.repo.fetch_compromisos_compartidos(user_id, is_director, search, estado, avance, fecha_limite)
+    
+    def es_jefe_de_departamento(self, user_id, departamento_id):
+        return self.repo.es_jefe_de_departamento(user_id, departamento_id)
+
+    def get_compromiso_by_id(self, compromiso_id):
+        return self.repo.fetch_compromiso_by_id(compromiso_id)
 
 
 

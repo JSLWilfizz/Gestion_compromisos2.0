@@ -169,6 +169,59 @@ class ReunionRepository:
             self.conn.rollback()
             raise e
 
+    def fetch_mis_reuniones(self, user_id):
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                # First, get the user's full name
+                cursor.execute("""
+                    SELECT COALESCE(name, '') || ' ' || COALESCE(lastname, '') AS full_name
+                    FROM persona
+                    WHERE id = %s
+                    LIMIT 1
+                """, (user_id,))
+                row = cursor.fetchone()
+                full_name = row['full_name'] if row else ''
+
+                # Then query reuniones using that full name
+                cursor.execute("""
+                    SELECT r.*, o.name AS origen_name
+                    FROM reunion r
+                    LEFT JOIN origen o ON r.id_origen = o.id
+                    WHERE r.asistentes ILIKE %s
+                    ORDER BY r.fecha_creacion DESC
+                """, (f"%{full_name}%",))
+
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+
+    def fetch_compromisos_by_reunion(self, reunion_id):
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT 
+                        c.id, 
+                        c.descripcion, 
+                        c.estado, 
+                        c.fecha_limite, 
+                        c.prioridad, 
+                        c.avance,
+                        d.name AS departamento,
+                        STRING_AGG(p.name || ' ' || p.lastname, ', ') AS responsables
+                    FROM compromiso c
+                    JOIN reunion_compromiso rc ON c.id = rc.id_compromiso
+                    JOIN departamento d ON c.id_departamento = d.id
+                    LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+                    LEFT JOIN persona p ON pc.id_persona = p.id
+                    WHERE rc.id_reunion = %s
+                    GROUP BY c.id, d.name
+                """, (reunion_id,))
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+
     def commit(self):
         try:
             self.conn.commit()

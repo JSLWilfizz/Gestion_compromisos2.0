@@ -3,50 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compromisos Compartidos</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>Compromisos Departamentales</title>
+    <meta name="description" content="Página para visualizar compromisos compartidos.">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input[type="text"], select {
+            padding: 10px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            word-wrap: break-word;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-size: 14px;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        /* Column widths */
+        th:nth-child(1) { width: 12%; } /* Descripción */
+        th:nth-child(2) { width: 8%; }  /* Estado */
+        th:nth-child(3) { width: 6%; }  /* Prioridad */
+        th:nth-child(4) { width: 8%; }  /* Fecha Creación */
+        th:nth-child(5) { width: 5%; }  /* Avance */
+        th:nth-child(6) { width: 9%; }  /* Fecha Límite */
+        th:nth-child(7) { width: 10%; } /* Nombre Departamento */
+        th:nth-child(8) { width: 15%; } /* Responsables */
+        th:nth-child(9) { width: 15%; } /* Niveles Jerárquicos */
+        th:nth-child(10) { width: 8%; } /* Comentario Referente */
+        th:nth-child(11) { width: 8%; } /* Comentario Dirección */
+        th:nth-child(12) { width: 6%; } /* Acciones */
+
+        .btn {
+            display: inline-block;
+            padding: 6px 10px;
+            margin: 1px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+            font-size: 12px;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .back-btn {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            text-align: center;
+            padding: 10px;
+            background-color: #2ecc71;
+            font-size: 16px;
+        }
+        .back-btn:hover {
+            background-color: #27ae60;
+        }
+        
+        /* Estados */
+        .estado-completado {
+            background-color: #2ecc71;
+            color: white;
+            padding: 4px 8px;
+            border-radius:3px;
+        }
+        .estado-pendiente {
+            background-color: #f1c40f;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        /* Prioridades */
+        .prioridad-alta {
+            background-color: #e74c3c;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .prioridad-media {
+            background-color: #e67e22;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .prioridad-baja {
+            background-color: #f1c40f;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        /* Avance progress bar */
+        .progress-container {
+            width: 100%;
+            border-radius: 4px;
+            align-items: center;
+        }
+        .progress-bar {
+            height: 20px;
+            border-radius: 4px;
+            transition: width 0.3s ease-in-out;
+            position: relative;
+            align-items: center;
+        }
+        .progress-text {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;  
+        }
+        
+        /* Fecha límite */
+        .fecha-limite {
+            padding: 4px 8px;
+            border-radius: 4px;
+            align-items: justify;
+        }
+        .fecha-limite-pasada {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .fecha-limite-cercana {
+            background-color: #f1c40f;
+            color: white;
+        }
+        .fecha-limite-futura {
+            background-color: #2ecc71;
+            color: white;
+        }
+    </style>
+    <script>
+        function getProgressBarColor(value) {
+            value = Math.min(100, Math.max(0, parseInt(value)));
+            if (value < 50) {
+                const g = Math.floor((value * 2) * 2.55);
+                return `rgb(255, ${g}, 0)`;
+            } else {
+                const r = Math.floor((100 - value) * 2 * 2.55);
+                return `rgb(${r}, 255, 0)`;
+            }
+        }
+
+        function getFechaLimiteClass(fechaLimite) {
+            const hoy = new Date();
+            const limite = new Date(fechaLimite);
+            const diferenciaDias = Math.ceil((limite - hoy) / (1000 * 60 * 60 * 24));
+            
+            if (diferenciaDias < 0) return 'fecha-limite-pasada';
+            if (diferenciaDias <= 2) return 'fecha-limite-cercana';
+            return 'fecha-limite-futura';
+        }
+
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            return new Date(dateString).toLocaleDateString('es-ES', options);
+        }
+
+        window.onload = function() {
+            document.querySelectorAll('.progress-bar').forEach(bar => {
+                const value = bar.getAttribute('data-value');
+                bar.style.width = value + '%';
+                bar.style.backgroundColor = getProgressBarColor(value);
+            });
+
+            document.querySelectorAll('[data-fecha-limite]').forEach(elem => {
+                const fecha = elem.getAttribute('data-fecha-limite');
+                const clase = getFechaLimiteClass(fecha);
+                elem.parentElement.classList.add(clase);  // Aplicar la clase a la celda
+                elem.textContent = formatDate(fecha);
+            });
+
+            document.querySelectorAll('.fecha-creacion').forEach(elem => {
+                elem.textContent = formatDate(elem.textContent);
+            });
+        };
+    </script>
 </head>
 <body>
     <div class="container">
-        <h1>Compromisos Compartidos</h1>
+        <h1>Compromisos Departamentales</h1>
+        <a href="/home" class="btn btn-primary">Volver al Inicio</a>
+        <br>
+        <br>
+        <form method="GET" action="{{ url_for('home.ver_compromisos_compartidos') }}">
+            <input type="text" name="search" placeholder="Buscar por persona o departamento" value="{{ request.args.get('search', '') }}">
+            <select name="estado">
+                <option value="">Todos los estados</option>
+                <option value="Pendiente" {% if request.args.get('estado') == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                <option value="Completado" {% if request.args.get('estado') == 'Completado' %}selected{% endif %}>Completado</option>
+            </select>
+            <select name="avance">
+                <option value="">Todos los avances</option>
+                <option value="0-25" {% if request.args.get('avance') == '0-25' %}selected{% endif %}>0-25%</option>
+                <option value="26-50" {% if request.args.get('avance') == '26-50' %}selected{% endif %}>26-50%</option>
+                <option value="51-75" {% if request.args.get('avance') == '51-75' %}selected{% endif %}>51-75%</option>
+                <option value="76-100" {% if request.args.get('avance') == '76-100' %}selected{% endif %}>76-100%</option>
+            </select>
+            <select name="fecha_limite">
+                <option value="">Ordenar por fecha límite</option>
+                <option value="asc" {% if request.args.get('fecha_limite') == 'asc' %}selected{% endif %}>Más cercana</option>
+                <option value="desc" {% if request.args.get('fecha_limite') == 'desc' %}selected{% endif %}>Más lejana</option>
+            </select>
+            <button type="submit">Buscar</button>
+        </form>
         <table>
             <thead>
                 <tr>
-                    <th>ID Compromiso</th>
                     <th>Descripción</th>
                     <th>Estado</th>
                     <th>Prioridad</th>
                     <th>Fecha Creación</th>
                     <th>Avance</th>
                     <th>Fecha Límite</th>
-                    <th>Comentario</th>
-                    <th>Comentario Dirección</th>
-                    <th>ID Departamento</th>
                     <th>Nombre Departamento</th>
-                    <th>ID Persona</th>
-                    <th>Nombre Persona</th>
-                    <th>Apellido Persona</th>
-                    <th>Nivel Jerárquico Persona</th>
+                    <th>Responsables</th>
+                    <th>Niveles Jerárquicos</th>
+                    <th>Comentario Referente</th>
+                    <th>Comentario Dirección</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {% for compromiso in compromisos %}
                 <tr>
-                    <td>{{ compromiso.compromiso_id }}</td>
                     <td>{{ compromiso.descripcion }}</td>
-                    <td>{{ compromiso.estado }}</td>
-                    <td>{{ compromiso.prioridad }}</td>
-                    <td>{{ compromiso.fecha_creacion }}</td>
-                    <td>{{ compromiso.avance }}</td>
-                    <td>{{ compromiso.fecha_limite }}</td>
+                    <td>
+                        <span class="{% if compromiso.estado == 'Completado' %}estado-completado{% else %}estado-pendiente{% endif %}">
+                            {{ compromiso.estado }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="
+                            {% if compromiso.prioridad == 'Alta' %}prioridad-alta
+                            {% elif compromiso.prioridad == 'Media' %}prioridad-media
+                            {% else %}prioridad-baja{% endif %}">
+                            {{ compromiso.prioridad }}
+                        </span>
+                    </td>
+                    <td class="fecha-creacion" data-fecha-creacion="{{ compromiso.fecha_creacion }}">{{ compromiso.fecha_creacion }}</td>
+                    <td>
+                        <div class="progress-container">
+                            <div class="progress-bar" data-value="{{ compromiso.avance }}">
+                                <div class="progress-text">{{ compromiso.avance }}%</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="fecha-limite" data-fecha-limite="{{ compromiso.fecha_limite }}">
+                            {{ compromiso.fecha_limite }}
+                        </span>
+                    </td>
+                    <td>{{ compromiso.departamento_name }}</td>
+                    <td>{{ compromiso.responsables }}</td>
+                    <td>{{ compromiso.niveles_jerarquicos }}</td>
                     <td>{{ compromiso.comentario }}</td>
                     <td>{{ compromiso.comentario_direccion }}</td>
-                    <td>{{ compromiso.departamento_id }}</td>
-                    <td>{{ compromiso.departamento_name }}</td>
-                    <td>{{ compromiso.persona_id }}</td>
-                    <td>{{ compromiso.persona_name }}</td>
-                    <td>{{ compromiso.persona_lastname }}</td>
-                    <td>{{ compromiso.persona_nivel_jerarquico }}</td>
+                    <td>
+
+                        <a href="{{ url_for('home.editar_compromiso', compromiso_id=compromiso.compromiso_id) }}" class="btn">Editar</a>
+                        <a href="{{ url_for('home.derivar_compromiso', compromiso_id=compromiso.compromiso_id) }}" class="btn">Derivar</a>
+                        <a href="#" class="btn">Ver Reunion (Pronto)</a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
