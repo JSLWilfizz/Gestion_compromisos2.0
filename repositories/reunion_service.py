@@ -29,17 +29,17 @@ class ReunionService:
         form.area.choices = [(a['id'], a['name']) for a in areas]
 
         personas = self.repo.fetch_personas()
-        responsables_choices = [
+        referentes_choices = [
             (p['id'], f"{p['name']} {p['lastname']} - {p['departamento']} - {p['profesion']}", p['correo'])
             for p in personas
         ]
-        form.compromisos[0].responsables.choices = responsables_choices
+        form.compromisos[0].referentes.choices = referentes_choices
 
         # Cargar departamentos para el formulario de compromisos
         departamentos = self.repo.fetch_departamentos()
         form.compromisos[0].departamento.choices = [(d['id'], d['name']) for d in departamentos]
 
-    def create_reunion(self, form, request_data, acta_pdf_path, tema_concatenado, temas_analizado_concatenado, proximas_reuniones_concatenado, fecha_creacion):
+    def create_reunion(self, form, request_data, acta_pdf_path, tema_concatenado, temas_analizado_concatenado, proximas_reuniones_concatenado, fecha_creacion, fecha_limite):
         origen_id = self.get_origen_id(form, request_data)
         area_id = self.get_area_id(form, request_data)
 
@@ -107,9 +107,9 @@ class ReunionService:
             compromiso_id = self.create_compromiso(compromiso_form)
             self.repo.associate_reunion_compromiso(reunion_id, compromiso_id)
 
-            # Acceder a los responsables correctamente como IDs
-            for responsable_id in compromiso_form.responsables.data:
-                self.repo.associate_persona_compromiso(responsable_id, compromiso_id)
+            # Acceder a los referentes correctamente como IDs
+            for referente_id in compromiso_form.referentes.data:
+                self.repo.associate_persona_compromiso(referente_id, compromiso_id)
 
         self.repo.commit()
 

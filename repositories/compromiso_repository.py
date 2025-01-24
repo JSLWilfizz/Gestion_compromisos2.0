@@ -37,7 +37,7 @@ class CompromisoRepository:
             self.conn.rollback()
             raise e
 
-    def fetch_responsables(self):
+    def fetch_referentes(self):
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("""
@@ -58,8 +58,8 @@ class CompromisoRepository:
                     SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
                            c.comentario, c.comentario_direccion,
                            d.name AS departamento_name, -- Nombre del departamento
-                           ARRAY_AGG(DISTINCT p.id) AS responsables_ids, -- Obtenemos una lista de IDs de responsables
-                           STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables -- Nombres concatenados
+                           ARRAY_AGG(DISTINCT p.id) AS referentes_ids, -- Obtenemos una lista de IDs de referentes
+                           STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS referentes -- Nombres concatenados
                     FROM compromiso c
                     LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                     LEFT JOIN persona p ON pc.id_persona = p.id
@@ -72,15 +72,15 @@ class CompromisoRepository:
             self.conn.rollback()
             raise e
 
-    def fetch_compromisos_by_responsable(self, user_id):
+    def fetch_compromisos_by_referente(self, user_id):
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("""
                     SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite,
                            c.comentario, c.comentario_direccion,
                            d.name AS departamento_name, -- Nombre del departamento
-                           ARRAY_AGG(DISTINCT p.id) AS responsables_ids,
-                           STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
+                           ARRAY_AGG(DISTINCT p.id) AS referentes_ids,
+                           STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS referentes
                     FROM compromiso c
                     LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                     LEFT JOIN persona p ON pc.id_persona = p.id
@@ -89,7 +89,7 @@ class CompromisoRepository:
                         SELECT c2.id
                         FROM compromiso c2
                         LEFT JOIN persona_compromiso pc2 ON c2.id = pc2.id_compromiso
-                        WHERE pc2.id_persona = %s -- Filtrar por el ID del usuario responsable
+                        WHERE pc2.id_persona = %s -- Filtrar por el ID del usuario referente
                     )
                     GROUP BY c.id, d.name
                 """, (user_id,))
@@ -98,27 +98,34 @@ class CompromisoRepository:
             self.conn.rollback()
             raise e
 
-    def update_compromiso(self, compromiso_id, estado, avance, comentario, comentario_director):
+    def update_compromiso(self, compromiso_id, descripcion, estado, prioridad, avance, comentario, comentario_direccion, user_id, referentes):
         try:
             with self.conn.cursor() as cursor:
                 cursor.execute("""
                     UPDATE compromiso
-                    SET estado = %s, avance = %s, comentario = %s, comentario_direccion = %s
+                    SET descripcion = %s, estado = %s, prioridad = %s, avance = %s, comentario = %s, comentario_direccion = %s
                     WHERE id = %s
-                """, (estado, avance, comentario, comentario_director, compromiso_id))
+                """, (descripcion, estado, prioridad, avance, comentario, comentario_direccion, compromiso_id))
+                
+                cursor.execute("DELETE FROM persona_compromiso WHERE id_compromiso = %s", (compromiso_id,))
+                for referente_id in referentes:
+                    cursor.execute("""
+                        INSERT INTO persona_compromiso (id_persona, id_compromiso)
+                        VALUES (%s, %s)
+                    """, (referente_id, compromiso_id))
         except Exception as e:
             self.conn.rollback()
             raise e
 
-    def update_responsables(self, compromiso_id, nuevos_responsables):
+    def update_referentes(self, compromiso_id, nuevos_referentes):
         try:
             with self.conn.cursor() as cursor:
                 cursor.execute("DELETE FROM persona_compromiso WHERE id_compromiso = %s", (compromiso_id,))
-                for responsable_id in nuevos_responsables:
+                for referente_id in nuevos_referentes:
                     cursor.execute("""
                         INSERT INTO persona_compromiso (id_persona, id_compromiso)
                         VALUES (%s, %s)
-                    """, (responsable_id, compromiso_id))
+                    """, (referente_id, compromiso_id))
         except Exception as e:
             self.conn.rollback()
             raise e
@@ -149,8 +156,8 @@ class CompromisoRepository:
                 cursor.execute("""
                     SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
                            c.comentario, c.comentario_direccion,
-                           ARRAY_AGG(DISTINCT p.id) AS responsables_ids, -- IDs de los responsables
-                           STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables -- Nombres de los responsables
+                           ARRAY_AGG(DISTINCT p.id) AS referentes_ids, -- IDs de los referentes
+                           STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS referentes -- Nombres de los referentes
                     FROM compromiso c
                     LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                     LEFT JOIN persona p ON pc.id_persona = p.id
@@ -168,7 +175,7 @@ class CompromisoRepository:
                 cursor.execute("""
                     SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
                            c.comentario_director, d.name AS departamento, 
-                           STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
+                           STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS referentes
                     FROM compromiso c
                     JOIN departamento d ON c.id_departamento = d.id
                     LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
@@ -322,8 +329,8 @@ class CompromisoRepository:
                     c.fecha_limite,
                     c.comentario,
                     c.comentario_direccion,
-                    ARRAY_AGG(DISTINCT p.id) AS responsables_ids,
-                    STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
+                    ARRAY_AGG(DISTINCT p.id) AS referentes_ids,
+                    STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS referentes
                 FROM compromiso c
                 LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                 LEFT JOIN persona p ON pc.id_persona = p.id
@@ -357,8 +364,8 @@ class CompromisoRepository:
             query = """
                 SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.avance, c.fecha_limite, 
                     c.comentario, c.comentario_direccion, 
-                    STRING_AGG(DISTINCT p.id::text, ', ') AS responsables_ids,
-                    STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables
+                    STRING_AGG(DISTINCT p.id::text, ', ') AS referentes_ids,
+                    STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS referentes
                 FROM compromiso c
                 LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                 LEFT JOIN persona p ON pc.id_persona = p.id
@@ -454,8 +461,8 @@ class CompromisoRepository:
                     SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
                         c.comentario, c.comentario_direccion,
                         d.name AS departamento_name, -- Nombre del departamento
-                        ARRAY_AGG(DISTINCT p.id) AS responsables_ids, -- Obtenemos una lista de IDs de responsables
-                        STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS responsables -- Nombres concatenados
+                        ARRAY_AGG(DISTINCT p.id) AS referentes_ids, -- Obtenemos una lista de IDs de referentes
+                        STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS referentes -- Nombres concatenados
                     FROM compromiso c
                     LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                     LEFT JOIN persona p ON pc.id_persona = p.id
@@ -511,7 +518,7 @@ class CompromisoRepository:
                 c.comentario_direccion,
                 d.id AS departamento_id,
                 d.name AS departamento_name,
-                STRING_AGG( p.name || ' ' || p.lastname, ', ') AS responsables,
+                STRING_AGG( p.name || ' ' || p.lastname, ', ') AS referentes,
                 STRING_AGG( p.nivel_jerarquico, ', ' ORDER BY p.name || ' ' || p.lastname) AS niveles_jerarquicos,
                 CASE
                     WHEN %s = c.id_departamento AND %s != 'FUNCIONARIO/A' THEN TRUE
@@ -571,24 +578,28 @@ class CompromisoRepository:
             return cursor.fetchall()
 
     def es_jefe_de_departamento(self, user_id, departamento_id):
-        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-            cursor.execute("""
-                SELECT 1
-                FROM persona_departamento pd
-                JOIN persona p ON pd.id_persona = p.id
-                WHERE pd.id_persona = %s
-                AND pd.id_departamento = %s
-                AND (p.nivel_jerarquico = 'DIRECTOR DE SERVICIO' OR p.nivel_jerarquico = 'SUBDIRECTOR/A' OR p.nivel_jerarquico = 'JEFE/A DE DEPARTAMENTO')
-            """, (user_id, departamento_id))
-            return cursor.fetchone() is not None
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT 1
+                    FROM persona_departamento pd
+                    JOIN persona p ON pd.id_persona = p.id
+                    WHERE pd.id_persona = %s
+                    AND pd.id_departamento = %s
+                    AND (p.nivel_jerarquico = 'DIRECTOR DE SERVICIO' OR p.nivel_jerarquico = 'SUBDIRECTOR/A' OR p.nivel_jerarquico = 'JEFE/A DE DEPARTAMENTO' OR p.nivel_jerarquico = 'JEFE/A DE UNIDAD')
+                """, (user_id, departamento_id))
+                return cursor.fetchone() is not None
+        except Exception as e:
+            self.conn.rollback()
+            raise e
 
     def fetch_compromiso_by_id(self, compromiso_id):
         with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
                 SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.prioridad, c.fecha_creacion, c.fecha_limite, 
                        c.avance, c.comentario, c.comentario_direccion, c.id_departamento,
-                       STRING_AGG(p.name || ' ' || p.lastname, ', ') AS responsables,
-                       ARRAY_AGG(p.id) AS responsables_ids
+                       STRING_AGG(p.name || ' ' || p.lastname, ', ') AS referentes,
+                       ARRAY_AGG(p.id) AS referentes_ids
                 FROM compromiso c
                 LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                 LEFT JOIN persona p ON pc.id_persona = p.id
@@ -596,5 +607,37 @@ class CompromisoRepository:
                 GROUP BY c.id
             """, (compromiso_id,))
             return cursor.fetchone()
+
+    def create_compromiso(self, descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento, user_id, referentes):
+        query = """
+        INSERT INTO compromiso (descripcion, estado, prioridad, fecha_creacion, avance, fecha_limite, comentario, comentario_direccion, id_departamento)
+        VALUES (%s, %s, %s, %s, 0, %s, %s, %s, %s)
+        RETURNING id
+        """
+        params = (descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento)
+        try:
+            with self.conn.cursor() as cursor:
+                cursor.execute(query, params)
+                compromiso_id = cursor.fetchone()['id']
+                for referente_id in referentes:
+                    cursor.execute("""
+                        INSERT INTO persona_compromiso (id_persona, id_compromiso)
+                        VALUES (%s, %s)
+                    """, (referente_id, compromiso_id))
+                self.conn.commit()
+                print("Compromiso creado exitosamente")
+        except Exception as e:
+            self.conn.rollback()
+            print(f"Error al insertar compromiso en la base de datos: {e}")
+            raise e
+
+    def commit(self):
+        self.conn.commit()
+
+    def rollback(self):
+        self.conn.rollback()
+
+    def close(self):
+        self.conn.close()
 
 

@@ -208,7 +208,7 @@ class ReunionRepository:
                         c.prioridad, 
                         c.avance,
                         d.name AS departamento,
-                        STRING_AGG(p.name || ' ' || p.lastname, ', ') AS responsables
+                        STRING_AGG(p.name || ' ' || p.lastname, ', ') AS referentes
                     FROM compromiso c
                     JOIN reunion_compromiso rc ON c.id = rc.id_compromiso
                     JOIN departamento d ON c.id_departamento = d.id

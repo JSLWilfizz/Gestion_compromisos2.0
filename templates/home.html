@@ -131,6 +131,12 @@
         .btn-reu:hover {
             background-color: #ffcc00;
         }
+        .btn-comp {
+            background-color: #513fb4;
+        }
+        .btn-comp:hover {
+            background-color: #1d36c9;
+        }
         .btn-danger {
             background-color: #dc3545;
         }
@@ -260,13 +266,18 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#">
-                        <i class="fas fa-chart-bar"></i>Funcionarios (Pronto)
+                    <a href="{{ url_for('director.funcionarios') }}">
+                        <i class="fas fa-user-tie   "></i>Funcionarios
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('director.departamentos') }}">
+                        <i class="fas fa-hospital"></i>Departamentos
                     </a>
                 </li>
                 <li>
                     <a href="#">
-                        <i class="fas fa-file-alt"></i>Departamentos (Pronto)
+                        <i class="fas fa-chart-bar"></i>Reportes (Pronto)
                     </a>
                 </li>
             </ul>
@@ -279,11 +290,24 @@
                 <p>Departamento: {{ user.departamento_name }}</p>
                 <p>Cargo: {{ user.cargo }}</p>
 
-                <a href="{{ url_for('reunion.crear_reunion_paso1') }}" class="btn btn-primary">Crear Reunión</a>
-                <a href="{{ url_for('home.ver_compromisos') }}" class="btn btn-secondary">Mis Compromisos</a>
-                <a href="{{url_for('home.mis_reuniones')}}" class="btn btn-reu">Mis Reuniones</a>
-                <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn btn-compromisosdepartamentales">Compromisos Departamentales</a> <!-- Nuevo botón -->
-                <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">Cerrar Sesión</a>
+                <a href="{{ url_for('reunion.crear_reunion_paso1') }}" class="btn btn-primary">
+                    <i class="fas fa-calendar-plus mr-2"></i> Crear Reunión
+                </a>
+                <a href="#" class="btn btn-comp">
+                    <i class="fas fa-tasks mr-2"></i> Crear Compromisos
+                </a>
+                <a href="{{ url_for('home.ver_compromisos') }}" class="btn btn-secondary">
+                    <i class="fas fa-list mr-2"></i> Mis Compromisos
+                </a>
+                <a href="{{url_for('home.mis_reuniones')}}" class="btn btn-reu">
+                    <i class="fas fa-handshake mr-2"></i> Mis Reuniones
+                </a>
+                <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn btn-compromisosdepartamentales">
+                    <i class="fas fa-users mr-2"></i> Compromisos Departamentales
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
+                </a>
             </div>
         </div>
     </div>

@@ -1,9 +1,11 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
 from repositories.compromiso_service import CompromisoService
 from .auth_routes import is_director
+from repositories.gestion_service import GestionService
 
 director_bp = Blueprint('director', __name__)
 compromiso_service = CompromisoService()
+gestion_service = GestionService()
 
 @director_bp.route('/director/resumen_compromisos', methods=['GET', 'POST'])
 @is_director
@@ -73,9 +75,9 @@ def ver_compromisos_director():
     # Obtener los compromisos filtrados por mes y departamento
     compromisos = compromiso_service.get_compromisos_by_mes_departamento(mes_numero, departamento_id, year)
     print(f"Compromisos: {compromisos}")
-    todos_responsables = compromiso_service.get_responsables()
+    todos_referentes = compromiso_service.get_referentes()
 
-    return render_template('director_ver_compromisos.html', compromisos=compromisos, todos_responsables=todos_responsables)
+    return render_template('director_ver_compromisos.html', compromisos=compromisos, todos_referentes=todos_referentes)
 
 @director_bp.route('/director/compromisos_por_mes', methods=['GET', 'POST'])
 @is_director
@@ -104,8 +106,8 @@ def editar_compromisos():
     # Obtener compromisos filtrados por mes, departamento y área
     compromisos = compromiso_service.get_compromisos_by_filtro(departamento_id, mes, area_id)
 
-    # Obtener todos los responsables para mostrarlos en los select
-    todos_responsables = compromiso_service.get_responsables()
+    # Obtener todos los referentes para mostrarlos en los select
+    todos_referentes = compromiso_service.get_referentes()
     print(f"Comentarios: {compromisos[0]['comentario_direccion']}")
 
     if request.method == 'POST':
@@ -115,4 +117,85 @@ def editar_compromisos():
         return redirect(
             url_for('director.resumen_compromisos', departamento_id=departamento_id, month=mes, area_id=area_id))
 
-    return render_template('editar_compromisos.html', compromisos=compromisos, todos_responsables=todos_responsables)
+    return render_template('editar_compromisos.html', compromisos=compromisos, todos_referentes=todos_referentes)
+
+@director_bp.route('/funcionarios', methods=['GET'])
+def funcionarios():
+    search = request.args.get('search', '')
+    departamento_raw = request.args.get('departamento', '')
+    nivel_jerarquico = request.args.get('nivel_jerarquico', '')
+
+    departamento = None
+    if departamento_raw.strip():
+        try:
+            departamento = int(departamento_raw)
+        except ValueError:
+            departamento = None
+
+    funcionarios = gestion_service.get_funcionarios(search, departamento, nivel_jerarquico)
+    departamentos = gestion_service.get_departamentos()
+    niveles_jerarquicos = gestion_service.get_niveles_jerarquicos()
+    return render_template(
+        'funcionarios.html',
+        funcionarios=funcionarios,
+        departamentos=departamentos,
+        niveles_jerarquicos=niveles_jerarquicos,
+        search=search,
+        departamento=departamento_raw,
+        nivel_jerarquico=nivel_jerarquico
+    )
+
+@director_bp.route('/departamentos')
+def departamentos():
+    jerarquia = request.args.get('jerarquia', '').strip()
+    all_departamentos = gestion_service.get_departamentos()
+    departamentos = all_departamentos
+    if jerarquia:
+        jerarquia_chain = gestion_service.get_departamento_chain_by_name(jerarquia)
+        departamentos = jerarquia_chain  # Display filtered departments in the main table
+    return render_template(
+        'departamentos.html',
+        departamentos=departamentos,
+        all_departamentos=all_departamentos,
+        selected_jerarquia=jerarquia
+    )
+
+@director_bp.route('/director/editar_funcionario/<int:funcionario_id>', methods=['GET', 'POST'])
+@is_director
+def editar_funcionario(funcionario_id):
+    funcionario = gestion_service.get_funcionario_by_id(funcionario_id)
+    departamentos = gestion_service.get_departamentos()
+    niveles_jerarquicos = gestion_service.get_niveles_jerarquicos()
+
+    if request.method == 'POST':
+        rut = request.form.get('rut')
+        name = request.form.get('name')
+        lastname = request.form.get('lastname')
+        profesion = request.form.get('profesion')
+        departamento_id = request.form.get('departamento')
+        nivel_jerarquico = request.form.get('nivel_jerarquico')
+        cargo = request.form.get('cargo')
+        correo = request.form.get('correo')
+        anexo_telefonico = request.form.get('anexo_telefonico')
+
+        gestion_service.update_funcionario(funcionario_id, rut, name, lastname, profesion, departamento_id, nivel_jerarquico, cargo, correo, anexo_telefonico)
+        flash('Funcionario actualizado con éxito.', 'success')
+        return redirect(url_for('director.funcionarios'))
+
+    return render_template('editar_funcionario.html', funcionario=funcionario, departamentos=departamentos, niveles_jerarquicos=niveles_jerarquicos)
+
+@director_bp.route('/director/editar_departamento/<int:departamento_id>', methods=['GET', 'POST'])
+@is_director
+def editar_departamento(departamento_id):
+    departamento = gestion_service.get_departamento_by_id(departamento_id)
+    all_departamentos = gestion_service.get_departamentos()
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        id_departamento_padre = request.form.get('id_departamento_padre')
+
+        gestion_service.update_departamento(departamento_id, name, id_departamento_padre)
+        flash('Departamento actualizado con éxito.', 'success')
+        return redirect(url_for('director.departamentos'))
+
+    return render_template('editar_departamento.html', departamento=departamento, all_departamentos=all_departamentos)

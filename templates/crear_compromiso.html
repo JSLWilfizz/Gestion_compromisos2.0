@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Compromiso - Servicio de Salud del Maule</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    :root {
+  --primary-color: #0056b3;
+  --secondary-color: #f8f9fa;
+  --text-color: #333;
+  --border-color: #ced4da;
+  --focus-color: #80bdff;
+  --error-color: #dc3545;
+  --success-color: #28a745;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+  line-height: 1.6;
+  color: var(--text-color);
+  background-color: #f0f2f5;
+}
+
+.container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+h1 {
+  color: var(--primary-color);
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+header p {
+  color: #666;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--primary-color);
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--focus-color);
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+button {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 1rem;
+  font-size: 1.1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #004494;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+    margin: 1rem;
+  }
+
+  .form-row {
+    flex-direction: column;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+}
+
+</style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Crear Compromiso</h1>
+            <p>Complete el siguiente formulario para crear un nuevo compromiso.</p>
+        </header>
+        <a href="{{ url_for('home.home_view') }}" class="btn btn-secondary">
+            <i class="fas fa-home mr-2"></i> Volver al inicio
+        </a>
+        <br>
+        <br>
+        <form action="{{ url_for('compromiso.crear_compromiso') }}" method="POST">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                <label for="id_departamento">Departamento</label>
+                {{ form.id_departamento(class="form-control") }}
+            </div>
+            <div class="form-group">
+                <label for="descripcion">Descripción</label>
+                {{ form.descripcion(class="form-control") }}
+            </div>
+            <div class="form-group">
+                <label for="referentes">Referentes</label>
+                {{ form.referentes(class="form-control select2", multiple="multiple") }}
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fecha_creacion">Fecha de Creación</label>
+                    {{ form.fecha_creacion(class="form-control", type="datetime-local", value=form.fecha_creacion.data.strftime('%Y-%m-%dT%H:%M') if form.fecha_creacion.data else '') }}
+                </div>
+                <div class="form-group">
+                    <label for="fecha_limite">Fecha Límite</label>
+                    {{ form.fecha_limite(class="form-control", type="datetime-local", value=form.fecha_limite.data.strftime('%Y-%m-%dT%H:%M') if form.fecha_limite.data else '') }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="estado">Estado</label>
+                    {{ form.estado(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    <label for="prioridad">Prioridad</label>
+                    {{ form.prioridad(class="form-control") }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="comentario">Comentario</label>
+                {{ form.comentario(class="form-control") }}
+            </div>
+            <div class="form-group">
+                <label for="comentario_direccion">Comentario Dirección</label>
+                <textarea name="comentario_direccion" class="form-control" {% if user.cargo != 'DIRECTOR DE SERVICIO' %}readonly{% endif %}>{{ form.comentario_direccion.data }}</textarea>
+            </div>
+            <button type="submit">Crear Compromiso</button>
+        </form>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2({
+                placeholder: "Selecciona referentes",
+                allowClear: true,
+                width: '100%'
+            });
+        });
+    </script>
+</body>
+</html>
+

@@ -6,6 +6,7 @@
     <title>Editar/Derivar Compromiso</title>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
             --primary-color: #3498db;
@@ -116,12 +117,12 @@
             <input type="number" id="avance" name="avance" value="{{ compromiso.avance }}" min="0" max="100" {% if derivar %}readonly{% endif %} required>
 
             <label for="fecha_limite">Fecha Límite</label>
-            <input type="date" id="fecha_limite" name="fecha_limite" value="{{ compromiso.fecha_limite.strftime('%Y-%m-%d') }}" {% if derivar %}readonly{% endif %} required>
+            <input type="datetime-local" id="fecha_limite" name="fecha_limite" value="{{ compromiso.fecha_limite.strftime('%Y-%m-%dT%H:%M') }}" {% if derivar or editar %}disabled{% endif %} required>
 
-            <label for="responsables">Responsables</label>
-            <select id="responsables" name="responsables" multiple class="form-control" required>
-                {% for value, label in todos_responsables %}
-                    <option value="{{ value }}" {% if value in compromiso.responsables_ids %}selected{% endif %}>{{ label }}</option>
+            <label for="referentes">Referentes</label>
+            <select id="referentes" name="referentes" multiple class="form-control" required>
+                {% for value, label in todos_referentes %}
+                    <option value="{{ value }}" {% if value in compromiso.referentes_ids %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
 
@@ -129,29 +130,35 @@
             <textarea id="comentario" name="comentario" {% if derivar %}readonly{% endif %}>{{ compromiso.comentario }}</textarea>
 
             <label for="comentario_direccion">Comentario Dirección</label>
-            <textarea id="comentario_direccion" name="comentario_direccion" {% if not direccion %}readonly{% endif %}>{{ compromiso.comentario_direccion }}</textarea>
+            <textarea id="comentario_direccion" name="comentario_direccion" {% if not direccion %}disabled{% endif %}>{{ compromiso.comentario_direccion }}</textarea>
 
             <div class="btn-group">
-                <button type="submit" class="btn">Guardar</button>
-                <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn"><i class="fas fa-save"></i> Guardar</button>
+                <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn btn-secondary"><i class="fas fa-times"></i> Cancelar</a>
             </div>
         </form>
     </div>
+    <footer class="footer">
+        Servicio de Salud del Maule
+        <div>
+            <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
+        </div>
+    </footer>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(document).ready(function() {
-            $('#responsables').select2({
-                placeholder: "Selecciona responsables",
+            $('#referentes').select2({
+                placeholder: "Selecciona referentes",
                 allowClear: true,
                 width: '100%'
             });
 
             $('#compromiso-form').on('submit', function(e) {
-                var responsables = $('#responsables').val();
-                if (responsables.length === 0) {
+                var referentes = $('#referentes').val();
+                if (referentes.length === 0) {
                     e.preventDefault();
-                    alert('Por favor, selecciona al menos un responsable.');
+                    alert('Por favor, selecciona al menos un referente.');
                 }
             });
         });

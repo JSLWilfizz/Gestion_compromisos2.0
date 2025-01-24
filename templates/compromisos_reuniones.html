@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Compromisos de la Reunión - Servicio de Salud del Maule</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -104,10 +105,10 @@
     <div class="wrapper">
         <div class="sidebar">
             <h3>Panel de Navegación</h3>
-            <a href="{{ url_for('home.home_view') }}">Inicio</a>
-            <a href="{{ url_for('home.ver_compromisos') }}">Mis Compromisos</a>
-            <a href="{{ url_for('home.ver_compromisos_compartidos') }}">Compromisos Departamentales</a>
-            <a href="{{ url_for('auth.logout') }}" style="color: #fc8181;">Cerrar Sesión</a>
+            <a href="{{ url_for('home.home_view') }}"><i class="fas fa-home mr-2"></i> Inicio</a>
+            <a href="{{ url_for('home.ver_compromisos') }}"><i class="fas fa-list mr-2"></i> Mis Compromisos</a>
+            <a href="{{ url_for('home.ver_compromisos_compartidos') }}"><i class="fas fa-users mr-2"></i> Compromisos Departamentales</a>
+            <a href="{{ url_for('auth.logout') }}" style="color: #fc8181;"><i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión</a>
         </div>
 
         <div class="main-content">
@@ -121,7 +122,7 @@
                             <th>Fecha Límite</th>
                             <th>Avance</th>
                             <th>Departamento</th>
-                            <th>Responsables</th>
+                            <th>Referentes</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -132,12 +133,12 @@
                             <td>{{ c.fecha_limite }}</td>
                             <td>{{ c.avance }}</td>
                             <td>{{ c.departamento }}</td>
-                            <td>{{ c.responsables }}</td>
+                            <td>{{ c.referentes }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-                <a href="/mis_reuniones" class="btn">Volver al Inicio</a>
+                <a href="/mis_reuniones" class="btn"><i class="fas fa-arrow-left mr-2"></i> Volver al Inicio</a>
             </div>
         </div>
     </div>

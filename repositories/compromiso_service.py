@@ -24,24 +24,24 @@ class CompromisoService:
         es_director = director_info['es_director']
         id_departamento = director_info['id_departamento']
 
-        responsables = self.repo.fetch_responsables()
+        referentes = self.repo.fetch_referentes()
 
-        responsables = [
+        referentes = [
             (p['id'], f"{p['name']} {p['lastname']} - {p['departamento']} - {p['profesion']}")
-            for p in responsables
+            for p in referentes
         ]
         # Si el usuario es director, obtener los compromisos del departamento
         if (es_director):
             compromisos = self.repo.fetch_compromisos_by_departamento(id_departamento)
         else:
-            # Si el usuario no es director, obtener los compromisos donde es responsable
-            compromisos = self.repo.fetch_compromisos_by_responsable(user_id)
+            # Si el usuario no es director, obtener los compromisos donde es referente
+            compromisos = self.repo.fetch_compromisos_by_referente(user_id)
 
         # Retornar exactamente tres valores
         print(f"Compromisos: {compromisos}")
-        print(f"Responsables: {responsables}")
+        print(f"Referentes: {referentes}")
         print(f"Es director: {es_director}")
-        return compromisos, responsables, es_director
+        return compromisos, referentes, es_director
 
     def actualizar_compromisos(self, request, compromisos, user_id, es_director):
         for compromiso in compromisos:
@@ -53,11 +53,11 @@ class CompromisoService:
             nuevo_comentario = request.form.get(f'comentario-{compromiso_id}')
             nuevo_comentario_direccion = request.form.get(f'comentario_direccion-{compromiso_id}')
 
-            # Si es director, obtener nuevos responsables
+            # Si es director, obtener nuevos referentes
             if es_director:
-                nuevos_responsables = request.form.getlist(f'responsables-{compromiso_id}')
+                nuevos_referentes = request.form.getlist(f'referentes-{compromiso_id}')
             else:
-                nuevos_responsables = compromiso['responsables_ids'].split(',')
+                nuevos_referentes = compromiso['referentes_ids'].split(',')
 
             # Verificar los valores y actualizar el compromiso
             if nuevo_estado and nuevo_avance and nuevo_comentario:
@@ -65,10 +65,10 @@ class CompromisoService:
                     self.repo.update_compromiso(compromiso_id, nuevo_estado, nuevo_avance,nuevo_comentario, nuevo_comentario_direccion)
                     self.repo.log_modificacion(compromiso_id, user_id)
 
-                    # Si es director, actualizar responsables
-                    if es_director and nuevos_responsables:
+                    # Si es director, actualizar referentes
+                    if es_director and nuevos_referentes:
                         print("en espanol")
-                        self.repo.update_responsables(compromiso_id, nuevos_responsables)
+                        self.repo.update_referentes(compromiso_id, nuevos_referentes)
                     self.repo.commit()
                 except Exception as e:
                     self.repo.rollback()
@@ -119,28 +119,20 @@ class CompromisoService:
         
         return self.repo.fetch_compromisos_by_mes_departamento(mes, departamento_id, year)
     
-    def get_responsables(self):
-        responsables = self.repo.fetch_responsables()
+    def get_referentes(self):
+        referentes = self.repo.fetch_referentes()
         return [
             (p['id'], f"{p['name']} {p['lastname']} - {p['departamento']} - {p['profesion']}")
-            for p in responsables
+            for p in referentes
         ]
 
     def get_compromisos_by_user(self, user_id):
         # Obtener los compromisos del usuario (director o no director)
-        return self.repo.fetch_compromisos_by_responsable(user_id)
+        return self.repo.fetch_compromisos_by_referente(user_id)
 
-    def update_compromiso(self, compromiso_id, estado, avance, comentario, user_id, comentario_direccion, nuevos_responsables):
-        # Actualizar los campos modificables por el usuario
-        try:
-            print("en ingles")
-            self.repo.update_compromiso(compromiso_id, estado, avance, comentario, comentario_direccion)
-            self.repo.update_responsables(compromiso_id, nuevos_responsables)
-            self.repo.log_modificacion(compromiso_id, user_id)
-            self.repo.commit()
-        except Exception as e:
-            self.repo.rollback()
-            raise e
+    def update_compromiso(self, compromiso_id, descripcion, estado, prioridad, avance, comentario, comentario_direccion, user_id, referentes):
+        self.repo.update_compromiso(compromiso_id, descripcion, estado, prioridad, avance, comentario, comentario_direccion, user_id, referentes)
+        self.repo.log_modificacion(compromiso_id, user_id)
 
     def get_compromisos_by_departamento(self, departamento_id):
         """
@@ -184,6 +176,16 @@ class CompromisoService:
 
     def get_compromiso_by_id(self, compromiso_id):
         return self.repo.fetch_compromiso_by_id(compromiso_id)
+
+    def create_compromiso(self, descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento, user_id, referentes):
+        self.repo.create_compromiso(descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento, user_id, referentes)
+
+    def get_initial_form_data(self, form):
+        departamentos = self.get_departamentos()
+        referentes = self.get_referentes()
+
+        form.id_departamento.choices = [(d['id'], d['name']) for d in departamentos]
+        form.referentes.choices = [(r[0], r[1]) for r in referentes]
 
 
 

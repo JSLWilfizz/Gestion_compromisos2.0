@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Departamentos - Servicio de Salud del Maule</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f4f4;
+        }
+        .wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            height: 100vh;
+            position: fixed;
+        }
+        .sidebar h3 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            text-align: center;
+        }
+        .sidebar-menu {
+            list-style-type: none;
+        }
+        .sidebar-menu li {
+            margin-bottom: 10px;
+        }
+        .sidebar-menu a {
+            display: block;
+            padding: 10px;
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            border-radius: 5px;
+        }
+        .sidebar-menu a:hover {
+            background-color: #34495e;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .btn-primary { background-color: #3498db; color: #fff; }
+        .btn-secondary { background-color: #95a5a6; color: #fff; }
+        .btn-reu { background-color: #e67e22; color: #fff; }
+        .btn-compromisosdepartamentales { background-color: #9b59b6; color: #fff; }
+        .btn-danger { background-color: #e74c3c; color: #fff; }
+        .btn:hover { opacity: 0.9; }
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        form {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .searchable-select {
+            position: relative;
+            display: inline-block;
+            width: 300px;
+        }
+        .searchable-select input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .searchable-select .options {
+            position: absolute;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            z-index: 1000;
+        }
+        .searchable-select .option {
+            padding: 10px;
+            cursor: pointer;
+        }
+        .searchable-select .option:hover {
+            background-color: #f1f1f1;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3498db;
+            color: #fff;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .botonazo a {
+            display: block;
+            padding: 10px;
+            color: #ffffff;
+            background-color: #34495e;
+            text-decoration: none;
+            transition: background-color 0.3s;
+            border-radius: 5px;
+            width: max-content;
+        }
+        .botonazo a:hover {
+            background-color: #1962ac;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="sidebar">
+            <h3>Panel del Director</h3>
+            <ul class="sidebar-menu">
+                <li><a href="{{ url_for('reunion.crear_reunion_paso1') }}" class="btn-primary"><i class="fas fa-calendar-plus mr-2"></i> Crear Reunión</a></li>
+                <li><a href="{{ url_for('home.ver_compromisos') }}" class="btn-secondary"><i class="fas fa-list mr-2"></i> Mis Compromisos</a></li>
+                <li><a href="{{url_for('home.mis_reuniones')}}" class="btn-reu"><i class="fas fa-handshake mr-2"></i> Mis Reuniones</a></li>
+                <li><a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn-compromisosdepartamentales"><i class="fas fa-users mr-2"></i> Compromisos Departamentales</a></li>
+                <li><a href="{{ url_for('auth.logout') }}" class="btn-danger"><i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión</a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            <div class="container">
+                <h1>Información de Departamentos</h1>
+                <div class="botonazo">
+                    <a href="{{ url_for('home.home_view') }}" class="btn btn-secondary"><i class="fas fa-home mr-2"></i> Volver al Inicio</a>
+                </div>
+                <form method="GET" action="{{ url_for('director.departamentos') }}">
+                    <div class="searchable-select">
+                        <input type="text" id="search-bar" placeholder="Buscar Departamento" autocomplete="off">
+                        <div class="options" id="departamento-options" style="display: none;">
+                            <div class="option" data-value="">Seleccionar Departamento</div>
+                            {% for departamento in all_departamentos %}
+                            <div class="option" data-value="{{ departamento.name }}" {% if request.args.get('jerarquia') == departamento.name %}selected{% endif %}>
+                                {{ departamento.name }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <select name="jerarquia" id="departamento-select" style="display: none;">
+                            <option value="">Seleccionar Departamento</option>
+                            {% for departamento in all_departamentos %}
+                            <option value="{{ departamento.name }}" {% if request.args.get('jerarquia') == departamento.name %}selected{% endif %}>
+                                {{ departamento.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Filtrar</button>
+                    <a href="{{ url_for('director.departamentos') }}" class="btn btn-primary"><i class="fas fa-filter"></i> Borrar Filtros</a>
+                </form>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Codigo Departamento</th>
+                            <th>Nombre</th>
+                            <th>ID Departamento Padre</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for departamento in departamentos %}
+                        <tr>
+                            <td>{{ departamento.id }}</td>
+                            <td>{{ departamento.name }}</td>
+                            <td>{{ departamento.id_departamento_padre }}</td>
+                            <td><a href="{{ url_for('director.editar_departamento', departamento_id=departamento.id) }}" class="btn btn-primary"><i class="fas fa-edit"></i> Editar</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if not departamentos %}
+                    <p>No se encontraron departamentos.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <footer class="footer">
+        Servicio de Salud del Maule
+        <div>
+            <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
+        </div>
+    </footer>
+    <script>
+        document.getElementById('search-bar').addEventListener('input', function() {
+            const filter = this.value.toLowerCase();
+            const options = document.getElementById('departamento-options').children;
+            for (let i = 0; i < options.length; i++) {
+                const option = options[i];
+                const text = option.textContent.toLowerCase();
+                option.style.display = text.includes(filter) ? '' : 'none';
+            }
+        });
+
+        document.getElementById('departamento-options').addEventListener('click', function(e) {
+            if (e.target.classList.contains('option')) {
+                const value = e.target.getAttribute('data-value');
+                document.getElementById('departamento-select').value = value;
+                document.getElementById('search-bar').value = e.target.textContent;
+                this.style.display = 'none';
+            }
+        });
+
+        document.getElementById('search-bar').addEventListener('focus', function() {
+            document.getElementById('departamento-options').style.display = 'block';
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!document.querySelector('.searchable-select').contains(e.target)) {
+                document.getElementById('departamento-options').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+
+</html>

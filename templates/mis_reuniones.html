@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Reuniones - Servicio de Salud del Maule</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -110,10 +111,10 @@
     <div class="wrapper">
         <div class="sidebar">
             <h3>Panel de Navegación</h3>
-            <a href="{{ url_for('home.home_view') }}">Inicio</a>
-            <a href="{{ url_for('home.ver_compromisos') }}">Mis Compromisos</a>
-            <a href="{{ url_for('home.ver_compromisos_compartidos') }}">Compromisos Departamentales</a>
-            <a href="{{ url_for('auth.logout') }}" style="color: #fc8181;">Cerrar Sesión</a>
+            <a href="{{ url_for('home.home_view') }}"><i class="fas fa-home"></i> Inicio</a>
+            <a href="{{ url_for('home.ver_compromisos') }}"><i class="fas fa-tasks"></i> Mis Compromisos</a>
+            <a href="{{ url_for('home.ver_compromisos_compartidos') }}"><i class="fas fa-users"></i> Compromisos Departamentales</a>
+            <a href="{{ url_for('auth.logout') }}" style="color: #fc8181;"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
         </div>
 
         <div class="main-content">
@@ -135,16 +136,16 @@
                         {% for reunion in reuniones %}
                         <tr>
                             <td>{{ reunion.nombre }}</td>
-                            <td>{{ reunion.fecha_creacion }}</td>
+                            <td>{{ reunion.fecha_creacion.strftime('%d-%m-%Y %H:%M') }}</td>
                             <td>{{ reunion.lugar }}</td>
                             <td>{{ reunion.origen_name }}</td>
                             <td>{{ reunion.tema }}</td>
                             <td>{{ reunion.asistentes }}</td>
                             <td>
-                                <a href="{{ url_for('home.ver_compromisos_reunion', reunion_id=reunion.id) }}" class="btn">Ver Compromisos</a>
-                                <a href="#" class="btn btn-secondary">Ver Archivos (Pronto)</a>
+                                <a href="{{ url_for('home.ver_compromisos_reunion', reunion_id=reunion.id) }}" class="btn"><i class="fas fa-eye"></i> Ver Compromisos</a>
+                                <a href="#" class="btn btn-secondary"><i class="fas fa-folder"></i> Ver Archivos (Pronto)</a>
                                 {% if reunion.acta_pdf %}
-                                <a href="{{ reunion.acta_pdf }}" class="btn btn-secondary" target="_blank">Ver Acta</a>
+                                <a href="{{ reunion.acta_pdf }}" class="btn btn-secondary" target="_blank"><i class="fas fa-file-pdf"></i> Ver Acta</a>
                                 {% endif %}
                             </td>
                         </tr>

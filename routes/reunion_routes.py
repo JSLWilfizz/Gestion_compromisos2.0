@@ -51,8 +51,9 @@ def crear_reunion_paso1():
             proximas_reuniones_concatenado = ';'.join(proximas_reuniones_values)
 
             fecha_creacion = request.form.get('fecha_reunion')
+            fecha_limite = request.form.get('fecha_limite')
 
-            service.create_reunion(form, request.form, acta_pdf_path, tema_concatenado, temas_analizados_concatenado, proximas_reuniones_concatenado, fecha_creacion)
+            service.create_reunion(form, request.form, acta_pdf_path, tema_concatenado, temas_analizados_concatenado, proximas_reuniones_concatenado, fecha_creacion, fecha_limite)
             print(request.form)
             return redirect(url_for('home.home_view'))
 

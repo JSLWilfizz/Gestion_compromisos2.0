@@ -6,6 +6,7 @@
     <title>Compromisos Departamentales</title>
     <meta name="description" content="Página para visualizar compromisos compartidos.">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -75,7 +76,7 @@
         th:nth-child(5) { width: 5%; }  /* Avance */
         th:nth-child(6) { width: 9%; }  /* Fecha Límite */
         th:nth-child(7) { width: 10%; } /* Nombre Departamento */
-        th:nth-child(8) { width: 15%; } /* Responsables */
+        th:nth-child(8) { width: 15%; } /* Referentes */
         th:nth-child(9) { width: 15%; } /* Niveles Jerárquicos */
         th:nth-child(10) { width: 8%; } /* Comentario Referente */
         th:nth-child(11) { width: 8%; } /* Comentario Dirección */
@@ -207,7 +208,7 @@
         }
 
         function formatDate(dateString) {
-            const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
             return new Date(dateString).toLocaleDateString('es-ES', options);
         }
 
@@ -234,7 +235,7 @@
 <body>
     <div class="container">
         <h1>Compromisos Departamentales</h1>
-        <a href="/home" class="btn btn-primary">Volver al Inicio</a>
+        <a href="/home" class="btn btn-primary"><i class="fas fa-home"></i> Volver al Inicio</a>
         <br>
         <br>
         <form method="GET" action="{{ url_for('home.ver_compromisos_compartidos') }}">
@@ -256,7 +257,8 @@
                 <option value="asc" {% if request.args.get('fecha_limite') == 'asc' %}selected{% endif %}>Más cercana</option>
                 <option value="desc" {% if request.args.get('fecha_limite') == 'desc' %}selected{% endif %}>Más lejana</option>
             </select>
-            <button type="submit">Buscar</button>
+            <button type="submit"><i class="fa-solid fa-magnifying-glass"></i>Buscar</button>
+            <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn"><i class="fas fa-filter"></i> Borrar Filtros</a>
         </form>
         <table>
             <thead>
@@ -268,7 +270,7 @@
                     <th>Avance</th>
                     <th>Fecha Límite</th>
                     <th>Nombre Departamento</th>
-                    <th>Responsables</th>
+                    <th>Referentes</th>
                     <th>Niveles Jerárquicos</th>
                     <th>Comentario Referente</th>
                     <th>Comentario Dirección</th>
@@ -306,15 +308,24 @@
                         </span>
                     </td>
                     <td>{{ compromiso.departamento_name }}</td>
-                    <td>{{ compromiso.responsables }}</td>
+                    <td>{{ compromiso.referentes }}</td>
                     <td>{{ compromiso.niveles_jerarquicos }}</td>
                     <td>{{ compromiso.comentario }}</td>
                     <td>{{ compromiso.comentario_direccion }}</td>
                     <td>
-
-                        <a href="{{ url_for('home.editar_compromiso', compromiso_id=compromiso.compromiso_id) }}" class="btn">Editar</a>
-                        <a href="{{ url_for('home.derivar_compromiso', compromiso_id=compromiso.compromiso_id) }}" class="btn">Derivar</a>
-                        <a href="#" class="btn">Ver Reunion (Pronto)</a>
+                        {% if compromiso.permiso_editar %}
+                        <a href="{{ url_for('home.editar_compromiso', compromiso_id=compromiso.compromiso_id) }}" class="btn"><i class="fas fa-edit"></i> Editar</a>
+                        {% else %}
+                        <a href="#" class="btn" style="pointer-events: none; opacity: 0.5;"><i class="fas fa-edit"></i> Editar</a>
+                        {% endif %}
+                        
+                        {% if compromiso.permiso_derivar %}
+                        <a href="{{ url_for('home.derivar_compromiso', compromiso_id=compromiso.compromiso_id) }}" class="btn"><i class="fas fa-share"></i> Derivar</a>
+                        {% else %}
+                        <a href="#" class="btn" style="pointer-events: none; opacity: 0.5;"><i class="fas fa-share"></i> Derivar</a>
+                        {% endif %}
+                        
+                        <a href="#" class="btn"><i class="fas fa-calendar-alt"></i> Ver Reunion (Pronto)</a>
                     </td>
                 </tr>
                 {% endfor %}

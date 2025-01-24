@@ -2,9 +2,9 @@ from datetime import datetime, date
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectMultipleField, DateTimeField, SelectField, FieldList, \
-    FormField, DateField, IntegerField
+    FormField, DateField, IntegerField, TextAreaField, HiddenField
 from wtforms import TextAreaField,StringField, SelectField, DateTimeField, SubmitField, FieldList, FormField, SelectMultipleField, DateField
-from wtforms.validators import DataRequired, Optional, ValidationError, NumberRange
+from wtforms.validators import DataRequired, Optional, ValidationError, NumberRange, Length
 from flask_wtf.file import FileAllowed, FileField
 
 
@@ -29,7 +29,7 @@ class CompromisoForm(FlaskForm):
     nombre = StringField('Nombre', validators=[DataRequired()])  # Eliminar DataRequired() para hacerlo opcional
     estado = SelectField('Estado', choices=[('Pendiente', 'Pendiente'), ('Completado', 'Completado')],default="Pendiente")  # Opcional
     prioridad = SelectField('Prioridad', choices=[('Alta', 'Alta'), ('Media', 'Media'), ('Baja', 'Baja')])  # Opcional
-    fecha_limite = DateField('Fecha Límite', format='%Y-%m-%d',validators=[DataRequired()])  # Opcional
+    fecha_limite = DateTimeField('Fecha Límite', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])  # Opcional
     fecha_creacion = DateField('Fecha Creación', default=datetime.now(),
                                format='%Y-%m-%d')  # Mantener la fecha de creación pero opcional
 
@@ -37,7 +37,7 @@ class CompromisoForm(FlaskForm):
     nivel_avance = IntegerField('Nivel de Avance',
                                 validators=[NumberRange(min=0, max=100)],default=0)  # Opcional, manteniendo el rango de 0 a 100
 
-    responsables = MultiSelectField('Responsables', choices=[])  # Opcional, choices cargados dinámicamente
+    referentes = MultiSelectField('Referentes', choices=[])  # Opcional, choices cargados dinámicamente
 
 
 class CreateMeetingForm(FlaskForm):

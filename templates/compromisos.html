@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         table {
             width: 100%;
@@ -53,6 +54,16 @@
             margin: 20px auto;
             max-width: 1200px;
         }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .footer img {
+            width: 100px;
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -70,7 +81,7 @@
         <h1>Ver Compromisos</h1>
 
         <!-- Botón para volver al home -->
-        <a href="{{ url_for('home.home_view') }}" class="btn-secondary">Volver al Home</a>
+        <a href="{{ url_for('home.home_view') }}" class="btn-secondary"><i class="fas fa-home mr-2"></i> Volver al Home</a>
 
         <form id="compromisos-form" method="POST" action="{{ url_for('director.ver_compromisos_director', mes=request.args.get('month'), departamento_id=request.args.get('departamento_id')) }}">
     <!-- Campos ocultos para enviar el mes y el departamento -->
@@ -85,7 +96,7 @@
                 <th>Nivel de Avance (%)</th>
                 <th>Fecha Límite</th>
                 <th>Departamento</th>
-                <th>Responsables</th>
+                <th>Referentes</th>
                 <th>Comentario</th>
                 <th>Comentario Dirección</th>
                 <th>Acciones</th>
@@ -102,14 +113,14 @@
                     </select>
                 </td>
                 <td><input type="number" name="nivel_avance-{{ compromiso.compromiso_id }}" value="{{ compromiso.avance }}" min="0" max="100"></td>
-                <td>{{ compromiso.fecha_limite.strftime('%Y-%m-%d') }}</td>
+                <td>{{ compromiso.fecha_limite.strftime('%d-%m-%Y %H:%M') }}</td>
                 <td>
                     {{ compromiso.departamento}}
                 </td>
                 <td>
-                    <select name="responsables-{{ compromiso.compromiso_id }}" multiple>
-                        {% for value, label in responsables %}
-                            <option value="{{ value }}" {% if value in compromiso.responsables_ids %}selected{% endif %}>
+                    <select name="referentes-{{ compromiso.compromiso_id }}" multiple>
+                        {% for value, label in referentes %}
+                            <option value="{{ value }}" {% if value in compromiso.referentes_ids %}selected{% endif %}>
                                 {{ label }}
                             </option>
                         {% endfor %}
@@ -117,21 +128,27 @@
                 </td>
                 <td><textarea name="comentario-{{ compromiso.compromiso_id }}">{{ compromiso.comentario }}</textarea></td>
                 <td><textarea name="comentario_direccion-{{ compromiso.compromiso_id }}">{{ compromiso.comentario_director }}</textarea></td>
-                <td><button type="button" class="btn-primary guardar-btn" data-id="{{ compromiso.compromiso_id }}">Guardar</button></td>
+                <td><button type="button" class="btn-primary guardar-btn" data-id="{{ compromiso.compromiso_id }}"><i class="fas fa-save"></i> Guardar</button></td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </form>
     </div>
+    <footer class="footer">
+        Servicio de Salud del Maule
+        <div>
+            <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
+        </div>
+    </footer>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(document).ready(function() {
-            // Inicializar Select2 para los selects de responsables
-            $('select[name^="responsables-"]').select2({
-                placeholder: "Selecciona responsables",
+            // Inicializar Select2 para los selects de referentes
+            $('select[name^="referentes-"]').select2({
+                placeholder: "Selecciona referentes",
                 allowClear: true,
                 width: '300px'
             });

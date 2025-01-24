@@ -1,167 +1,163 @@
-{% block title %}<title>Ver Compromisos</title>{% endblock %}
-<link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
-
-{% block stylesheets %}
-<style>
-    .container {
-        font-family: sans-serif;
-        max-width: 98%;
-        margin: 20px auto;
-        padding: 20px;
-        background-color: #f8f9fa;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-    }
-
-    h1 {
-        font-family: sans-serif;
-        color: #007bff;
-        text-align: center;
-        font-size: 2em;
-        margin-bottom: 1.5rem;
-    }
-    .responsables-wrapper {
-            position: relative;
-            
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ver Compromisos</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
         }
 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-    .back-button {
-        font-family: sans-serif;
-        display: block;
-        background-color: #6c757d;
-        color: white;
-        padding: 10px 15px;
-        text-decoration: none;
-        border-radius: 4px;
-        margin-bottom: 20px;
-        width: fit-content;
-    }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+        }
 
-    .back-button:hover {
-        background-color: #5a6268;
-    }
-
-    .table-responsive {
-        overflow-x: auto;
-        margin-top: 1rem;
-        padding: 0.5rem;
-    }
-
-    table {
-        font-family: sans-serif;
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.9em;
-        background-color: white;
-    }
-
-    th, td {
-        font-family: sans-serif;
-        border: 1px solid #dee2e6;
-        padding: 15px;
-        text-align: left;
-        vertical-align: top;
-    }
-
-    th {
-        font-family: sans-serif;
-        background-color: #007bff;
-        color: white;
-        white-space: nowrap;
-        position: sticky;
-        top: 0;
-        z-index: 1;
-    }
-
-    tr:nth-child(even) {
-        font-family: sans-serif;
-        background-color: #f8f9fa;
-    }
-
-    .priority-low {
-        background-color: #d4edda;
-        color: #155724;
-        text-align: center;
-        font-weight: 500;
-    }
-
-    .priority-medium {
-        background-color: #fff3cd;
-        color: #856404;
-        text-align: center;
-        font-weight: 500;
-    }
-
-    .priority-high {
-        background-color: #f8d7da;
-        color: #721c24;
-        text-align: center;
-        font-weight: 500;
-    }
-
-    select, input[type="number"] {
-        font-family: sans-serif;
-        width: 100%;
-        padding: 6px 8px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        background-color: white;
-    }
-
-    textarea {
-        font-family: sans-serif;
-        width: 100%;
-        min-height: 80px;
-        padding: 6px 8px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        resize: vertical;
-    }
-
-    .btn-guardar {
-        font-family: sans-serif;
-        background-color: #007bff;
-        color: white;
-        padding: 6px 12px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        width: auto;
-        min-width: 100px;
-        white-space: nowrap;
-    }
-
-    .btn-guardar:hover {
-        font-family: sans-serif;
-        background-color: #0056b3;
-    }
-
-    /* Column widths */
-    .col-descripcion { width: 15%; }
-    .col-estado { width: 8%; }
-    .col-prioridad { width: 8%; }
-    .col-avance { width: 8%; }
-    .col-fecha { width: 8%; }
-    .col-departamento { width: 12%; }
-    .col-responsables { width: 12%; }
-    .col-comentario { width: 12%; }
-    .col-acciones { width: 8%; }
-
-    @media screen and (max-width: 1200px) {
         .container {
-            margin: 10px;
-            padding: 10px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
         }
-    }
-    .footer {
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 2.5em;
+        }
+
+        .back-button {
+            display: inline-block;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        .back-button:hover {
+            background-color: #5a6268;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 1rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: auto;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:nth-child(even) {
             background-color: #f8f9fa;
+        }
+
+        tr:hover {
+            background-color: #e9ecef;
+        }
+
+        .priority {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .priority-low {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .priority-medium {
+            background-color: var(--warning-color);
+            color: black;
+        }
+
+        .priority-high {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        select, input[type="number"], textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 14px;
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: horizontal; /* Permitir redimensionar horizontalmente */
+        }
+
+        .btn-guardar {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-guardar:hover {
+            background-color: #0056b3;
+        }
+
+        .footer {
+            background-color: var(--light-color);
             padding: 20px 0;
             text-align: center;
-            color: #666;
+            color: var(--secondary-color);
             font-size: 14px;
             border-top: 1px solid #ddd;
-            margin-bottom: 0px;
+            margin-top: 40px;
         }
 
         .footer img {
@@ -169,107 +165,108 @@
             margin-top: 10px;
         }
 
-</style>
-{% endblock %}
+        @media screen and (max-width: 768px) {
+            .table-responsive {
+                font-size: 14px;
+            }
 
-{% block content %}
-<div class="container"></div>
-    <h1><i class="fas fa-tasks"></i>Compromisos</h1>
-    
-    <a href="{{ url_for('home.home_view') }}" class="back-button">
-        <i class="fas fa-home"></i> Volver al Inicio
-    </a>
+            th, td {
+                padding: 8px 10px;
+            }
 
+            .btn-guardar {
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-tasks"></i> Compromisos</h1>
+        
+        <a href="{{ url_for('home.home_view') }}" class="back-button">
+            <i class="fas fa-home"></i> Volver al Inicio
+        </a>
 
-        <form id="compromisos-form" method="POST" action="{{ url_for('home.ver_compromisos') }}">
-            <table>
-                <thead>
-                    <tr>
-                        <th class="col-descripcion">Descripción</th>
-                        <th class="col-estado">Estado</th>
-                        <th class="col-prioridad">Prioridad</th>
-                        <th class="col-avance">Avance (%)</th>
-                        <th class="col-fecha">Fecha Límite</th>
-                        <th class="col-departamento">Departamento</th>
-                        <th class="col-responsables">Responsables</th>
-                        {% if es_director %}
-                        <th class="col-responsables">Nuevos Responsables</th>
-                        {% endif %}
-                        <th class="col-comentario">Comentario Referente</th>
-                        <th class="col-comentario">Comentario Dirección</th>
-                        <th class="col-acciones">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for compromiso in compromisos %}
-                    <tr>
-                        <td>{{ compromiso.descripcion }}</td>
-                        <td>
-                            <select name="estado-{{ compromiso.compromiso_id }}">
-                                <option value="Pendiente" {% if compromiso.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-                                <option value="Completado" {% if compromiso.estado == 'Completado' %}selected{% endif %}>Completado</option>
-                            </select>
-                        </td>
-                        <td class="{% if compromiso.prioridad == 'Alta' %}priority-high{% elif compromiso.prioridad == 'Media' %}priority-medium{% else %}priority-low{% endif %}">
-                            {{ compromiso.prioridad }}
-                        </td>
-                        <td>
-                            <input type="number" 
-                                   name="nivel_avance-{{ compromiso.compromiso_id }}" 
-                                   value="{{ compromiso.avance }}" 
-                                   min="0" 
-                                   max="100">
-                        </td>
-                        <td>{{ compromiso.fecha_limite.strftime('%Y-%m-%d') }}</td>
-                        <td>{{ compromiso.departamento_name }}</td>
-                        <td>
+        <div class="table-responsive">
+            <form id="compromisos-form" method="POST" action="{{ url_for('home.ver_compromisos') }}">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Descripción</th>
+                            <th>Estado</th>
+                            <th>Prioridad</th>
+                            <th>Avance (%)</th>
+                            <th>Fecha Límite</th>
+                            <th>Departamento</th>
+                            <th>Referentes</th>
                             {% if es_director %}
-                            <select name="nuevos_responsables-{{ compromiso.compromiso_id }}" 
-                                    multiple 
-                                    class="responsables-select">
-                                {% for value, label in todos_responsables %}
-                                    <option value="{{ value }}" 
-                                            {% if value in compromiso.responsables_ids %}selected{% endif %}>
-                                        {{ label }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                            {% else %}
-                            {{ compromiso.responsables }}
+                            <th>Nuevos Referentes</th>
                             {% endif %}
-                        </td>
-                        {% if es_director %}
-                        <td>
-                            <select name="nuevos_responsables-{{ compromiso.compromiso_id }}" 
-                                    multiple 
-                                    class="responsables-select">
-                                {% for value, label in todos_responsables %}
-                                    <option value="{{ value }}" 
-                                            {% if value in compromiso.responsables_ids %}selected{% endif %}>
-                                        {{ label }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </td>
-                        {% endif %}
-                        <td>
-                            <textarea name="comentario-{{ compromiso.compromiso_id }}">{{ compromiso.comentario }}</textarea>
-                        </td>
-                        <td>
-                            <textarea name="comentario_direccion-{{ compromiso.compromiso_id }}" readonly>{{ compromiso.comentario_direccion }}</textarea>
-                        </td>
-                        <td>
-                            <button type="submit" 
-                                    class="btn-guardar" 
-                                    data-id="{{ compromiso.compromiso_id }}">
-                                <i class="fas fa-save"></i> Guardar
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </form>
+                            <th>Comentario Referente</th>
+                            <th>Comentario Dirección</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for compromiso in compromisos if user_id in compromiso.referentes_ids %}
+                        <tr>
+                            <td>{{ compromiso.descripcion }}</td>
+                            <td>
+                                <select name="estado-{{ compromiso.compromiso_id }}">
+                                    <option value="Pendiente" {% if compromiso.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                    <option value="Completado" {% if compromiso.estado == 'Completado' %}selected{% endif %}>Completado</option>
+                                </select>
+                            </td>
+                            <td>
+                                <span class="priority {% if compromiso.prioridad == 'Alta' %}priority-high{% elif compromiso.prioridad == 'Media' %}priority-medium{% else %}priority-low{% endif %}">
+                                    {{ compromiso.prioridad }}
+                                </span>
+                            </td>
+                            <td>
+                                <input type="number" 
+                                       name="nivel_avance-{{ compromiso.compromiso_id }}" 
+                                       value="{{ compromiso.avance }}" 
+                                       min="0" 
+                                       max="100">
+                            </td>
+                            <td>{{ compromiso.fecha_limite.strftime('%d-%m-%Y %H:%M') }}</td>
+                            <td>{{ compromiso.departamento_name }}</td>
+                            <td>{{ compromiso.referentes }}</td>
+                            {% if es_director %}
+                            <td>
+                                <select name="nuevos_referentes-{{ compromiso.compromiso_id }}" 
+                                        multiple 
+                                        class="referentes-select">
+                                    {% for value, label in todos_referentes %}
+                                        <option value="{{ value }}" 
+                                                {% if value in compromiso.referentes_ids %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            {% endif %}
+                            <td>
+                                <textarea name="comentario-{{ compromiso.compromiso_id }}">{{ compromiso.comentario }}</textarea>
+                            </td>
+                            <td>
+                                <textarea name="comentario_direccion-{{ compromiso.compromiso_id }}" {% if user.cargo != 'DIRECTOR DE SERVICIO' %}readonly{% endif %}>{{ compromiso.comentario_direccion }}</textarea>
+                            </td>
+                            <td>
+                                <button type="submit" 
+                                        class="btn-guardar" 
+                                        data-id="{{ compromiso.compromiso_id }}">
+                                    <i class="fas fa-save"></i> Guardar
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+        </div>
     </div>
     <footer class="footer">
         Servicio de Salud del Maule
@@ -278,21 +275,19 @@
         </div>
     </footer>
 
-
-{% endblock %}
-
-{% block javascripts %}
-<script>
-    $(document).ready(function() {
-        {% if es_director %}
-        $('.responsables-select').select2({
-            placeholder: "Selecciona responsables",
-            allowClear: true,
-            width: '100%',
-            dropdownParent: $('#compromisos-form')
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            {% if es_director %}
+            $('.referentes-select').select2({
+                placeholder: "Selecciona referentes",
+                allowClear: true,
+                width: '100%',
+                dropdownParent: $('#compromisos-form')
+            });
+            {% endif %}
         });
-        {% endif %}
-    });
-</script>
-{% endblock %}
-
+    </script>
+</body>
+</html>

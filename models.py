@@ -12,7 +12,7 @@ class User(UserMixin, db.Model):
 
 class Departamento(db.Model):
     __tablename__ = 'departamento'
-    id_departamento = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
 
 class Persona(db.Model):
@@ -47,7 +47,7 @@ class Reunión(db.Model):
 
 class Staff(db.Model):
     __tablename__ = 'staff'
-    id_staff = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     nombre_staff = db.Column(db.String(150), nullable=False)
 
 # Tabla intermedia para compromisos y reuniones
