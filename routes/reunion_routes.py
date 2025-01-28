@@ -9,6 +9,10 @@ from werkzeug.utils import secure_filename
 from forms import CreateMeetingForm
 import os
 from datetime import datetime
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for
+from repositories.reunion_service import ReunionService
+from .auth_routes import login_required
+import logging
 
 reunion = Blueprint('reunion', __name__)
 service = ReunionService()
@@ -70,6 +74,25 @@ def crear_reunion_paso1():
 
     return render_template('crear_reunion.html', form=form)
 
+@reunion.route('/add_invitado', methods=['POST'])
+def add_invitado():
+    nombre = request.form.get('nombre')
+    institucion = request.form.get('institucion')
+    correo = request.form.get('correo')
+    telefono = request.form.get('telefono')
 
+    if not nombre or not institucion or not correo or not telefono:
+        return jsonify({'error': 'Todos los campos son obligatorios'}), 400
+
+    try:
+        logging.debug(f"Datos recibidos: nombre={nombre}, institucion={institucion}, correo={correo}, telefono={telefono}")
+        invitado_id = service.add_invitado(nombre, institucion, correo, telefono)  # Call the method on the service object
+        logging.debug(f"Invitado guardado con ID: {invitado_id}")
+        return jsonify({'id': invitado_id, 'nombre': nombre, 'institucion': institucion, 'correo': correo, 'telefono': telefono}), 200
+    except Exception as e:
+        logging.error(f"Error al guardar el invitado: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+#
 
 

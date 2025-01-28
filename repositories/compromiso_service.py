@@ -133,6 +133,7 @@ class CompromisoService:
     def update_compromiso(self, compromiso_id, descripcion, estado, prioridad, avance, comentario, comentario_direccion, user_id, referentes):
         self.repo.update_compromiso(compromiso_id, descripcion, estado, prioridad, avance, comentario, comentario_direccion, user_id, referentes)
         self.repo.log_modificacion(compromiso_id, user_id)
+        self.repo.commit()  # Ensure changes are committed to the database
 
     def get_compromisos_by_departamento(self, departamento_id):
         """
@@ -186,6 +187,9 @@ class CompromisoService:
 
         form.id_departamento.choices = [(d['id'], d['name']) for d in departamentos]
         form.referentes.choices = [(r[0], r[1]) for r in referentes]
+
+    def set_current_user_id(self, user_id):
+        self.repo.set_current_user_id(user_id)
 
 
 

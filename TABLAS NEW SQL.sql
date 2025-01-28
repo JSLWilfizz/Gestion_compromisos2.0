@@ -114,9 +114,9 @@ CREATE TABLE IF NOT EXISTS compromiso(
     id SERIAL PRIMARY KEY,
     descripcion TEXT,
     estado VARCHAR(255),
-	prioridad VARCHAR(255),
-	fecha_creacion TIMESTAMP,
-	avance INT,
+    prioridad VARCHAR(255),
+    fecha_creacion TIMESTAMP,
+    avance INT,
     fecha_limite TIMESTAMP,
     comentario TEXT,
     comentario_direccion TEXT,
@@ -161,10 +161,13 @@ CREATE TABLE compromiso_modificaciones (
     FOREIGN KEY (id_usuario) REFERENCES persona(id) ON DELETE SET NULL
 );
 
-CREATE TABLE invitados (
-    id_invitado INT AUTO_INCREMENT PRIMARY KEY,
+-- Tabla invitados
+CREATE TABLE IF NOT EXISTS invitados (
+    id SERIAL PRIMARY KEY,
     nombre_completo VARCHAR(255) NOT NULL,
-    correo VARCHAR(255) NOT NULL UNIQUE
+    institucion VARCHAR(255) NOT NULL,
+    correo VARCHAR(255) NOT NULL UNIQUE,
+    telefono VARCHAR(255)
 );
 
 -- Crear función para el trigger
@@ -192,112 +195,84 @@ AFTER INSERT ON persona
 FOR EACH ROW
 EXECUTE FUNCTION crear_usuario();
 
--- Crear vista para compromisos compartidos según jerarquía
-CREATE OR REPLACE VIEW compromisos_compartidos AS
-WITH RECURSIVE dept_hierarchy AS (
-    SELECT 
-        id, 
-        name, 
-        id_departamento_padre 
-    FROM 
-        departamento 
-    WHERE 
-        id_departamento_padre IS NULL
-    UNION ALL
-    SELECT 
-        d.id, 
-        d.name, 
-        d.id_departamento_padre 
-    FROM 
-        departamento d
-    INNER JOIN 
-        dept_hierarchy dh ON dh.id = d.id_departamento_padre
-)
-SELECT 
-    c.id AS compromiso_id,
-    c.descripcion,
-    c.estado,
-    c.prioridad,
-    c.fecha_creacion,
-    c.avance,
-    c.fecha_limite,
-    c.comentario,
-    c.comentario_direccion,
-    d.id AS departamento_id,
-    d.name AS departamento_name,
-    p.id AS persona_id,
-    p.name AS persona_name,
-    p.lastname AS persona_lastname,
-    p.nivel_jerarquico AS persona_nivel_jerarquico
-FROM 
-    compromiso c
-JOIN 
-    departamento d ON c.id_departamento = d.id
-JOIN 
-    dept_hierarchy dh ON d.id = dh.id
-JOIN 
-    persona_departamento pd ON d.id = pd.id_departamento
-JOIN 
-    persona p ON pd.id_persona = p.id
-WHERE 
-    (p.nivel_jerarquico = 'SUBDIRECTOR/A' AND dh.id_departamento_padre IS NOT NULL)
-    OR (p.nivel_jerarquico = 'JEFE/A DE DEPARTAMENTO' AND dh.id_departamento_padre = d.id)
-    OR (p.nivel_jerarquico = 'JEFE/A DE UNIDAD' AND d.id = pd.id_departamento);
 
--- Crear vista para reuniones compartidas según jerarquía
-CREATE OR REPLACE VIEW reuniones_compartidas AS
-WITH RECURSIVE dept_hierarchy AS (
-    SELECT 
-        id, 
-        name, 
-        id_departamento_padre 
-    FROM 
-        departamento 
-    WHERE 
-        id_departamento_padre IS NULL
-    UNION ALL
-    SELECT 
-        d.id, 
-        d.name, 
-        d.id_departamento_padre 
-    FROM 
-        departamento d
-    INNER JOIN 
-        dept_hierarchy dh ON dh.id = d.id_departamento_padre
-)
-SELECT 
-    r.id AS reunion_id,
-    r.nombre,
-    r.fecha_creacion,
-    r.lugar,
-    r.asistentes,
-    r.proximas_reuniones,
-    r.acta_pdf,
-    r.correos,
-    r.temas_analizado,
-    r.tema,
-    d.id AS departamento_id,
-    d.name AS departamento_name,
-    p.id AS persona_id,
-    p.name AS persona_name,
-    p.lastname AS persona_lastname,
-    p.nivel_jerarquico AS persona_nivel_jerarquico
-FROM 
-    reunion r
-JOIN 
-    staff s ON r.id_staff = s.id
-JOIN 
-    persona_departamento pd ON s.id = pd.id_persona
-JOIN 
-    departamento d ON pd.id_departamento = d.id
-JOIN 
-    dept_hierarchy dh ON d.id = dh.id
-JOIN 
-    persona p ON pd.id_persona = p.id
-WHERE 
-    (p.nivel_jerarquico = 'SUBDIRECTOR/A' AND dh.id_departamento_padre IS NOT NULL)
-    OR (p.nivel_jerarquico = 'JEFE/A DE DEPARTAMENTO' AND dh.id_departamento_padre = d.id)
-    OR (p.nivel_jerarquico = 'JEFE/A DE UNIDAD' AND d.id = pd.id_departamento);
+--nuevo 24/01/2025
+
+-- Tabla para guardar compromisos eliminados
+CREATE TABLE IF NOT EXISTS compromiso_eliminado (
+    id SERIAL PRIMARY KEY, -- Clave primaria del compromiso eliminado
+    descripcion TEXT,
+    estado VARCHAR(255),
+    prioridad VARCHAR(255),
+    fecha_creacion TIMESTAMP,
+    avance INT,
+    fecha_limite TIMESTAMP,
+    comentario TEXT,
+    comentario_direccion TEXT,
+    id_departamento INT,
+    fecha_eliminacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Fecha de eliminación
+    eliminado_por INT, -- Usuario que eliminó el compromiso
+    CONSTRAINT fk_departamento_compromiso_eliminado FOREIGN KEY (id_departamento)
+        REFERENCES departamento(id)
+);
+
+
+-- Tabla para guardar compromisos archivados
+CREATE TABLE IF NOT EXISTS compromisos_archivados (
+    id SERIAL PRIMARY KEY, -- Clave primaria del compromiso archivado
+    descripcion TEXT,
+    estado VARCHAR(255),
+    prioridad VARCHAR(255),
+    fecha_creacion TIMESTAMP,
+    avance INT,
+    fecha_limite TIMESTAMP,
+    comentario TEXT,
+    comentario_direccion TEXT,
+    id_departamento INT,
+    fecha_archivado TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Fecha de archivado
+    archivado_por INT, -- Usuario que archivó el compromiso
+    CONSTRAINT fk_departamento_compromiso_archivado FOREIGN KEY (id_departamento)
+        REFERENCES departamento(id)
+);
+
+-- Tabla intermedia para responsables de compromisos archivados
+CREATE TABLE IF NOT EXISTS persona_compromiso_archivado (
+    id_persona INT,
+    id_compromiso INT,
+    CONSTRAINT fk_id_persona_archivado FOREIGN KEY (id_persona) REFERENCES persona(id),
+    CONSTRAINT fk_id_compromiso_archivado FOREIGN KEY (id_compromiso) REFERENCES compromisos_archivados(id),
+    PRIMARY KEY (id_persona, id_compromiso)
+);
+
+CREATE TABLE IF NOT EXISTS persona_compromiso_eliminado (
+    id_persona INT,
+    id_compromiso INT,
+    CONSTRAINT fk_id_persona_eliminado
+        FOREIGN KEY (id_persona) REFERENCES persona(id),
+    CONSTRAINT fk_id_compromiso_eliminado
+        FOREIGN KEY (id_compromiso) REFERENCES compromiso_eliminado(id),
+    PRIMARY KEY (id_persona, id_compromiso)
+);
+
+CREATE TABLE IF NOT EXISTS reunion_compromiso_archivado (
+    id_reunion INT,
+    id_compromiso INT,
+    CONSTRAINT fk_id_reunion_archivado
+        FOREIGN KEY (id_reunion) REFERENCES reunion(id),
+    CONSTRAINT fk_id_compromiso_archivado
+        FOREIGN KEY (id_compromiso) REFERENCES compromisos_archivados(id)
+);
+
+CREATE TABLE IF NOT EXISTS reunion_compromiso_eliminado (
+    id_reunion INT,
+    id_compromiso INT,
+    CONSTRAINT fk_id_reunion_eliminado
+        FOREIGN KEY (id_reunion) REFERENCES reunion(id),
+    CONSTRAINT fk_id_compromiso_eliminado
+        FOREIGN KEY (id_compromiso) REFERENCES compromiso_eliminado(id)
+);
+
+
 
 
 

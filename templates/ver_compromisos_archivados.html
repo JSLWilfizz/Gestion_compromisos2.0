@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compromisos Archivados</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            word-wrap: break-word;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-size: 14px;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .btn {
+            display: inline-block;
+            padding: 6px 10px;
+            margin: 1px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+            font-size: 12px;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .back-btn {
+            display: block;
+            width: 200px;
+            margin: 20px auto;
+            text-align: center;
+            padding: 10px;
+            background-color: #2ecc71;
+            font-size: 16px;
+        }
+        .back-btn:hover {
+            background-color: #27ae60;
+        }
+    </style>
+    <script>
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' };
+            return new Date(dateString).toLocaleDateString('es-ES', options);
+        }
+
+        window.onload = function() {
+            document.querySelectorAll('.fecha').forEach(elem => {
+                elem.textContent = formatDate(elem.textContent);
+            });
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Compromisos Archivados</h1>
+        <a href="/home" class="btn btn-primary"><i class="fas fa-home"></i> Volver al Inicio</a>
+        <br><br>
+        <table>
+            <thead>
+                <tr>
+                    <th>Descripción</th>
+                    <th>Reuniones asociadas</th>
+                    <th>Departamento</th>
+                    <th>Estado</th>
+                    <th>Prioridad</th>
+                    <th>Fecha Creación</th>
+                    <th>Avance</th>
+                    <th>Fecha Límite</th>
+                    <th>Comentario</th>
+                    <th>Comentario Dirección</th>
+                    <th>Archivado Por</th>
+                    <th>Fecha Archivado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for compromiso in compromisos %}
+                <tr>
+                    <td>{{ compromiso.descripcion }}</td>
+                    <td>{{ compromiso.reuniones_asociadas }}</td>
+                    <td>{{ compromiso.departamento_name }}</td>
+                    <td>{{ compromiso.estado }}</td>
+                    <td>{{ compromiso.prioridad }}</td>
+                    <td class="fecha">{{ compromiso.fecha_creacion }}</td>
+                    <td>{{ compromiso.avance }}%</td>
+                    <td class="fecha">{{ compromiso.fecha_limite }}</td>
+                    <td>{{ compromiso.comentario }}</td>
+                    <td>{{ compromiso.comentario_direccion }}</td>
+                    <td>{{ compromiso.archivado_por_nombre }}</td>
+                    <td class="fecha">{{ compromiso.fecha_archivado }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('home.desarchivar_compromiso', compromiso_id=compromiso.id) }}" style="display:inline;">
+                            <button type="submit" class="btn" onclick="return confirm('¿Estás seguro de que deseas desarchivar este compromiso?');"><i class="fas fa-undo"></i> Desarchivar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

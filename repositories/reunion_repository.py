@@ -1,6 +1,7 @@
 # /repositories/reunion_repository.py
 from database import get_db_connection
 from psycopg2.extras import RealDictCursor
+import logging
 
 class ReunionRepository:
     def __init__(self):
@@ -124,17 +125,19 @@ class ReunionRepository:
             self.conn.rollback()
             raise e
 
-    def insert_invitado(self, nombre, correo):
+    def insert_invitado(self, nombre, institucion, correo, telefono):
         try:
             with self.conn.cursor() as cursor:
                 cursor.execute("""
-                    INSERT INTO invitado (nombre_completo, correo)
-                    VALUES (%s, %s)
-                    RETURNING id
-                """, (nombre, correo))
+                    INSERT INTO invitados (nombre_completo, institucion, correo, telefono)
+                    VALUES (%s, %s, %s, %s)
+                    RETURNING id_invitado
+                """, (nombre, institucion, correo, telefono))
+                self.conn.commit()  # Commit the transaction
                 return cursor.fetchone()[0]
         except Exception as e:
             self.conn.rollback()
+            logging.error(f"Error en insert_invitado: {str(e)}")
             raise e
 
     def associate_reunion_compromiso(self, reunion_id, compromiso_id):
@@ -217,6 +220,15 @@ class ReunionRepository:
                     WHERE rc.id_reunion = %s
                     GROUP BY c.id, d.name
                 """, (reunion_id,))
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+
+    def fetch_invitados(self):
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT id_invitado, nombre_completo, institucion, correo, telefono FROM invitados")
                 return cursor.fetchall()
         except Exception as e:
             self.conn.rollback()

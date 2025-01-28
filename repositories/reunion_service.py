@@ -39,6 +39,9 @@ class ReunionService:
         departamentos = self.repo.fetch_departamentos()
         form.compromisos[0].departamento.choices = [(d['id'], d['name']) for d in departamentos]
 
+        invitados = self.repo.fetch_invitados()
+        form.invitados.choices = [(i['id_invitado'], f"{i['nombre_completo']} - {i['institucion']} - {i['correo']} - {i['telefono']}") for i in invitados]
+
     def create_reunion(self, form, request_data, acta_pdf_path, tema_concatenado, temas_analizado_concatenado, proximas_reuniones_concatenado, fecha_creacion, fecha_limite):
         origen_id = self.get_origen_id(form, request_data)
         area_id = self.get_area_id(form, request_data)
@@ -60,22 +63,19 @@ class ReunionService:
             correo_list.append(user['correo'] or '')
 
         # Recoger invitados y crearlos en la tabla persona
-        invitado_nombres = []
-        invitado_correos = []
-        for key, value in request_data.items():
-            if key.startswith('invitado-nombre-') and value.strip():
-                index = key.split('-')[-1]
-                invitado_nombres.append(value.strip())
-                correo_key = f'invitado-correo-{index}'
-                if request_data.get(correo_key):
-                    invitado_correos.append(request_data[correo_key].strip())
+        invitado_nombres = request_data.getlist('invitado-nombre')
+        invitado_instituciones = request_data.getlist('invitado-institucion')
+        invitado_correos = request_data.getlist('invitado-correo')
 
-        for i, nombre_invitado in enumerate(invitado_nombres):
-            # Insertar invitado
-            invitado_id = self.repo.insert_invitado(nombre_invitado, invitado_correos[i])
-            invitado_user = self.repo.fetch_user_info(invitado_id)
-            name_list.append(f"{invitado_user['name']} {invitado_user['lastname']}")
-            correo_list.append(invitado_user['correo'] or '')
+        for i in range(len(invitado_nombres)):
+            nombre = invitado_nombres[i]
+            institucion = invitado_instituciones[i]
+            correo = invitado_correos[i]
+            if nombre and institucion and correo:
+                invitado_id = self.repo.insert_invitado(nombre, institucion, correo)
+                invitado_user = self.repo.fetch_user_info(invitado_id)
+                name_list.append(f"{invitado_user['name']} {invitado_user['lastname']}")
+                correo_list.append(invitado_user['correo'] or '')
 
         asistentes_concatenados = ';'.join(name_list)
         correos_final = ';'.join(correo_list)
@@ -150,3 +150,6 @@ class ReunionService:
 
     def get_compromisos_por_reunion(self, reunion_id):
         return self.repo.fetch_compromisos_by_reunion(reunion_id)
+
+    def add_invitado(self, nombre, institucion, correo, telefono):
+        return self.repo.insert_invitado(nombre, institucion, correo, telefono)

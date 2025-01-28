@@ -326,6 +326,17 @@
                         {% endif %}
                         
                         <a href="#" class="btn"><i class="fas fa-calendar-alt"></i> Ver Reunion (Pronto)</a>
+                        
+                        <!-- Delete button -->
+                        <form method="POST" action="{{ url_for('home.eliminar_compromiso', compromiso_id=compromiso.compromiso_id) }}" style="display:inline;">
+                            <button type="submit" class="btn" onclick="return confirm('¿Estás seguro de que deseas eliminar este compromiso?');"><i class="fas fa-trash-alt"></i> Eliminar</button>
+                        </form>
+                        <!-- Archivado button -->
+                        {% if compromiso.estado == 'Completado' and user.cargo == 'DIRECTOR DE SERVICIO' or user.cargo == 'JEFE/A DE DEPARTAMENTO' or user.cargo == 'SUBDIRECTOR/A' or user.cargo == 'JEFE/A DE UNIDAD' %}
+                        <form method="POST" action="{{ url_for('home.archivar_compromiso', compromiso_id=compromiso.compromiso_id) }}" style="display:inline;">
+                            <button type="submit" class="btn" onclick="return confirm('¿Estás seguro de que deseas archivar este compromiso?');"><i class="fas fa-archive"></i> Archivar</button>
+                        </form>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

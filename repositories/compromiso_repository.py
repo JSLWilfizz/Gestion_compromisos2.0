@@ -434,7 +434,7 @@ class CompromisoRepository:
                     """, (mes,))
                 return cursor.fetchall()
         except Exception as e:
-            self.conn.rollback()
+            self.conn.rollback() # type: ignore
             raise e
 
     def get_meses(self):
@@ -447,9 +447,6 @@ class CompromisoRepository:
 
     def commit(self):
         self.conn.commit()
-
-    def rollback(self):
-        self.conn.rollback()
 
     def close(self):
         self.conn.close()
@@ -631,8 +628,6 @@ class CompromisoRepository:
             print(f"Error al insertar compromiso en la base de datos: {e}")
             raise e
 
-    def commit(self):
-        self.conn.commit()
 
     def rollback(self):
         self.conn.rollback()

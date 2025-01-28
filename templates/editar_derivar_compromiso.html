@@ -101,13 +101,13 @@
             <textarea id="descripcion" name="descripcion" {% if derivar %}readonly{% endif %} required>{{ compromiso.descripcion }}</textarea>
 
             <label for="estado">Estado</label>
-            <select id="estado" name="estado" {% if derivar %}disabled{% endif %} required>
+            <select id="estado" name="estado" {% if derivar %}readonly{% endif %} required>
                 <option value="Pendiente" {% if compromiso.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
                 <option value="Completado" {% if compromiso.estado == 'Completado' %}selected{% endif %}>Completado</option>
             </select>
 
             <label for="prioridad">Prioridad</label>
-            <select id="prioridad" name="prioridad" {% if derivar %}disabled{% endif %} required>
+            <select id="prioridad" name="prioridad" {% if derivar %}readonly{% endif %} required>
                 <option value="Alta" {% if compromiso.prioridad == 'Alta' %}selected{% endif %}>Alta</option>
                 <option value="Media" {% if compromiso.prioridad == 'Media' %}selected{% endif %}>Media</option>
                 <option value="Baja" {% if compromiso.prioridad == 'Baja' %}selected{% endif %}>Baja</option>

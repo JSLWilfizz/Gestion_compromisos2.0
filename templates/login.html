@@ -1,49 +1,52 @@
 <!DOCTYPE html>
 <html lang="es">
-
-    <!-- Mensaje de notificación -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="flash-messages">
-          {% for category, message in messages %}
-            <div class="alert alert-{{ category }}">{{ message }}</div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Servicio de Salud del Maule</title>
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-
     <style>
-        /* Estilo general */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f6f9;
+        :root {
+            --primary-color: #007bff;
+            --primary-dark: #0056b3;
+            --secondary-color: #6c757d;
+            --background-color: #f4f6f9;
+            --text-color: #333333;
+            --input-background: #f9f9f9;
+            --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            display: flex;  
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--background-color);
+            display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
+            padding: 20px;
         }
 
         .container {
             max-width: 400px;
             width: 100%;
             background: #ffffff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: var(--box-shadow);
         }
 
         .container h1 {
             text-align: center;
-            margin-bottom: 20px;
-            color: #007bff;
-            font-size: 24px;
+            margin-bottom: 30px;
+            color: var(--primary-color);
+            font-size: 28px;
+            font-weight: 700;
         }
 
         form {
@@ -52,101 +55,106 @@
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #333;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 14px;
         }
 
         input[type="text"], input[type="password"] {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            background-color: #f9f9f9;
-            transition: border-color 0.3s ease;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            background-color: var(--input-background);
+            transition: all 0.3s ease;
         }
 
         input[type="text"]:focus, input[type="password"]:focus {
-            border-color: #007bff;
+            border-color: var(--primary-color);
             outline: none;
             background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
         }
 
         button {
             width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            margin-left:8px;
-            font-weight: bold;
+            padding: 12px;
+            font-size: 18px;
+            font-weight: 600;
             color: #ffffff;
-            background: #007bff;
+            background: var(--primary-color);
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.1s ease;
         }
 
         button:hover {
-            background: #0056b3;
+            background: var(--primary-dark);
+        }
+
+        button:active {
+            transform: scale(0.98);
         }
 
         .footer {
             text-align: center;
-            margin-top: 20px;
-            font-size: 14px;
-            color: #777;
+            margin-top: 30px;
         }
 
         .footer p {
-            margin: 0;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: var(--secondary-color);
         }
+
         .footer img {
-            width: 80px;
-            margin-top: 10px;
+            width: 100px;
+            height: auto;
         }
-        /* Responsividad */
-        @media (max-width: 600px) {
+
+        @media (max-width: 480px) {
             .container {
-                padding: 20px;
+                padding: 30px 20px;
             }
-            h1 {
-                font-size: 20px;
+
+            .container h1 {
+                font-size: 24px;
+            }
+
+            input[type="text"], input[type="password"], button {
+                font-size: 16px;
             }
         }
     </style>
-
-
+</head>
 <body>
     <div class="container">
-        <h1>Sistema de Gestión de Compromisos   </h1>
-        
+        <h1>Sistema de Gestión de Compromisos</h1>
         
         <form method="POST" action="{{ url_for('auth.login') }}">
-            <!-- Campo RUT -->
             <div class="form-group">
                 <label for="rut">RUT</label>
                 <input type="text" id="rut" name="rut" placeholder="Ingrese su RUT" required>
             </div>
 
-            <!-- Campo Contraseña -->
             <div class="form-group">
                 <label for="password">Contraseña</label>
                 <input type="password" id="password" name="password" placeholder="Ingrese su Contraseña" required>
             </div>
 
-            <!-- Botón de Iniciar Sesión -->
             <div class="form-group">
-                <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+                <button type="submit">Iniciar Sesión</button>
             </div>
         </form>
 
-        <!-- Pie de página -->
         <div class="footer">
             <p>Servicio de Salud del Maule</p>
             <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">

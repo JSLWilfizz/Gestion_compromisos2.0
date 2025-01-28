@@ -4,11 +4,14 @@ from flask import Blueprint, render_template, session, redirect, url_for, flash,
 from flask_login import login_required
 from repositories.compromiso_service import CompromisoService
 from repositories.reunion_service import ReunionService
+from repositories.persona_comp_service import PersonaCompService
 from .auth_routes import login_required
+from forms import CompromisoForm, CreateCompromisoForm
 
 home = Blueprint('home', __name__)
 compromiso_service = CompromisoService()
 reunion_service = ReunionService()
+persona_comp_service = PersonaCompService()
 
 
 @home.route('/')
@@ -263,4 +266,179 @@ def mis_reuniones():
 def ver_compromisos_reunion(reunion_id):
     compromisos = reunion_service.get_compromisos_por_reunion(reunion_id)
     return render_template('compromisos_reuniones.html', compromisos=compromisos)
+
+@home.route('/eliminar_compromiso/<int:compromiso_id>', methods=['POST'])
+@login_required
+def eliminar_compromiso(compromiso_id):
+    user_id = session['user_id']
+    user = compromiso_service.get_user_info(user_id)
+    compromiso = compromiso_service.get_compromiso_by_id(compromiso_id)
+
+    # Verificar si el usuario tiene permiso para eliminar el compromiso
+    if not (compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento']) or session.get('the_big_boss') or session.get('es_director')):
+        flash('No tienes permiso para eliminar este compromiso.', 'danger')
+        return redirect(url_for('home.ver_compromisos_compartidos'))
+
+    try:
+        # Establecer el id_persona en el contexto de la sesión
+        persona_comp_service.set_current_user_id(user_id)
+        
+        # Eliminar el compromiso usando el servicio
+        persona_comp_service.eliminar_compromiso(compromiso_id, user_id)
+        flash('Compromiso eliminado con éxito.', 'success')
+    except Exception as e:
+        print(f"Error al eliminar el compromiso: {e}")
+        traceback.print_exc()
+        flash(f'Error al eliminar el compromiso: {str(e)}', 'danger')
+    return redirect(url_for('home.ver_compromisos_compartidos'))
+
+@home.route('/ver_compromisos_eliminados')
+@login_required
+def ver_compromisos_eliminados():
+    user_id = session['user_id']
+    if not session.get('the_big_boss'):
+        flash('No tienes permiso para ver los compromisos eliminados.', 'danger')
+        return redirect(url_for('home.home_view'))
+
+    compromisos_eliminados = persona_comp_service.get_compromisos_eliminados()
+    return render_template('ver_compromisos_eliminados.html', compromisos=compromisos_eliminados)
+
+@home.route('/archivar_compromiso/<int:compromiso_id>', methods=['POST'])
+@login_required
+def archivar_compromiso(compromiso_id):
+    user_id = session['user_id']
+    user = compromiso_service.get_user_info(user_id)
+    compromiso = compromiso_service.get_compromiso_by_id(compromiso_id)
+
+    # Verificar si el usuario tiene permiso para archivar el compromiso
+    if not (compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento']) or session.get('the_big_boss') or session.get('es_director')):
+        flash('No tienes permiso para archivar este compromiso.', 'danger')
+        return redirect(url_for('home.ver_compromisos_compartidos'))
+
+    try:
+        # Establecer el id_persona en el contexto de la sesión
+        persona_comp_service.set_current_user_id(user_id)
+        
+        # Archivar el compromiso usando el servicio
+        persona_comp_service.archivar_compromiso(compromiso_id, user_id)
+        flash('Compromiso archivado con éxito.', 'success')
+    except Exception as e:
+        flash(f'Error al archivar el compromiso: {str(e)}', 'danger')
+    return redirect(url_for('home.ver_compromisos_compartidos'))
+
+@home.route('/ver_compromisos_archivados')
+@login_required
+def ver_compromisos_archivados():
+    user_id = session['user_id']
+    if not session.get('the_big_boss'):
+        flash('No tienes permiso para ver los compromisos archivados.', 'danger')
+        return redirect(url_for('home.home_view'))
+
+    compromisos_archivados = persona_comp_service.get_compromisos_archivados()
+    return render_template('ver_compromisos_archivados.html', compromisos=compromisos_archivados)
+
+@home.route('/desarchivar_compromiso/<int:compromiso_id>', methods=['POST'])
+@login_required
+def desarchivar_compromiso(compromiso_id):
+    user_id = session['user_id']
+    if not session.get('the_big_boss'):
+        flash('No tienes permiso para desarchivar este compromiso.', 'danger')
+        return redirect(url_for('home.home_view'))
+
+    try:
+        persona_comp_service.desarchivar_compromiso(compromiso_id)
+        flash('Compromiso desarchivado con éxito.', 'success')
+    except Exception as e:
+        flash(f'Error al desarchivar el compromiso: {str(e)}', 'danger')
+    return redirect(url_for('home.ver_compromisos_archivados'))
+
+@home.route('/eliminar_permanentemente_compromiso/<int:compromiso_id>', methods=['POST'])
+@login_required
+def eliminar_permanentemente_compromiso(compromiso_id):
+    user_id = session['user_id']
+    if not session.get('the_big_boss'):
+        flash('No tienes permiso para eliminar permanentemente este compromiso.', 'danger')
+        return redirect(url_for('home.home_view'))
+
+    try:
+        persona_comp_service.eliminar_permanentemente_compromiso(compromiso_id)
+        flash('Compromiso eliminado permanentemente con éxito.', 'success')
+    except Exception as e:
+        print(f"Error al eliminar permanentemente el compromiso: {e}")
+        traceback.print_exc()
+        flash(f'Error al eliminar permanentemente el compromiso: {str(e)}', 'danger')
+    return redirect(url_for('home.ver_compromisos_eliminados'))
+
+@home.route('/forzar_eliminacion_compromisos', methods=['POST'])
+@login_required
+def forzar_eliminacion_compromisos():
+    try:
+        compromiso_ids = [20, 21]
+        persona_comp_service.forzar_eliminacion_compromisos(compromiso_ids)
+        flash('Compromisos eliminados forzosamente con éxito.', 'success')
+    except Exception as e:
+        print(f"Error al forzar la eliminación de los compromisos: {e}")
+        traceback.print_exc()
+        flash(f'Error al forzar la eliminación de los compromisos: {str(e)}', 'danger')
+    return redirect(url_for('home.ver_compromisos_compartidos'))
+
+@home.route('/recuperar_compromiso/<int:compromiso_id>', methods=['POST'])
+@login_required
+def recuperar_compromiso(compromiso_id):
+    user_id = session['user_id']
+    if not session.get('the_big_boss'):
+        flash('No tienes permiso para recuperar este compromiso.', 'danger')
+        return redirect(url_for('home.home_view'))
+
+    try:
+        persona_comp_service.recuperar_compromiso(compromiso_id)
+        flash('Compromiso recuperado con éxito.', 'success')
+    except Exception as e:
+        flash(f'Error al recuperar el compromiso: {str(e)}', 'danger')
+    return redirect(url_for('home.ver_compromisos_eliminados'))
+
+@home.route('/crear_compromiso', methods=['GET', 'POST'])
+@login_required
+def crear_compromiso():
+    user_id = session['user_id']
+    user = persona_comp_service.get_user_info(user_id)
+    form = CreateCompromisoForm()
+
+    # Cargar opciones para el formulario
+    persona_comp_service.get_initial_form_data(form)
+
+    if request.method == 'POST':
+        print("Formulario enviado")
+        if form.validate_on_submit():
+            print("Formulario validado")
+            descripcion = form.descripcion.data
+            estado = form.estado.data
+            prioridad = form.prioridad.data
+            fecha_creacion = form.fecha_creacion.data
+            fecha_limite = form.fecha_limite.data
+            comentario = form.comentario.data
+            comentario_direccion = form.comentario_direccion.data
+            id_departamento = form.id_departamento.data
+            referentes = form.referentes.data
+
+            print(f"Datos del formulario: {descripcion}, {estado}, {prioridad}, {fecha_creacion}, {fecha_limite}, {comentario}, {comentario_direccion}, {id_departamento}, {referentes}")
+
+            try:
+                # Crear el compromiso
+                compromiso_id = persona_comp_service.create_compromiso(
+                    descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento, user_id
+                )
+                # Asociar los referentes al compromiso
+                persona_comp_service.asociar_referentes(compromiso_id, referentes)
+                
+                flash('Compromiso creado con éxito.', 'success')
+                return redirect(url_for('home.home_view'))
+            except Exception as e:
+                print(f"Error al crear compromiso: {e}")
+                flash(f"Error al crear compromiso: {e}", 'danger')
+        else:
+            print("Formulario no válido")
+            print(form.errors)
+
+    return render_template('crear_compromiso.html', form=form, user=user)
 

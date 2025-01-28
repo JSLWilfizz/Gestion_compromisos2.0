@@ -99,210 +99,260 @@
             background-color: #45a049;
             /* Verde más oscuro */
         }
+
+        /* Agregar estilos para hacer la tabla responsiva */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+        @media (max-width: 768px) {
+            .table-responsive table {
+                width: 100%;
+                display: block;
+            }
+            .table-responsive thead, .table-responsive tbody, .table-responsive th, .table-responsive td, .table-responsive tr { 
+                display: block; 
+            }
+            .table-responsive tr { 
+                margin-bottom: 15px; 
+            }
+            .table-responsive td { 
+                text-align: right; 
+                padding-left: 50%; 
+                position: relative; 
+            }
+            .table-responsive td::before { 
+                content: attr(data-label); 
+                position: absolute; 
+                left: 0;
+                width: 50%; 
+                padding-left: 15px; 
+                font-weight: bold;
+                text-align: left; 
+            }
+        }
     </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen flex flex-col">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="flash-messages">
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }} bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4">{{ message
-            }}</div>
-        {% endfor %}
-    </div>
-    {% endif %}
-    {% endwith %}
+    <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+        <div class="bg-blue-600 text-white p-4">
+            <h1 class="text-2xl font-bold">Acta de Reunión DSSM</h1>
+        </div>
 
+        <div class="p-6" id="acta-content">
+            <form method="POST" action="{{ url_for('reunion.crear_reunion_paso1') }}" enctype="multipart/form-data">
+                {{ form.hidden_tag() }}
+                <input type="hidden" id="reunion_id" name="reunion_id" value="{{ some_reunion_id_value }}">
 
-        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
-            <div class="bg-blue-600 text-white p-4">
-                <h1 class="text-2xl font-bold">Acta de Reunión DSSM</h1>
-            </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="nombre_reunion" class="block text-sm font-medium text-gray-700">Nombre de la
+                            Reunión</label>
+                        <input type="text" id="nombre_reunion" name="nombre_reunion" class="form-control"
+                            placeholder="Introduce el nombre de la reunión" required>
+                    </div>
 
-            <div class="p-6" id="acta-content">
-                <form method="POST" action="{{ url_for('reunion.crear_reunion_paso1') }}" enctype="multipart/form-data">
-                    {{ form.hidden_tag() }}
-                    <input type="hidden" id="reunion_id" name="reunion_id" value="{{ some_reunion_id_value }}">
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="nombre_reunion" class="block text-sm font-medium text-gray-700">Nombre de la
-                                Reunión</label>
-                            <input type="text" id="nombre_reunion" name="nombre_reunion" class="form-control"
-                                placeholder="Introduce el nombre de la reunión" required>
+                    <div>
+                        <label for="lugar" class="block text-sm font-medium text-gray-700">Lugar</label>
+                        <input type="text" id="lugar" name="lugar" class="form-control"
+                            placeholder="Introduce el lugar de la reunión" required>
+                    </div>
+                    <div>
+                        <label for="tema" class="block text sm font-medium text-gray-700">Tema</label>
+                        <textarea type="text" id="tema" name="tema" class="form-control"
+                            placeholder="Introduce los temas de la reunión" required rows="3"></textarea>
+                    </div>
+                    <div id="hora-group">
+                        <label for="fecha_reunion" class="block text-sm font-medium text-gray-700">Fecha y Hora de
+                            la Reunión</label>
+                        <input type="datetime-local" id="fecha_reunion" name="fecha_reunion" class="form-control"
+                            required>
+                    </div>
+                    <div id="origen-group">
+                        <label for="origen" class="block text-sm font-medium text-gray-700">Origen</label>
+                        {{ form.origen(class="form-control") }}
+                        <input type="text" id="new-origen" name="new_origen" class="form-control hidden"
+                            placeholder="Introduce nuevo origen">
+                        <button type="button" class="btn btn-secondary mt-2" id="btn-add-origen"><i class="fas fa-plus"></i> Añadir nuevo Origen</button>
+                    </div>
+                    <div id="area-group">
+                        <label for="area" class="block text-sm font-medium text-gray-700">Área</label>
+                        {{ form.area(class="form-control") }}
+                        <input type="text" id="new-area" name="new_area" class="form-control hidden"
+                            placeholder="Introduce nueva área">
+                        <button type="button" class="btn btn-secondary mt-2" id="btn-add-area"><i class="fas fa-plus"></i> Añadir nueva Área</button>
+                    </div>
+                    <div id="asistentes-group" class="col-span-2">
+                        <label for="asistentes-select" class="block text-sm font-medium text-gray-700">Asistentes</label>
+                        <select id="asistentes-select" name="asistentes[]" class="form-control select2 w-full" multiple>
+                            {% for value, label, correo in form.compromisos[0].referentes.choices %}
+                            <option value="{{ value }}" data-correo="{{ correo }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <label for="invitados-select" class="block text-sm font-medium text-gray-700">Invitados</label>
+                        <select name="invitados[]" id="invitados-select" class="form-control select2 w-full" multiple>
+                            {% for value, label in form.invitados.choices %}
+                            {% set parts = label.split(' - ') %}
+                            <option value="{{ value }}" data-correo="{{ parts[2] }}" data-telefono="{{ parts[3] }}">
+                                {{ parts[0] }} - {{ parts[1] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" id="btn-add-invitado" class="btn btn-secondary mt-2"><i class="fas fa-plus"></i> Añadir invitado</button>
+                        <div id="invitado-form" class="hidden mt-4">
+                            <label for="invitado-nombre" class="block text-sm font-medium text-gray-700">Nombre del Invitado</label>
+                            <input type="text" id="invitado-nombre" name="invitado-nombre" class="form-control" placeholder="Introduce el nombre del invitado">
+                            <label for="invitado-institucion" class="block text-sm font-medium text-gray-700 mt-2">Institución</label>
+                            <input type="text" id="invitado-institucion" name="invitado-institucion" class="form-control" placeholder="Introduce la institución del invitado">
+                            <label for="invitado-correo" class="block text-sm font-medium text-gray-700 mt-2">Correo</label>
+                            <input type="email" id="invitado-correo" name="invitado-correo" class="form-control" placeholder="Introduce el correo del invitado">
+                            <label for="invitado-telefono" class="block text-sm font-medium text-gray-700 mt-2">Teléfono</label>
+                            <input type="text" id="invitado-telefono" name="invitado-telefono" class="form-control" placeholder="Introduce el teléfono del invitado">
+                            <button type="button" id="btn-save-invitado" class="btn btn-primary mt-2"><i class="fas fa-save"></i> Guardar Invitado</button>
                         </div>
-
-                        <div>
-                            <label for="lugar" class="block text-sm font-medium text-gray-700">Lugar</label>
-                            <input type="text" id="lugar" name="lugar" class="form-control"
-                                placeholder="Introduce el lugar de la reunión" required>
-                        </div>
-                        <div>
-                            <label for="tema" class="block text sm font-medium text-gray-700">Tema</label>
-                            <textarea type="text" id="tema" name="tema" class="form-control"
-                                placeholder="Introduce los temas de la reunión" required rows="3"></textarea>
-                        </div>
-                        <div id="hora-group">
-                            <label for="fecha_reunion" class="block text-sm font-medium text-gray-700">Fecha y Hora de
-                                la Reunión</label>
-                            <input type="datetime-local" id="fecha_reunion" name="fecha_reunion" class="form-control"
-                                required>
-                        </div>
-                        <div id="origen-group">
-                            <label for="origen" class="block text-sm font-medium text-gray-700">Origen</label>
-                            {{ form.origen(class="form-control") }}
-                            <input type="text" id="new-origen" name="new_origen" class="form-control hidden"
-                                placeholder="Introduce nuevo origen">
-                            <button type="button" class="btn btn-secondary mt-2" id="btn-add-origen"><i class="fas fa-plus"></i> Añadir nuevo Origen</button>
-                        </div>
-                        <div id="area-group">
-                            <label for="area" class="block text-sm font-medium text-gray-700">Área</label>
-                            {{ form.area(class="form-control") }}
-                            <input type="text" id="new-area" name="new_area" class="form-control hidden"
-                                placeholder="Introduce nueva área">
-                            <button type="button" class="btn btn-secondary mt-2" id="btn-add-area"><i class="fas fa-plus"></i> Añadir nueva Área</button>
-                        </div>
-                        <div id="asistentes-group" class="col-span-2">
-                            <label for="asistentes-select" class="block text-sm font-medium text-gray-700">Asistentes</label>
-                            <select id="asistentes-select" name="asistentes[]" class="form-control select2 w-full" multiple>
-                                {% for value, label, correo in form.compromisos[0].referentes.choices %}
-                                <option value="{{ value }}" data-correo="{{ correo }}">{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                            <label for="invitados-select" class="col-span-2">Invitados (Pronto)</label>
-                            <select name="invitados[]" id="invitados-select" class="form-control select2 w-full" multiple>
-                                {% for invitado in invitados %}
-                                <option value="{{ invitado.id_invitado }}">{{ invitado.nombre_completo }}</option>
-                                {% endfor %}
-                            </select>
-                            <button type="button" id="btn-add-invitado" class="btn btn-secondary mt-2"><i class="fas fa-plus"></i> Añadir invitado (Pronto)</button>
-
+                    <h3 class="text-lg font-medium text-gray-900">Participantes</h3>
+                    <table class="min-w-full divide-y divide-gray-200 mt-3">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Asistente</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Correo</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="correos-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Aquí se añadirán dinámicamente los asistentes seleccionados con su correo -->
+                        </tbody>
+                    </table>
                     <br>
-                    <div id="asistentes-correos" class="mt-6">
-                        <h3 class="text-lg font-medium text-gray-900">Participantes</h3>
+                    <h3 class="text-lg font-medium text-gray-900 mt-6">Invitados</h3>
+                    <br>
+                    <div class="table-responsive">
                         <table class="min-w-full divide-y divide-gray-200 mt-3">
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Asistente</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Correo</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Acciones</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Institución</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Correo</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teléfono</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody id="correos-body" class="bg-white divide-y divide-gray-200">
-                                <!-- Aquí se añadirán dinámicamente los asistentes seleccionados con su correo -->
+                            <tbody id="invitados-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Aquí se añadirán dinámicamente los invitados seleccionados con su correo -->
                             </tbody>
                         </table>
                     </div>
-                    <br>
-                    <div class="mt-6">
-                        <h3 class="text-lg font-medium text-gray-900">Temas Analizados en Reunión</h3>
-                        <textarea id="temas_analizado" name="temas_analizado" class="form-control mt-1"></textarea>
-                    </div>
-                    <div class="mt-6">
-                        <h3 class="text-lg font-medium text-gray-900">Proximas Fechas de Reuniones</h3>
-                        <textarea id="descripcion1" name="proximas_fechas" class="form-control mt-1"></textarea>
-                    </div>
-                    <br>
-                    <div class="mt-6">
-                        <h2 class="text-xl font-medium text-gray-900">Compromisos de la Reunión</h2>
-                        <table class="min-w-full divide-y divide-gray-200 mt-3" id="compromisos-table">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Nombre</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Prioridad</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Fecha Límite</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Departamento</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Referentes</th>
-                                    <th
-                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for compromiso_form in form.compromisos %}
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <textarea name="compromisos-{{ loop.index }}-nombre" class="form-control resize-both" rows="2" required></textarea>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <select name="compromisos-{{ loop.index }}-prioridad" class="form-control" required>
-                                            <option value="Alta">Alta</option>
-                                            <option value="Media">Media</option>
-                                            <option value="Baja">Baja</option>
-                                        </select>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <input type="datetime-local" name="compromisos-{{ loop.index }}-fecha_limite"
-                                            class="form-control" required />
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <select name="compromisos-{{ loop.index }}-departamento" class="form-control" required>
-                                            {% for value, label in form.compromisos[0].departamento.choices %}
+        
+                <br>
+                <div class="mt-6">
+                    <h3 class="text-lg font-medium text-gray-900">Temas Analizados en Reunión</h3>
+                    <textarea id="temas_analizado" name="temas_analizado" class="form-control mt-1"></textarea>
+                </div>
+                <div class="mt-6">
+                    <h3 class="text-lg font-medium text-gray-900">Proximas Fechas de Reuniones</h3>
+                    <textarea id="descripcion1" name="proximas_fechas" class="form-control mt-1"></textarea>
+                </div>
+                <br>
+                <div class="mt-6">
+                    <h2 class="text-xl font-medium text-gray-900">Compromisos de la Reunión</h2>
+                    <table class="min-w-full divide-y divide-gray-200 mt-3" id="compromisos-table">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Nombre</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Prioridad</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Fecha Límite</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Departamento</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Referentes</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for compromiso_form in form.compromisos %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <textarea name="compromisos-{{ loop.index }}-nombre" class="form-control resize-both" rows="2" required></textarea>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <select name="compromisos-{{ loop.index }}-prioridad" class="form-control" required>
+                                        <option value="Alta">Alta</option>
+                                        <option value="Media">Media</option>
+                                        <option value="Baja">Baja</option>
+                                    </select>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <input type="datetime-local" name="compromisos-{{ loop.index }}-fecha_limite"
+                                        class="form-control" required />
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <select name="compromisos-{{ loop.index }}-departamento" class="form-control" required>
+                                        {% for value, label in form.compromisos[0].departamento.choices %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td class="block text-sm font-medium text-gray-700">
+                                    <label for="referentes-select">
+                                        <select id="referentes-select"
+                                            name="compromisos-{{ loop.index }}-referentes"
+                                            class="form-control select2" multiple="multiple" required>
+                                            {% for value, label, correo in form.compromisos[0].referentes.choices %}
                                             <option value="{{ value }}">{{ label }}</option>
                                             {% endfor %}
                                         </select>
-                                    </td>
-                                    <td class="block text-sm font-medium text-gray-700">
-                                        <label for="referentes-select">
-                                            <select id="referentes-select"
-                                                name="compromisos-{{ loop.index }}-referentes"
-                                                class="form-control select2" multiple="multiple" required>
-                                                {% for value, label, correo in form.compromisos[0].referentes.choices %}
-                                                <option value="{{ value }}">{{ label }}</option>
-                                                {% endfor %}
-                                            </select>
-                                        </label>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <button type="button" class="btn btn-danger btn-remove"><i class="fas fa-trash"></i> Eliminar</button>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                        <button type="button" id="add-compromiso" class="btn btn-secondary mt-4"><i class="fas fa-plus"></i> Agregar otro
-                            compromiso</button>
-                        <button type="button" id="export-pdf" class="btn-pdf"><i class="fas fa-file-pdf"></i> Exportar Acta en PDF (Pronto)</button>
-                    </div>
-                    <br>
-                    <div class="mt-6 flex justify-between items-center" style="display: center;">
-
-                        <a href="{{ url_for('home.home_view') }}" class="btn btn-secondary"><i class="fas fa-home"></i> Volver al inicio</a>
-
-                        <div>
-                            <label for="acta_pdf" class="block text-sm font-medium text-gray-700">Subir acta de la
-                                reunión</label>
-                            <input type="file" id="acta_pdf" name="acta_pdf"
-                                accept="application/pdf, image/png, image/jpeg" class="form-control mt-1">
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-confirm"><i class="fas fa-check"></i> Confirmar Reunión y
-                            Compromisos</button>
-                    </div>
-                </form>
-                <div class="container mx-auto px-4 flex justify-between items-center">
-                    <p class="text-gray-600">Servicio de Salud del Maule</p>
-                    <img src="{{ url_for('static', filename='logo_ministerio.png') }}"
-                        alt="Logotipo del Servicio de Salud del Maule" class="h-16">
+                                    </label>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <button type="button" class="btn btn-danger btn-remove"><i class="fas fa-trash"></i> Eliminar</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <button type="button" id="add-compromiso" class="btn btn-secondary mt-4"><i class="fas fa-plus"></i> Agregar otro
+                        compromiso</button>
+                    <button type="button" id="export-pdf" class="btn-pdf"><i class="fas fa-file-pdf"></i> Exportar Acta en PDF (Pronto)</button>
                 </div>
-            </div>
+                <br>
+                <div class="mt-6 flex justify-between items-center" style="display: center;">
 
+                    <a href="{{ url_for('home.home_view') }}" class="btn btn-secondary"><i class="fas fa-home"></i> Volver al inicio</a>
+
+                    <div>
+                        <label for="acta_pdf" class="block text-sm font-medium text-gray-700">Subir acta de la
+                            reunión</label>
+                        <input type="file" id="acta_pdf" name="acta_pdf"
+                            accept="application/pdf, image/png, image/jpeg" class="form-control mt-1">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-confirm"><i class="fas fa-check"></i> Confirmar Reunión y
+                        Compromisos</button>
+                </div>
+            </form>
+            <br>
+            <div class="container mx-auto px-4 flex justify-between items-center">
+                <p class="text-gray-600">Servicio de Salud del Maule</p>
+                <img src="{{ url_for('static', filename='logo_ministerio.png') }}"
+                    alt="Logotipo del Servicio de Salud del Maule" class="h-16">
+            </div>
+        </div>
 
 </body>
 </div>
@@ -335,7 +385,7 @@
 
         // Inicializar select2
         $('.select2').select2({
-            placeholder: "Selecciona asistentes",
+            placeholder: "Selecciona Invitados",
             allowClear: true,
             width: '100%'
         });
@@ -442,7 +492,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <button type="button" class="btn btn-danger btn-remove" data-id="${id}">
-                            <i class="btn-danger"></i> Eliminar
+                            <i class="fas fa-trash"></i> Eliminar
                         </button>
                     </td>
                 `;
@@ -458,11 +508,124 @@
             }
         });
 
+        $('#btn-add-invitado').on('click', function () {
+            $('#invitado-form').toggleClass('hidden');
+        });
+
+        $('#btn-save-invitado').on('click', function () {
+            const nombre = $('#invitado-nombre').val();
+            const institucion = $('#invitado-institucion').val();
+            const correo = $('#invitado-correo').val();
+            const telefono = $('#invitado-telefono').val();
+
+            if (nombre && institucion && correo && telefono) {
+                $.ajax({
+                    url: "{{ url_for('reunion.add_invitado') }}",  // Corrected blueprint name
+                    method: "POST",
+                    data: {
+                        nombre: nombre,
+                        institucion: institucion,
+                        correo: correo,
+                        telefono: telefono
+                    },
+                    success: function(response) {
+                        const newOption = new Option(`${response.nombre} - ${response.institucion}`, response.id, true, true);
+                        $(newOption).attr('data-correo', response.correo).attr('data-telefono', response.telefono);
+                        $('#invitados-select').append(newOption).trigger('change');
+                        
+                        $('#invitado-form').addClass('hidden');
+                        $('#invitado-nombre').val('');
+                        $('#invitado-institucion').val('');
+                        $('#invitado-correo').val('');
+                        $('#invitado-telefono').val('');
+                    },
+                    error: function(error) {
+                        console.error('Error al guardar el invitado:', error);
+                        alert('Error al guardar el invitado. Por favor, inténtelo de nuevo.');
+                    }
+                });
+            } else {
+                alert('Por favor, complete todos los campos del invitado.');
+            }
+        });
+
+        // Actualizar el manejador de eliminación para quitar la opción del select
+        $('#invitados-body').on('click', '.btn-remove', function () {
+            const row = $(this).closest('tr');
+            const nombre = row.find('td:nth-child(1)').text();
+            const institucion = row.find('td:nth-child(2)').text();
+            // Encontrar el valor correspondiente en el select basado en nombre e institución
+            $('#invitados-select option').each(function() {
+                const optionText = $(this).text();
+                if (optionText.startsWith(nombre) && optionText.includes(`- ${institucion}`)) {
+                    $(this).remove();
+                    return false; // Salir del loop
+                }
+            });
+            row.remove();
+        });
+
+        // Manejar la selección de invitados existentes
+        $('#invitados-select').on('change', function () {
+            const seleccionados = $(this).val();
+            $('#invitados-body').empty(); // Limpiar la tabla de invitados
+
+            seleccionados.forEach(function (id) {
+                const option = $(`#invitados-select option[value="${id}"]`);
+                const nombreInstitucion = option.text().split(' - ');
+                const nombre = nombreInstitucion[0];
+                const institucion = nombreInstitucion[1];
+                const correo = option.data('correo');
+                const telefono = option.data('telefono');
+                const row = `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap" data-label="Nombre">${nombre}</td>
+                        <td class="px-6 py-4 whitespace-nowrap" data-label="Institución">${institucion}</td>
+                        <td class="px-6 py-4 whitespace-nowrap" data-label="Correo">${correo}</td>
+                        <td class="px-6 py-4 whitespace-nowrap" data-label="Teléfono">${telefono}</td>
+                        <td class="px-6 py-4 whitespace-nowrap" data-label="Acciones">
+                            <button type="button" class="btn btn-danger btn-remove"><i class="fas fa-trash"></i> Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+                $('#invitados-body').append(row);
+            });
+        });
+
         //usar gtm -3 
         var now = new Date();
         var localDatetime = now.toISOString().slice(0, 16);
         document.getElementById('fecha_reunion').value = localDatetime -3; 
         
+        $('#add-invitado').on('click', function () {
+            const nombre = $('#nombre-invitado').val();
+            const institucion = $('#institucion-invitado').val();
+            const correo = $('#correo-invitado').val();
+            const telefono = $('#telefono-invitado').val();
+
+            if(nombre && institucion && correo && telefono){
+                const newRow = `
+                    <tr>
+                        <td>${nombre}</td>
+                        <td>${institucion}</td>
+                        <td>${correo}</td>
+                        <td>${telefono}</td>
+                        <td>
+                            <button type="button" class="btn btn-danger btn-remove"><i class="fas fa-trash"></i> Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+                $('#invitados-body').append(newRow);
+                
+                // Clear input fields
+                $('#nombre-invitado').val('');
+                $('#institucion-invitado').val('');
+                $('#correo-invitado').val('');
+                $('#telefono-invitado').val('');
+            } else {
+                alert('Por favor, complete todos los campos del invitado.');
+            }
+        });
     });
 </script>
 </body>

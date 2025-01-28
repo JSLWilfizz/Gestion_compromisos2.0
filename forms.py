@@ -32,19 +32,33 @@ class CompromisoForm(FlaskForm):
     fecha_limite = DateTimeField('Fecha Límite', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])  # Opcional
     fecha_creacion = DateField('Fecha Creación', default=datetime.now(),
                                format='%Y-%m-%d')  # Mantener la fecha de creación pero opcional
-
     departamento = SelectField('Departamento', choices=[])  # Opcional, choices cargados dinámicamente
     nivel_avance = IntegerField('Nivel de Avance',
                                 validators=[NumberRange(min=0, max=100)],default=0)  # Opcional, manteniendo el rango de 0 a 100
-
     referentes = MultiSelectField('Referentes', choices=[])  # Opcional, choices cargados dinámicamente
 
+class CreateCompromisoForm(FlaskForm):
+    descripcion = TextAreaField('Descripción', validators=[DataRequired()])
+    estado = SelectField('Estado', choices=[('Pendiente', 'Pendiente'), ('Completado', 'Completado')], validators=[DataRequired()])
+    prioridad = SelectField('Prioridad', choices=[('Alta', 'Alta'), ('Media', 'Media'), ('Baja', 'Baja')], validators=[DataRequired()])
+    fecha_creacion = DateTimeField('Fecha de Creación', format='%Y-%m-%dT%H:%M', default=datetime.now, validators=[DataRequired()])
+    fecha_limite = DateTimeField('Fecha Límite', format='%Y-%m-%dT%H:%M', validators=[DataRequired()])
+    comentario = TextAreaField('Comentario')
+    comentario_direccion = TextAreaField('Comentario Dirección')
+    id_departamento = SelectField('Departamento', choices=[], validators=[DataRequired()])
+    referentes = MultiSelectField('Referentes', choices=[], validators=[DataRequired()])
+    submit = SubmitField('Crear Compromiso')
 
 class CreateMeetingForm(FlaskForm):
     origen = SelectField('Origen', validators=[DataRequired()], choices=[], description="Si no encuentras el origen, escríbelo en el campo de abajo")
     area = SelectField('Área', validators=[DataRequired()], choices=[], description="Si no encuentras el área, escríbela en el campo de abajo")
     asistentes = StringField('Asistentes', validators=[DataRequired()], description="Separar los nombres con comas")
+    invitados = SelectMultipleField('Invitados', choices=[], coerce=int)  # Ya existente
     compromisos = FieldList(FormField(CompromisoForm), min_entries=1)  # Asegúrate de tener FieldList para compromisos
     acta_pdf = FileField('Subir Acta (PDF o Imagen)', validators=[FileAllowed(['pdf', 'png', 'jpg', 'jpeg', 'gif'], 'Solo se permiten archivos PDF o imágenes')])
     submit = SubmitField('Confirmar Reunión')
+    
+    def __init__(self, *args, **kwargs):
+        super(CreateMeetingForm, self).__init__(*args, **kwargs)
+        # Esto ya está gestionado en ReunionService.get_initial_form_data
 

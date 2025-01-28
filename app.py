@@ -4,9 +4,10 @@ from flask_wtf import CSRFProtect
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager  # Import LoginManager
 from config import Config
-from routes import auth, home, reunion, director_bp
+from routes import auth, home, reunion, director_bp, reunion_routes
 from repositories.reunion_service import ReunionService
 from models import User  # Import User model
+
 
 def secure_headers(response):  # Función para aplicar cabeceras de seguridad
     response.headers['X-Content-Type-Options'] = 'nosniff'

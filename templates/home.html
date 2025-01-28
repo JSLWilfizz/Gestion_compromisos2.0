@@ -280,6 +280,11 @@
                         <i class="fas fa-chart-bar"></i>Reportes (Pronto)
                     </a>
                 </li>
+                <li>
+                    <a href="{{ url_for('home.ver_compromisos_eliminados') }}">
+                        <i class="fas fa-trash-alt"></i> Compromisos Eliminados
+                    </a>
+                </li>
             </ul>
         </div>
         {% endif %}
@@ -293,7 +298,7 @@
                 <a href="{{ url_for('reunion.crear_reunion_paso1') }}" class="btn btn-primary">
                     <i class="fas fa-calendar-plus mr-2"></i> Crear Reunión
                 </a>
-                <a href="#" class="btn btn-comp">
+                <a href="{{ url_for('home.crear_compromiso') }}" class="btn btn-comp">
                     <i class="fas fa-tasks mr-2"></i> Crear Compromisos
                 </a>
                 <a href="{{ url_for('home.ver_compromisos') }}" class="btn btn-secondary">
@@ -304,6 +309,9 @@
                 </a>
                 <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn btn-compromisosdepartamentales">
                     <i class="fas fa-users mr-2"></i> Compromisos Departamentales
+                </a>
+                <a href="{{ url_for('home.ver_compromisos_archivados') }}" class="btn btn-secondary">
+                    <i class="fas fa-archive mr-2"></i> Compromisos Archivados
                 </a>
                 <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">
                     <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
