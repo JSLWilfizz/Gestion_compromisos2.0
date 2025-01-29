@@ -7,6 +7,7 @@ from repositories.reunion_service import ReunionService
 from repositories.persona_comp_service import PersonaCompService
 from .auth_routes import login_required
 from forms import CompromisoForm, CreateCompromisoForm
+from exceptions.compromiso_exceptions import ResponsablePrincipalError
 
 home = Blueprint('home', __name__)
 compromiso_service = CompromisoService()
@@ -156,31 +157,42 @@ def ver_compromisos_compartidos():
 @home.route('/editar_compromiso/<int:compromiso_id>', methods=['GET', 'POST'])
 @login_required
 def editar_compromiso(compromiso_id):
-    user_id = session['user_id']
-    user = compromiso_service.get_user_info(user_id)
-    compromiso = compromiso_service.get_compromiso_by_id(compromiso_id)
-    todos_referentes = compromiso_service.get_referentes()
-    direccion = session.get('the_big_boss') or session.get('es_director')
+    try:
+        user_id = session['user_id']
+        user = compromiso_service.get_user_info(user_id)
+        compromiso = compromiso_service.get_compromiso_by_id(compromiso_id)
+        todos_referentes = compromiso_service.get_referentes()
+        direccion = session.get('the_big_boss') or session.get('es_director')
 
-    # Verificar si el usuario es el jefe del departamento correspondiente al compromiso
-    if not (compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento']) or direccion):
-        flash('No tienes permiso para editar este compromiso.', 'danger')
-        return redirect(url_for('home.ver_compromisos_compartidos'))
+        # Verificar si el usuario es el jefe del departamento correspondiente al compromiso
+        if not (compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento']) or direccion):
+            flash('No tienes permiso para editar este compromiso.', 'danger')
+            return redirect(url_for('home.ver_compromisos_compartidos'))
 
-    if request.method == 'POST':
-        descripcion = request.form.get('descripcion')
-        estado = request.form.get('estado')
-        prioridad = request.form.get('prioridad')
-        avance = request.form.get('avance')
-        fecha_limite = request.form.get('fecha_limite')
-        referentes = request.form.getlist('referentes')
-        comentario = request.form.get('comentario')
-        comentario_direccion = request.form.get('comentario_direccion')
+        if request.method == 'POST':
+            descripcion = request.form.get('descripcion')
+            estado = request.form.get('estado')
+            prioridad = request.form.get('prioridad')
+            avance = request.form.get('avance')
+            fecha_limite = request.form.get('fecha_limite')
+            referentes = request.form.getlist('referentes')
+            comentario = request.form.get('comentario')
+            comentario_direccion = request.form.get('comentario_direccion')
 
-        compromiso_service.update_compromiso(
-            compromiso_id, descripcion, estado, prioridad, avance, comentario, comentario_direccion, user_id, referentes
-        )
-        flash('Compromiso actualizado con éxito.', 'success')
+            try:
+                compromiso_service.update_compromiso(
+                    compromiso_id, descripcion, estado, prioridad, avance, comentario, 
+                    comentario_direccion, user_id, referentes
+                )
+                flash('Compromiso actualizado con éxito.', 'success')
+                return redirect(url_for('home.ver_compromisos_compartidos'))
+            except ResponsablePrincipalError:
+                flash('Error: No se puede eliminar al responsable principal del compromiso. ' 
+                      'Por favor, asegúrese de mantener al responsable principal en la lista de referentes.', 'error')
+                return redirect(request.url)
+
+    except Exception as e:
+        flash(f'Error inesperado: {str(e)}', 'error')
         return redirect(url_for('home.ver_compromisos_compartidos'))
 
     return render_template('editar_derivar_compromiso.html', 

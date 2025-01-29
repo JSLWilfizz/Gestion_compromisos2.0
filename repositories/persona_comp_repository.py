@@ -31,8 +31,8 @@ class PersonaCompRepository:
                     WHERE id_compromiso = %s
                 """, (compromiso_id,))
                 cursor.execute("""
-                    INSERT INTO persona_compromiso_eliminado (id_persona, id_compromiso)
-                    SELECT id_persona, id_compromiso
+                    INSERT INTO persona_compromiso_eliminado (id_persona, id_compromiso, es_responsable_principal)
+                    SELECT id_persona, id_compromiso, es_responsable_principal
                     FROM persona_compromiso
                     WHERE id_compromiso = %s
                 """, (compromiso_id,))
@@ -69,8 +69,8 @@ class PersonaCompRepository:
                     WHERE id_compromiso = %s
                 """, (compromiso_id,))
                 cursor.execute("""
-                    INSERT INTO persona_compromiso_archivado (id_persona, id_compromiso)
-                    SELECT id_persona, id_compromiso
+                    INSERT INTO persona_compromiso_archivado (id_persona, id_compromiso, es_responsable_principal)
+                    SELECT id_persona, id_compromiso, es_responsable_principal
                     FROM persona_compromiso
                     WHERE id_compromiso = %s
                 """, (compromiso_id,))
@@ -98,8 +98,8 @@ class PersonaCompRepository:
                 
                 # Restaurar registros relacionados en persona_compromiso desde persona_compromiso_archivado
                 cursor.execute("""
-                    INSERT INTO persona_compromiso (id_persona, id_compromiso)
-                    SELECT id_persona, id_compromiso
+                    INSERT INTO persona_compromiso (id_persona, id_compromiso, es_responsable_principal)
+                    SELECT id_persona, id_compromiso, es_responsable_principal
                     FROM persona_compromiso_archivado
                     WHERE id_compromiso = %s
                 """, (compromiso_id,))
@@ -201,8 +201,8 @@ class PersonaCompRepository:
                 
                 # Restaurar registros relacionados en persona_compromiso desde persona_compromiso_eliminado
                 cursor.execute("""
-                    INSERT INTO persona_compromiso (id_persona, id_compromiso)
-                    SELECT id_persona, id_compromiso
+                    INSERT INTO persona_compromiso (id_persona, id_compromiso, es_responsable_principal)
+                    SELECT id_persona, id_compromiso, es_responsable_principal
                     FROM persona_compromiso_eliminado
                     WHERE id_compromiso = %s
                 """, (compromiso_id,))
@@ -250,16 +250,61 @@ class PersonaCompRepository:
     def asociar_referentes(self, compromiso_id, referentes):
         try:
             with self.conn.cursor() as cursor:
-                for referente_id in referentes:
+                for index, referente_id in enumerate(referentes):
+                    es_responsable = True if index == 0 else False
                     cursor.execute("""
-                        INSERT INTO persona_compromiso (id_persona, id_compromiso)
-                        VALUES (%s, %s)
-                    """, (referente_id, compromiso_id))
+                        INSERT INTO persona_compromiso (id_persona, id_compromiso, es_responsable_principal)
+                        VALUES (%s, %s, %s)
+                    """, (referente_id, compromiso_id, es_responsable))
                 self.conn.commit()
                 print("Referentes asociados exitosamente")
         except Exception as e:
             self.conn.rollback()
             print(f"Error al asociar referentes en la base de datos: {e}")
+            raise e
+
+    def update_referentes(self, compromiso_id, nuevos_referentes):
+        try:
+            with self.conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT id_persona, es_responsable_principal
+                    FROM persona_compromiso
+                    WHERE id_compromiso = %s
+                """, (compromiso_id,))
+                antiguos = cursor.fetchall()
+
+                for ref in antiguos:
+                    if ref[1] and str(ref[0]) not in map(str, nuevos_referentes):
+                        raise ResponsablePrincipalError()
+
+                # Convertir los valores de nuevos_referentes a integer
+                nuevos_referentes_int = list(map(int, nuevos_referentes))
+
+                # Eliminar referentes que no son principales y que no están en la nueva lista
+                cursor.execute("""
+                    DELETE FROM persona_compromiso 
+                    WHERE id_compromiso = %s 
+                    AND es_responsable_principal = FALSE 
+                    AND id_persona != ALL(%s)
+                """, (compromiso_id, nuevos_referentes_int))
+
+                # Agregar nuevos referentes que no existan
+                for nuevo_ref in nuevos_referentes_int:
+                    cursor.execute("""
+                        INSERT INTO persona_compromiso (id_persona, id_compromiso, es_responsable_principal)
+                        SELECT %s, %s, FALSE
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM persona_compromiso 
+                            WHERE id_persona = %s AND id_compromiso = %s
+                        )
+                    """, (nuevo_ref, compromiso_id, nuevo_ref, compromiso_id))
+
+                self.conn.commit()
+        except ResponsablePrincipalError:
+            self.conn.rollback()
+            raise
+        except Exception as e:
+            self.conn.rollback()
             raise e
 
     def fetch_departamentos(self):

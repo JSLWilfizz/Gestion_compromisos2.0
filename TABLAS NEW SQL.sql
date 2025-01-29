@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS compromiso(
 CREATE TABLE IF NOT EXISTS persona_compromiso(
     id_persona INT,
     id_compromiso INT,
+    es_responsable_principal BOOLEAN DEFAULT FALSE,
     CONSTRAINT fk_id_persona
         FOREIGN KEY (id_persona)
         REFERENCES persona(id),
@@ -138,6 +139,11 @@ CREATE TABLE IF NOT EXISTS persona_compromiso(
         REFERENCES compromiso(id),
     PRIMARY KEY (id_persona, id_compromiso)
 );
+
+-- Add a unique constraint to ensure only one principal per compromiso
+CREATE UNIQUE INDEX unique_principal_per_compromiso
+ON persona_compromiso(id_compromiso)
+WHERE es_responsable_principal = true;
 
 -- Tabla intermedia reunion_compromiso (N:N entre reunion y compromiso)
 CREATE TABLE IF NOT EXISTS reunion_compromiso(
@@ -239,6 +245,7 @@ CREATE TABLE IF NOT EXISTS compromisos_archivados (
 CREATE TABLE IF NOT EXISTS persona_compromiso_archivado (
     id_persona INT,
     id_compromiso INT,
+    es_responsable_principal BOOLEAN DEFAULT FALSE,
     CONSTRAINT fk_id_persona_archivado FOREIGN KEY (id_persona) REFERENCES persona(id),
     CONSTRAINT fk_id_compromiso_archivado FOREIGN KEY (id_compromiso) REFERENCES compromisos_archivados(id),
     PRIMARY KEY (id_persona, id_compromiso)
@@ -247,6 +254,7 @@ CREATE TABLE IF NOT EXISTS persona_compromiso_archivado (
 CREATE TABLE IF NOT EXISTS persona_compromiso_eliminado (
     id_persona INT,
     id_compromiso INT,
+    es_responsable_principal BOOLEAN DEFAULT FALSE,
     CONSTRAINT fk_id_persona_eliminado
         FOREIGN KEY (id_persona) REFERENCES persona(id),
     CONSTRAINT fk_id_compromiso_eliminado
@@ -271,6 +279,26 @@ CREATE TABLE IF NOT EXISTS reunion_compromiso_eliminado (
     CONSTRAINT fk_id_compromiso_eliminado
         FOREIGN KEY (id_compromiso) REFERENCES compromiso_eliminado(id)
 );
+
+-- Function to set es_responsable_principal to true for the first person added to a compromiso
+CREATE OR REPLACE FUNCTION set_responsable_principal()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM persona_compromiso
+        WHERE id_compromiso = NEW.id_compromiso AND es_responsable_principal = true
+    ) THEN
+        NEW.es_responsable_principal := true;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to call the function before inserting into persona_compromiso
+CREATE TRIGGER trg_set_responsable_principal
+BEFORE INSERT ON persona_compromiso
+FOR EACH ROW
+EXECUTE PROCEDURE set_responsable_principal();
 
 
 

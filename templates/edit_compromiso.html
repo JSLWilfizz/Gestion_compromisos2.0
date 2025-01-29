@@ -128,6 +128,16 @@
             var departamentoPreseleccionado = {{ form.departamento.data }};
             $('#departamento').val(departamentoPreseleccionado).trigger('change');
         });
+
+        function handleRemoveReferente(event, isPrincipal) {
+            if (isPrincipal) {
+                event.preventDefault();
+                alert("No se puede eliminar al responsable principal.");
+            }
+        }
+    </script>
+    <script>
+      console.error("Error de prueba para verificar la consola.");
     </script>
     <footer class="footer">
         Servicio de Salud del Maule

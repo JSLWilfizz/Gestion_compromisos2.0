@@ -1,6 +1,7 @@
 # /repositories/compromiso_repository.py
 from database import get_db_connection
 from psycopg2.extras import RealDictCursor
+from exceptions.compromiso_exceptions import ResponsablePrincipalError
 
 class CompromisoRepository:
     def __init__(self):
@@ -106,13 +107,7 @@ class CompromisoRepository:
                     SET descripcion = %s, estado = %s, prioridad = %s, avance = %s, comentario = %s, comentario_direccion = %s
                     WHERE id = %s
                 """, (descripcion, estado, prioridad, avance, comentario, comentario_direccion, compromiso_id))
-                
-                cursor.execute("DELETE FROM persona_compromiso WHERE id_compromiso = %s", (compromiso_id,))
-                for referente_id in referentes:
-                    cursor.execute("""
-                        INSERT INTO persona_compromiso (id_persona, id_compromiso)
-                        VALUES (%s, %s)
-                    """, (referente_id, compromiso_id))
+            self.update_referentes(compromiso_id, referentes)
         except Exception as e:
             self.conn.rollback()
             raise e
@@ -120,12 +115,43 @@ class CompromisoRepository:
     def update_referentes(self, compromiso_id, nuevos_referentes):
         try:
             with self.conn.cursor() as cursor:
-                cursor.execute("DELETE FROM persona_compromiso WHERE id_compromiso = %s", (compromiso_id,))
-                for referente_id in nuevos_referentes:
+                cursor.execute("""
+                    SELECT id_persona, es_responsable_principal
+                    FROM persona_compromiso
+                    WHERE id_compromiso = %s
+                """, (compromiso_id,))
+                antiguos = cursor.fetchall()
+
+                for ref in antiguos:
+                    if ref[1] and str(ref[0]) not in map(str, nuevos_referentes):
+                        raise ResponsablePrincipalError()
+
+                # Convertir los valores de nuevos_referentes a integer
+                nuevos_referentes_int = list(map(int, nuevos_referentes))
+
+                # Eliminar referentes que no son principales y que no están en la nueva lista
+                cursor.execute("""
+                    DELETE FROM persona_compromiso 
+                    WHERE id_compromiso = %s 
+                    AND es_responsable_principal = FALSE 
+                    AND id_persona != ALL(%s)
+                """, (compromiso_id, nuevos_referentes_int))
+
+                # Agregar nuevos referentes que no existan
+                for nuevo_ref in nuevos_referentes_int:
                     cursor.execute("""
-                        INSERT INTO persona_compromiso (id_persona, id_compromiso)
-                        VALUES (%s, %s)
-                    """, (referente_id, compromiso_id))
+                        INSERT INTO persona_compromiso (id_persona, id_compromiso, es_responsable_principal)
+                        SELECT %s, %s, FALSE
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM persona_compromiso 
+                            WHERE id_persona = %s AND id_compromiso = %s
+                        )
+                    """, (nuevo_ref, compromiso_id, nuevo_ref, compromiso_id))
+
+                self.conn.commit()
+        except ResponsablePrincipalError:
+            self.conn.rollback()
+            raise
         except Exception as e:
             self.conn.rollback()
             raise e
@@ -515,8 +541,8 @@ class CompromisoRepository:
                 c.comentario_direccion,
                 d.id AS departamento_id,
                 d.name AS departamento_name,
-                STRING_AGG( p.name || ' ' || p.lastname, ', ') AS referentes,
-                STRING_AGG( p.nivel_jerarquico, ', ' ORDER BY p.name || ' ' || p.lastname) AS niveles_jerarquicos,
+                STRING_AGG( p.name || ' ' || p.lastname, ', ' ORDER BY pc.id_persona) AS referentes,
+                STRING_AGG( p.nivel_jerarquico, ', ' ORDER BY pc.id_persona) AS niveles_jerarquicos,
                 CASE
                     WHEN %s = c.id_departamento AND %s != 'FUNCIONARIO/A' THEN TRUE
                     ELSE FALSE
