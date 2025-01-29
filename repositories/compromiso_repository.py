@@ -56,17 +56,38 @@ class CompromisoRepository:
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("""
-                    SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
-                           c.comentario, c.comentario_direccion,
-                           d.name AS departamento_name, -- Nombre del departamento
-                           ARRAY_AGG(DISTINCT p.id) AS referentes_ids, -- Obtenemos una lista de IDs de referentes
-                           STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS referentes -- Nombres concatenados
+                    SELECT 
+                        c.id AS compromiso_id,
+                        c.prioridad,
+                        c.descripcion,
+                        c.estado,
+                        c.avance,
+                        c.fecha_limite,
+                        c.comentario,
+                        c.comentario_direccion,
+                        d.name AS departamento_name,
+                        ARRAY_AGG(p.id) AS referentes_ids,
+                        STRING_AGG(
+                            p.name || ' ' || p.lastname || 
+                            CASE WHEN pc.es_responsable_principal THEN ' (*)' ELSE '' END,
+                            ', '
+                            ORDER BY pc.es_responsable_principal DESC, p.name, p.lastname
+                        ) AS referentes
                     FROM compromiso c
                     LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                     LEFT JOIN persona p ON pc.id_persona = p.id
-                    LEFT JOIN departamento d ON c.id_departamento = d.id -- Relación con la tabla departamento
+                    LEFT JOIN departamento d ON c.id_departamento = d.id
                     WHERE c.id_departamento = %s
-                    GROUP BY c.id, d.name
+                    GROUP BY 
+                        c.id,
+                        c.prioridad,
+                        c.descripcion,
+                        c.estado,
+                        c.avance,
+                        c.fecha_limite,
+                        c.comentario,
+                        c.comentario_direccion,
+                        d.name
                 """, (departamento_id,))
                 return cursor.fetchall()
         except Exception as e:
@@ -77,22 +98,45 @@ class CompromisoRepository:
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("""
-                    SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite,
-                           c.comentario, c.comentario_direccion,
-                           d.name AS departamento_name, -- Nombre del departamento
-                           ARRAY_AGG(DISTINCT p.id) AS referentes_ids,
-                           STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS referentes
+                    SELECT 
+                        c.id AS compromiso_id,
+                        c.prioridad,
+                        c.descripcion,
+                        c.estado,
+                        c.avance,
+                        c.fecha_limite,
+                        c.comentario,
+                        c.comentario_direccion,
+                        d.name AS departamento_name,
+                        ARRAY_AGG(p.id) AS referentes_ids,
+                        STRING_AGG(
+                            CASE 
+                                WHEN pc.es_responsable_principal THEN p.name || ' ' || p.lastname || ' (*)'
+                                ELSE p.name || ' ' || p.lastname
+                            END,
+                            ', '
+                        ) AS referentes
                     FROM compromiso c
                     LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                     LEFT JOIN persona p ON pc.id_persona = p.id
-                    LEFT JOIN departamento d ON c.id_departamento = d.id -- Relación con la tabla departamento
+                    LEFT JOIN departamento d ON c.id_departamento = d.id
                     WHERE c.id IN (
                         SELECT c2.id
                         FROM compromiso c2
-                        LEFT JOIN persona_compromiso pc2 ON c2.id = pc2.id_compromiso
-                        WHERE pc2.id_persona = %s -- Filtrar por el ID del usuario referente
+                        JOIN persona_compromiso pc2 ON c2.id = pc2.id_compromiso
+                        WHERE pc2.id_persona = %s
                     )
-                    GROUP BY c.id, d.name
+                    GROUP BY 
+                        c.id,
+                        c.prioridad,
+                        c.descripcion,
+                        c.estado,
+                        c.avance,
+                        c.fecha_limite,
+                        c.comentario,
+                        c.comentario_direccion,
+                        d.name
+                    ORDER BY c.fecha_limite
                 """, (user_id,))
                 return cursor.fetchall()
         except Exception as e:
@@ -200,8 +244,13 @@ class CompromisoRepository:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("""
                     SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
-                           c.comentario_director, d.name AS departamento, 
-                           STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS referentes
+                           c.comentario_director, d.name AS departamento,
+                           STRING_AGG(
+                               p.name || ' ' || p.lastname || 
+                               CASE WHEN pc.es_responsable_principal THEN ' (*)' ELSE '' END,
+                               ', '
+                               ORDER BY pc.es_responsable_principal DESC, p.name, p.lastname
+                           ) AS referentes
                     FROM compromiso c
                     JOIN departamento d ON c.id_departamento = d.id
                     LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
@@ -356,7 +405,12 @@ class CompromisoRepository:
                     c.comentario,
                     c.comentario_direccion,
                     ARRAY_AGG(DISTINCT p.id) AS referentes_ids,
-                    STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS referentes
+                    STRING_AGG(
+                        p.name || ' ' || p.lastname || 
+                        CASE WHEN pc.es_responsable_principal THEN ' (*)' ELSE '' END,
+                        ', '
+                        ORDER BY pc.es_responsable_principal DESC, p.name, p.lastname
+                    ) AS referentes
                 FROM compromiso c
                 LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                 LEFT JOIN persona p ON pc.id_persona = p.id
@@ -481,16 +535,37 @@ class CompromisoRepository:
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("""
-                    SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
-                        c.comentario, c.comentario_direccion,
-                        d.name AS departamento_name, -- Nombre del departamento
-                        ARRAY_AGG(DISTINCT p.id) AS referentes_ids, -- Obtenemos una lista de IDs de referentes
-                        STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS referentes -- Nombres concatenados
+                    SELECT 
+                        c.id AS compromiso_id,
+                        c.prioridad,
+                        c.descripcion,
+                        c.estado,
+                        c.avance,
+                        c.fecha_limite,
+                        c.comentario,
+                        c.comentario_direccion,
+                        d.name AS departamento_name,
+                        ARRAY_AGG(p.id) AS referentes_ids,
+                        STRING_AGG(
+                            p.name || ' ' || p.lastname || 
+                            CASE WHEN pc.es_responsable_principal THEN ' (*)' ELSE '' END,
+                            ', '
+                            ORDER BY pc.es_responsable_principal DESC, p.name, p.lastname
+                        ) AS referentes
                     FROM compromiso c
                     LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                     LEFT JOIN persona p ON pc.id_persona = p.id
-                    LEFT JOIN departamento d ON c.id_departamento = d.id -- Relación con la tabla departamento
-                    GROUP BY c.id, d.name
+                    LEFT JOIN departamento d ON c.id_departamento = d.id
+                    GROUP BY 
+                        c.id,
+                        c.prioridad,
+                        c.descripcion,
+                        c.estado,
+                        c.avance,
+                        c.fecha_limite,
+                        c.comentario,
+                        c.comentario_direccion,
+                        d.name
                 """)
                 return cursor.fetchall()
         except Exception as e:
@@ -541,8 +616,17 @@ class CompromisoRepository:
                 c.comentario_direccion,
                 d.id AS departamento_id,
                 d.name AS departamento_name,
-                STRING_AGG( p.name || ' ' || p.lastname, ', ' ORDER BY pc.id_persona) AS referentes,
-                STRING_AGG( p.nivel_jerarquico, ', ' ORDER BY pc.id_persona) AS niveles_jerarquicos,
+                STRING_AGG(
+                    p.name || ' ' || p.lastname || 
+                    CASE WHEN pc.es_responsable_principal THEN ' (*)' ELSE '' END,
+                    ', '
+                    ORDER BY pc.es_responsable_principal DESC, p.name, p.lastname
+                ) AS referentes,
+                STRING_AGG(
+                    p.nivel_jerarquico,
+                    ', '
+                    ORDER BY pc.es_responsable_principal DESC, p.name, p.lastname
+                ) AS niveles_jerarquicos,
                 CASE
                     WHEN %s = c.id_departamento AND %s != 'FUNCIONARIO/A' THEN TRUE
                     ELSE FALSE
@@ -619,9 +703,15 @@ class CompromisoRepository:
     def fetch_compromiso_by_id(self, compromiso_id):
         with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
             cursor.execute("""
-                SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.prioridad, c.fecha_creacion, c.fecha_limite, 
-                       c.avance, c.comentario, c.comentario_direccion, c.id_departamento,
-                       STRING_AGG(p.name || ' ' || p.lastname, ', ') AS referentes,
+                SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.prioridad, 
+                       c.fecha_creacion, c.fecha_limite, c.avance, c.comentario, 
+                       c.comentario_direccion, c.id_departamento,
+                       STRING_AGG(
+                           p.name || ' ' || p.lastname || 
+                           CASE WHEN pc.es_responsable_principal THEN ' (*)' ELSE '' END,
+                           ', '
+                           ORDER BY pc.es_responsable_principal DESC, p.name, p.lastname
+                       ) AS referentes,
                        ARRAY_AGG(p.id) AS referentes_ids
                 FROM compromiso c
                 LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso

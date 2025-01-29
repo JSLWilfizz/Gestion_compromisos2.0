@@ -147,6 +147,16 @@
                 padding: 0.5rem;
             }
         }
+
+        .required::after {
+            content: " *";
+            color: red;
+        }
+
+        .responsable-principal {
+            color: red !important;
+            font-weight: bold !important;
+        }
     </style>
 </head>
 <body>
@@ -160,11 +170,11 @@
                         <thead>
                             <tr>
                                 <th>Descripción</th>
-                                <th>Estado</th>
+                                <th class="required">Estado</th>
                                 <th>Prioridad</th>
                                 <th>Nivel de Avance (%)</th>
                                 <th>Fecha Límite</th>
-                                <th>Referentes</th>
+                                <th class="required">Referentes</th>
                                 <th>Comentario Referente</th>
                                 <th>Comentario Dirección</th>
                             </tr>
@@ -193,7 +203,11 @@
                                 <td>
                                     <select name="referentes-{{ compromiso.compromiso_id }}" multiple class="select2 form-select">
                                         {% for value, label in todos_referentes %}
-                                            <option value="{{ value }}" {% if value in compromiso.referentes_ids %}selected{% endif %}>{{ label }}</option>
+                                            {% if value in compromiso.responsable_principal_id %}
+                                                <option value="{{ value }}" class="responsable-principal" {% if value in compromiso.referentes_ids %}selected{% endif %}>[Principal] {{ label }}</option>
+                                            {% else %}
+                                                <option value="{{ value }}" {% if value in compromiso.referentes_ids %}selected{% endif %}>{{ label }}</option>
+                                            {% endif %}
                                         {% endfor %}
                                     </select>
                                 </td>
@@ -235,14 +249,20 @@
             $('.select2').select2({
                 placeholder: "Selecciona referentes",
                 allowClear: false,
-                width: '100%'
+                width: '100%',
+                templateResult: function(data) {
+                    var $result = $("<span></span>");
+                    $result.text(data.text);
+                    
+                    if ($(data.element).hasClass('responsable-principal')) {
+                        $result.addClass('responsable-principal');
+                    }
+                    
+                    return $result;
+                }
             });
 
-            $('.date-limit').each(function() {
-                const fechaLimite = new Date($(this).data('fecha'));
-                const hoy = new Date();
-                const diferenciaDias = Math.floor((fechaLimite - hoy) / (1000 * 60 * 60 * 24));
-
+            $('.date-limit').each(function() {                const fechaLimite = new Date($(this).data('fecha'));                const hoy = new Date();                const diferenciaDias = Math.floor((fechaLimite - hoy) / (1000 * 60 * 60 * 24));
                 if (diferenciaDias <= 0) {
                     $(this).addClass('date-limit-overdue');
                 } else if (diferenciaDias <= 7) {

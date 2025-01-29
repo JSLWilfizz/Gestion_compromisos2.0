@@ -60,6 +60,16 @@
             justify-content: space-between;
             margin-top: 30px;
         }
+
+        .required::after {
+            content: " *";
+            color: red;
+        }
+
+        .responsable-principal {
+            color: red !important;
+            font-weight: bold !important;
+        }
     </style>
 </head>
 <body>
@@ -74,11 +84,11 @@
             </div>
 
             <div class="form-horizontal">
-                <label for="estado">Estado:</label>
+                <label for="estado" class="required">Estado:</label>
                 {{ form.estado(class="form-control") }}
             </div>
             <div class="form-horizontal">
-                <label for="prioridad">Prioridad:</label>
+                <label for="prioridad" class="required">Prioridad:</label>
                 {{ form.prioridad(class="form-control") }}
             </div>
 
@@ -89,14 +99,14 @@
 
             <!-- Campo SelectField para los departamentos -->
             <div class="form-horizontal">
-                <label for="departamento">Departamento:</label>
+                <label for="departamento" class="required">Departamento:</label>
                 {{ form.departamento(class="form-control") }}
             </div>
 
             <!-- Campo Select2 para los referentes -->
             <div class="form-horizontal">
-                <label for="referentes">Referentes:</label>
-                {{ form.referentes(class="form-control") }}
+                <label for="referentes" class="required">Referentes:</label>
+                {{ form.referentes(class="form-control")|safe }}
             </div>
 
             <div class="form-horizontal">
@@ -117,7 +127,17 @@
             // Inicializar Select2 para los referentes
             $('#referentes').select2({
                 placeholder: "Selecciona referentes",
-                allowClear: true
+                allowClear: true,
+                templateResult: function(data) {
+                    var $result = $("<span></span>");
+                    $result.text(data.text);
+                    
+                    if ($(data.element).hasClass('responsable-principal')) {
+                        $result.addClass('responsable-principal');
+                    }
+                    
+                    return $result;
+                }
             });
 
             // Forzar la selección de los referentes preseleccionados desde el backend

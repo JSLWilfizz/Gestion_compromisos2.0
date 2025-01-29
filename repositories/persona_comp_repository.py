@@ -154,38 +154,58 @@ class PersonaCompRepository:
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("""
-                    SELECT ca.*, d.name AS departamento_name, p.name AS archivado_por_nombre,
-                           STRING_AGG(r.nombre, ', ') AS reuniones_asociadas
+                    SELECT 
+                        ca.*, 
+                        d.name AS departamento_name, 
+                        p.name AS archivado_por_nombre,
+                        STRING_AGG(r.nombre, ', ') AS reuniones_asociadas,
+                        STRING_AGG(
+                            p2.name || ' ' || p2.lastname || 
+                            CASE WHEN pca.es_responsable_principal THEN ' (*)' ELSE '' END,
+                            ', '
+                            ORDER BY pca.es_responsable_principal DESC, p2.name, p2.lastname
+                        ) AS referentes
                     FROM compromisos_archivados ca
                     LEFT JOIN reunion_compromiso_archivado rca ON ca.id = rca.id_compromiso
                     LEFT JOIN reunion r ON rca.id_reunion = r.id
                     LEFT JOIN departamento d ON ca.id_departamento = d.id
                     LEFT JOIN persona p ON ca.archivado_por = p.id
+                    LEFT JOIN persona_compromiso_archivado pca ON ca.id = pca.id_compromiso
+                    LEFT JOIN persona p2 ON pca.id_persona = p2.id
                     GROUP BY ca.id, d.name, p.name
                 """)
                 return cursor.fetchall()
         except Exception as e:
             self.conn.rollback()
-            print(f"Error in fetch_compromisos_archivados: {e}")
             raise e
 
     def fetch_compromisos_eliminados(self):
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("""
-                    SELECT ce.*, d.name AS departamento_name, p.name AS eliminado_por_nombre,
-                           STRING_AGG(r.nombre, ', ') AS reuniones_asociadas
+                    SELECT 
+                        ce.*, 
+                        d.name AS departamento_name, 
+                        p.name AS eliminado_por_nombre,
+                        STRING_AGG(r.nombre, ', ') AS reuniones_asociadas,
+                        STRING_AGG(
+                            p2.name || ' ' || p2.lastname || 
+                            CASE WHEN pce.es_responsable_principal THEN ' (*)' ELSE '' END,
+                            ', '
+                            ORDER BY pce.es_responsable_principal DESC, p2.name, p2.lastname
+                        ) AS referentes
                     FROM compromiso_eliminado ce
                     LEFT JOIN reunion_compromiso_eliminado rce ON ce.id = rce.id_compromiso
                     LEFT JOIN reunion r ON rce.id_reunion = r.id
                     LEFT JOIN departamento d ON ce.id_departamento = d.id
                     LEFT JOIN persona p ON ce.eliminado_por = p.id
+                    LEFT JOIN persona_compromiso_eliminado pce ON ce.id = pce.id_compromiso
+                    LEFT JOIN persona p2 ON pce.id_persona = p2.id
                     GROUP BY ce.id, d.name, p.name
                 """)
                 return cursor.fetchall()
         except Exception as e:
             self.conn.rollback()
-            print(f"Error in fetch_compromisos_eliminados: {e}")
             raise e
 
     def recuperar_compromiso(self, compromiso_id):

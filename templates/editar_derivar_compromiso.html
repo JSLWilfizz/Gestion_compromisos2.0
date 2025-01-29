@@ -124,6 +124,26 @@
             cursor: pointer;
             float: right;
         }
+
+        .required::after {
+            content: " *";
+            color: red;
+        }
+
+        .responsable-principal {
+            color: red !important;
+            font-weight: bold !important;
+        }
+        .select2-container--default .select2-selection--multiple .select2-selection__choice.responsable-principal {
+            background-color: #ffebee !important;
+            border-color: #ffcdd2 !important;
+            color: red !important;
+        }
+        /* Estilo para el texto dentro del select2 */
+        .select2-container--default .select2-results__option.responsable-principal {
+            color: red !important;
+            font-weight: bold !important;
+        }
     </style>
 </head>
 <body>
@@ -133,13 +153,13 @@
             <label for="descripcion">Descripción</label>
             <textarea id="descripcion" name="descripcion" {% if derivar %}readonly{% endif %} required>{{ compromiso.descripcion }}</textarea>
 
-            <label for="estado">Estado</label>
+            <label for="estado" class="required">Estado</label>
             <select id="estado" name="estado" {% if derivar %}readonly{% endif %} required>
                 <option value="Pendiente" {% if compromiso.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
                 <option value="Completado" {% if compromiso.estado == 'Completado' %}selected{% endif %}>Completado</option>
             </select>
 
-            <label for="prioridad">Prioridad</label>
+            <label for="prioridad" class="required">Prioridad</label>
             <select id="prioridad" name="prioridad" {% if derivar %}readonly{% endif %} required>
                 <option value="Alta" {% if compromiso.prioridad == 'Alta' %}selected{% endif %}>Alta</option>
                 <option value="Media" {% if compromiso.prioridad == 'Media' %}selected{% endif %}>Media</option>
@@ -152,10 +172,14 @@
             <label for="fecha_limite">Fecha Límite</label>
             <input type="datetime-local" id="fecha_limite" name="fecha_limite" value="{{ compromiso.fecha_limite.strftime('%Y-%m-%dT%H:%M') }}" {% if derivar or editar %}disabled{% endif %} required>
 
-            <label for="referentes">Referentes</label>
+            <label for="referentes" class="required">Referentes</label>
             <select id="referentes" name="referentes" multiple class="form-control" required>
                 {% for value, label in todos_referentes %}
-                    <option value="{{ value }}" {% if value in compromiso.referentes_ids %}selected{% endif %}>{{ label }}</option>
+                    {% if value in compromiso.responsable_principal_id %}
+                        <option value="{{ value }}" class="responsable-principal" {% if value in compromiso.referentes_ids %}selected{% endif %}>[Principal] {{ label }}</option>
+                    {% else %}
+                        <option value="{{ value }}" {% if value in compromiso.referentes_ids %}selected{% endif %}>{{ label }}</option>
+                    {% endif %}
                 {% endfor %}
             </select>
 
@@ -184,7 +208,9 @@
             $('#referentes').select2({
                 placeholder: "Selecciona referentes",
                 allowClear: true,
-                width: '100%'
+                width: '100%',
+                templateResult: formatReferente,
+                templateSelection: formatReferente
             });
 
             $('#compromiso-form').on('submit', function(e) {
@@ -194,12 +220,29 @@
                     alert('Por favor, selecciona al menos un referente.');
                 }
             });
-
-            // Limpiar mensajes flash anteriores
-            $('.flash-close').on('click', function() {
-                $(this).parent().remove();
-            });
+            // Limpiar mensajes flash anteriores            $('.flash-close').on('click', function() {                $(this).parent().remove();            });
         });
+
+        function formatReferente(data) {
+            if (!data.id) return data.text;
+            
+            var $result = $("<span></span>");
+            $result.text(data.text);
+            
+            if ($(data.element).hasClass('responsable-principal')) {
+                $result.addClass('responsable-principal');
+                // También aplicar la clase al contenedor del select2
+                setTimeout(function() {
+                    $('.select2-container--default .select2-results__option')
+                        .filter(function() {
+                            return $(this).text() === data.text;
+                        })
+                        .addClass('responsable-principal');
+                }, 0);
+            }
+            
+            return $result;
+        }
     </script>
     <script>
         console.error("Error de prueba para verificar la consola.");
