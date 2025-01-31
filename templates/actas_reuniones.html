@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acta de Reunión</title>
+</head>
+<body>
+    <h1>Acta de Reunión</h1>
+    <h2 id="nombre_reunion"></h2>
+    <p><strong>Fecha:</strong> <span id="fecha_reunion"></span></p>
+    <p><strong>Tema:</strong> <span id="tema"></span></p>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const datos = JSON.parse(localStorage.getItem("datosReunion"));
+            if (datos) {
+                document.getElementById("nombre_reunion").innerText = datos.nombre_reunion;
+                document.getElementById("fecha_reunion").innerText = datos.fecha_reunion;
+                document.getElementById("tema").innerText = datos.tema;
+            }
+        });
+    </script>
+</body>
+</html>

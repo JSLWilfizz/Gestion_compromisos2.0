@@ -93,6 +93,9 @@ def add_invitado():
         logging.error(f"Error al guardar el invitado: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-#
+@reunion.route('/reunion/actas_reuniones', methods=['GET'])
+@login_required
+def actas_reuniones():
+    return render_template('actas_reuniones.html')
 
 

@@ -152,6 +152,8 @@ class CompromisoRepository:
                     WHERE id = %s
                 """, (descripcion, estado, prioridad, avance, comentario, comentario_direccion, compromiso_id))
             self.update_referentes(compromiso_id, referentes)
+            self.log_modificacion(compromiso_id, user_id)  # Añadir user_id
+            self.conn.commit()
         except Exception as e:
             self.conn.rollback()
             raise e

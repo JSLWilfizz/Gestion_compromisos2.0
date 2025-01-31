@@ -62,7 +62,17 @@ class CompromisoService:
             # Verificar los valores y actualizar el compromiso
             if nuevo_estado and nuevo_avance and nuevo_comentario:
                 try:
-                    self.repo.update_compromiso(compromiso_id, nuevo_estado, nuevo_avance,nuevo_comentario, nuevo_comentario_direccion)
+                    self.update_compromiso(
+                        compromiso_id,
+                        compromiso['descripcion'],
+                        nuevo_estado,
+                        compromiso['prioridad'],
+                        nuevo_avance,
+                        nuevo_comentario,
+                        nuevo_comentario_direccion,
+                        user_id,  # Asegurar que user_id se pasa correctamente
+                        nuevos_referentes  # Asegurar que referentes se pasa correctamente
+                    )
                     self.repo.log_modificacion(compromiso_id, user_id)
 
                     # Si es director, actualizar referentes
@@ -133,7 +143,7 @@ class CompromisoService:
     def update_compromiso(self, compromiso_id, descripcion, estado, prioridad, avance, comentario, comentario_direccion, user_id, referentes):
         self.repo.update_compromiso(compromiso_id, descripcion, estado, prioridad, avance, comentario, comentario_direccion, user_id, referentes)
         self.repo.log_modificacion(compromiso_id, user_id)
-        self.repo.commit()  # Ensure changes are committed to the database
+        self.repo.commit()
 
     def get_compromisos_by_departamento(self, departamento_id):
         """

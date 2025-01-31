@@ -49,80 +49,70 @@ def home_view():
 @home.route('/ver_compromisos', methods=['GET', 'POST'])
 @login_required
 def ver_compromisos():
-    user_id = session['user_id']
-    es_director = session.get('es_director')
-    the_big_boss = session.get('the_big_boss')
-    user = compromiso_service.get_user_info(user_id)  # Fetch user information
-    print(request.method)
-    print(es_director)
     if request.method == 'POST':
-        # Obtener compromisos actuales (directores ven todos, usuarios solo sus compromisos)
-        if es_director:
-            departamento_id = compromiso_service.get_director_info(user_id)['id_departamento']
-            compromisos = compromiso_service.get_compromisos_by_departamento(departamento_id)
-            
-        else:
-            print("No es director")
-            compromisos = compromiso_service.get_compromisos_by_user(user_id)
-        if the_big_boss:
-            print("es el jefe")
-            compromisos = compromiso_service.get_all_compromisos()
-        print(compromisos)
-        # Actualizar los compromisos
-        for compromiso in compromisos:
-            compromiso_id = compromiso['compromiso_id']
-            print(f"Referentes: {compromiso['referentes_ids']}")
-
-            # Directores pueden cambiar referentes y comentario de dirección
-            if es_director:
-                nuevos_referentes = request.form.getlist(f'nuevos_referentes-{compromiso_id}')
-                comentario_director = request.form.get(f'comentario-{compromiso_id}') # director es parte de direccion?
-                if nuevos_referentes == []:
-                    nuevos_referentes = compromiso['referentes_ids']
-
-            if the_big_boss:
-                nuevos_referentes = request.form.getlist(f'nuevos_referentes-{compromiso_id}')
-                comentario_director = request.form.get(f'comentario_direccion-{compromiso_id}')
-                if nuevos_referentes == []:
-                    nuevos_referentes = compromiso['referentes_ids']
-            else:
-                nuevos_referentes = compromiso['referentes_ids']  # Mantiene los referentes actuales
-                comentario_director = compromiso['comentario_direccion']  # Mantiene el comentario actual
-
-            # Obtener los nuevos valores del formulario
-            nuevo_estado = request.form.get(f'estado-{compromiso_id}')
-            nuevo_avance = request.form.get(f'nivel_avance-{compromiso_id}')
-            nuevo_comentario = request.form.get(f'comentario-{compromiso_id}')
-            print(f"Actualizando compromiso {compromiso_id}")
-            # Actualizar el compromiso
+        compromiso_id = request.form.get('compromiso_id')
+        if compromiso_id:
             try:
-                print(f"Actualizando compromiso {compromiso_id}")
+                compromiso = compromiso_service.get_compromiso_by_id(compromiso_id)
+                if not compromiso:
+                    flash('Compromiso no encontrado.', 'danger')
+                    return redirect(url_for('home.ver_compromisos'))
+
+                user_id = session['user_id']
+                es_director = session.get('es_director')
+                the_big_boss = session.get('the_big_boss')
+
+                # Verificar permisos
+                if not (es_director or the_big_boss or compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento'])):
+                    flash('No tienes permiso para actualizar este compromiso.', 'danger')
+                    return redirect(url_for('home.ver_compromisos'))
+
+                # Obtener los nuevos valores del formulario
+                nuevo_estado = request.form.get('estado')
+                nuevo_avance = request.form.get('nivel_avance')
+                nuevo_comentario = request.form.get('comentario')
+                comentario_director = request.form.get('comentario_direccion')
+
+                if es_director or the_big_boss:
+                    nuevos_referentes = request.form.getlist('referentes')
+                    if not nuevos_referentes:
+                        nuevos_referentes = compromiso['referentes_ids']
+                else:
+                    nuevos_referentes = compromiso['referentes_ids']
+                    comentario_director = compromiso['comentario_direccion']
+
+                # Actualizar el compromiso
                 compromiso_service.update_compromiso(
-                    compromiso_id,
-                    nuevo_estado,
-                    nuevo_avance,
-                    nuevo_comentario,
-                    user_id,
-                    comentario_director,
-                    nuevos_referentes
+                    compromiso_id=compromiso_id,
+                    descripcion=compromiso['descripcion'],
+                    estado=nuevo_estado,
+                    prioridad=compromiso['prioridad'],
+                    avance=nuevo_avance,
+                    comentario=nuevo_comentario,
+                    comentario_direccion=comentario_director,
+                    referentes=nuevos_referentes,
+                    user_id=user_id
                 )
+
+                flash('Compromiso actualizado con éxito.', 'success')
             except Exception as e:
                 print(e)
+                flash(f'Error al actualizar el compromiso: {str(e)}', 'danger')
 
-        flash('Compromisos actualizados con éxito.', 'success')
         return redirect(url_for('home.ver_compromisos'))
 
     # Si es un GET, obtener los compromisos para mostrar
+    user_id = session['user_id']
+    es_director = session.get('es_director')
+    the_big_boss = session.get('the_big_boss')
+
     if es_director:
-        print("es director")
-        compromisos = compromiso_service.get_compromisos_by_user(user_id)
-    else:
-        print("No es director")
-        compromisos = compromiso_service.get_compromisos_by_user(user_id)
-    if the_big_boss:
-        print("es el jefe")
+        compromisos = compromiso_service.get_compromisos_by_departamento(compromiso_service.get_director_info(user_id)['id_departamento'])
+    elif the_big_boss:
         compromisos = compromiso_service.get_all_compromisos()
-    print(compromisos)
+    else:
+        compromisos = compromiso_service.get_compromisos_by_user(user_id)
+
     todos_referentes = compromiso_service.get_referentes()
 
     return render_template(
@@ -132,7 +122,7 @@ def ver_compromisos():
         es_director=es_director,
         the_big_boss=the_big_boss,
         user_id=user_id,
-        user=user  # Pass the user variable to the template
+        user=compromiso_service.get_user_info(user_id)  # Pass the user variable to the template
     )
 
 @home.route('/ver_compromisos_compartidos')
@@ -453,4 +443,14 @@ def crear_compromiso():
             print(form.errors)
 
     return render_template('crear_compromiso.html', form=form, user=user)
+
+@home.route('/exportar_acta', methods=['GET'])
+def exportar_acta():
+    # Esta ruta puede ser opcional si se utiliza solo el front-end para manejar la exportación
+    return render_template('actas_reuniones.html')
+
+@home.route('/actas_reuniones')
+@login_required
+def actas_reuniones():
+    return render_template('actas_reuniones.html')
 

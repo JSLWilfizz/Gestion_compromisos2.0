@@ -190,31 +190,32 @@
         </a>
 
         <div class="table-responsive">
-            <form id="compromisos-form" method="POST" action="{{ url_for('home.ver_compromisos') }}">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Descripción</th>
-                            <th>Estado</th>
-                            <th>Prioridad</th>
-                            <th>Avance (%)</th>
-                            <th>Fecha Límite</th>
-                            <th>Departamento</th>
-                            <th>Referentes</th>
-                            {% if es_director %}
-                            <th>Nuevos Referentes</th>
-                            {% endif %}
-                            <th>Comentario Referente</th>
-                            <th>Comentario Dirección</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for compromiso in compromisos if user_id in compromiso.referentes_ids %}
-                        <tr>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Descripción</th>
+                        <th>Estado</th>
+                        <th>Prioridad</th>
+                        <th>Avance (%)</th>
+                        <th>Fecha Límite</th>
+                        <th>Departamento</th>
+                        <th>Referentes</th>
+                        {% if es_director %}
+                        <th>Nuevos Referentes</th>
+                        {% endif %}
+                        <th>Comentario Referente</th>
+                        <th>Comentario Dirección</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for compromiso in compromisos if user_id in compromiso.referentes_ids %}
+                    <tr>
+                        <form method="POST" action="{{ url_for('home.ver_compromisos') }}">
+                            <input type="hidden" name="compromiso_id" value="{{ compromiso.compromiso_id }}">
                             <td>{{ compromiso.descripcion }}</td>
                             <td>
-                                <select name="estado-{{ compromiso.compromiso_id }}">
+                                <select name="estado">
                                     <option value="Pendiente" {% if compromiso.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
                                     <option value="Completado" {% if compromiso.estado == 'Completado' %}selected{% endif %}>Completado</option>
                                 </select>
@@ -226,7 +227,7 @@
                             </td>
                             <td>
                                 <input type="number" 
-                                       name="nivel_avance-{{ compromiso.compromiso_id }}" 
+                                       name="nivel_avance" 
                                        value="{{ compromiso.avance }}" 
                                        min="0" 
                                        max="100">
@@ -236,12 +237,9 @@
                             <td>{{ compromiso.referentes }}</td>
                             {% if es_director %}
                             <td>
-                                <select name="nuevos_referentes-{{ compromiso.compromiso_id }}" 
-                                        multiple 
-                                        class="referentes-select">
+                                <select name="referentes" multiple class="referentes-select">
                                     {% for value, label in todos_referentes %}
-                                        <option value="{{ value }}" 
-                                                {% if value in compromiso.referentes_ids %}selected{% endif %}>
+                                        <option value="{{ value }}" {% if value in compromiso.referentes_ids %}selected{% endif %}>
                                             {{ label }}
                                         </option>
                                     {% endfor %}
@@ -249,23 +247,21 @@
                             </td>
                             {% endif %}
                             <td>
-                                <textarea name="comentario-{{ compromiso.compromiso_id }}">{{ compromiso.comentario }}</textarea>
+                                <textarea name="comentario">{{ compromiso.comentario }}</textarea>
                             </td>
                             <td>
-                                <textarea name="comentario_direccion-{{ compromiso.compromiso_id }}" {% if user.cargo != 'DIRECTOR DE SERVICIO' %}readonly{% endif %}>{{ compromiso.comentario_direccion }}</textarea>
+                                <textarea name="comentario_direccion" {% if user.cargo != 'DIRECTOR DE SERVICIO' and not the_big_boss %}readonly{% endif %}>{{ compromiso.comentario_direccion }}</textarea>
                             </td>
                             <td>
-                                <button type="submit" 
-                                        class="btn-guardar" 
-                                        data-id="{{ compromiso.compromiso_id }}">
+                                <button type="submit" class="btn-guardar">
                                     <i class="fas fa-save"></i> Guardar
                                 </button>
                             </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </form>
+                        </form>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
     <footer class="footer">
@@ -277,17 +273,5 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            {% if es_director %}
-            $('.referentes-select').select2({
-                placeholder: "Selecciona referentes",
-                allowClear: true,
-                width: '100%',
-                dropdownParent: $('#compromisos-form')
-            });
-            {% endif %}
-        });
-    </script>
 </body>
 </html>

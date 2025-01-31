@@ -149,7 +149,7 @@
         </div>
 
         <div class="p-6" id="acta-content">
-            <form method="POST" action="{{ url_for('reunion.crear_reunion_paso1') }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ url_for('reunion.crear_reunion_paso1') }}" enctype="multipart/form-data" id="form-reunion">
                 {{ form.hidden_tag() }}
                 <input type="hidden" id="reunion_id" name="reunion_id" value="{{ some_reunion_id_value }}">
 
@@ -349,8 +349,7 @@
                         <input type="file" id="acta_pdf" name="acta_pdf"
                             accept="application/pdf, image/png, image/jpeg" class="form-control mt-1">
                     </div>
-                    <button type="submit" class="btn btn-primary btn-confirm"><i class="fas fa-check"></i> Confirmar Reunión y
-                        Compromisos</button>
+                    <button type="submit" class="btn btn-primary btn-confirm"><i class="fas fa-check"></i> Confirmar Reunión y Compromisos</button>
                 </div>
             </form>
             <br>
@@ -374,19 +373,14 @@
         var easyMDE1 = new EasyMDE({ element: document.getElementById('descripcion1') });
 
         document.getElementById('export-pdf').addEventListener('click', function() {
-            const actaContent = document.getElementById('acta-content').innerHTML;
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = "{{ url_for('exportar_pdf') }}";
-
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'acta_content';
-            input.value = actaContent;
-
-            form.appendChild(input);
-            document.body.appendChild(form);
-            form.submit();
+            const form = document.getElementById('form-reunion');
+            const formData = new FormData(form);
+            const datosReunion = {};
+            formData.forEach((value, key) => {
+                datosReunion[key] = value;
+            });
+            localStorage.setItem('datosReunion', JSON.stringify(datosReunion));
+            window.open("{{url_for('reunion.actas_reuniones')}}", "_blank");
         });
 
         // Inicializar select2
@@ -794,6 +788,8 @@
         $('#correos-body').on('click', '.btn-remove', function () {
             updateReferentesDisplay();
         });
+
+        
     });
 </script>
 </body>
