@@ -11,7 +11,8 @@ from models import User  # Import User model
 
 def secure_headers(response):  # Función para aplicar cabeceras de seguridad
     response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'DENY'
+    # Permitir que la página se cargue en un iframe si proviene del mismo origen
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-XSS-Protection'] = '1; mode=block'
     return response
 
@@ -26,6 +27,10 @@ def create_app(config_class=Config):
     # Configuración de carpetas
     UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+    # Agregar la ruta base para archivos estáticos subidos. 
+    # Se asume que los archivos se guardan en 'uploads', por lo que sus subdirectorios se incluyen.
+    app.config['STATIC_FOLDER'] = os.path.join(app.root_path, 'uploads')
+
     app.secret_key = 'tu_clave_secreta'  # Cambia esto por una clave secreta segura
 
     # Aplicar las cabeceras seguras a todas las respuestas
@@ -37,6 +42,12 @@ def create_app(config_class=Config):
     app.register_blueprint(reunion)  # Registrar el blueprint de las reuniones
     app.register_blueprint(director_bp)  # Registrar el blueprint del director
 
+    # Nueva ruta para servir archivos subidos en 'uploads'
+    @app.route('/uploads/<path:filename>')
+    def uploaded_file(filename):
+        from flask import send_from_directory
+        return send_from_directory(app.config['STATIC_FOLDER'], filename)
+        
     @app.route('/exportar_pdf', methods=['POST'])
     def exportar_pdf():
         acta_content = request.form.get('acta_content')

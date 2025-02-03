@@ -1,7 +1,7 @@
 # /routes/reunion_routes.py
 import traceback
 
-from flask import Blueprint, render_template, redirect, url_for, flash, session, request, jsonify
+from flask import Blueprint, render_template, redirect, url_for, flash, session, request, jsonify, current_app, send_from_directory
 from .auth_routes import login_required
 from repositories.reunion_service import ReunionService
 from validators.reunion_validator import ReunionValidator
@@ -97,5 +97,43 @@ def add_invitado():
 @login_required
 def actas_reuniones():
     return render_template('actas_reuniones.html')
+
+@reunion.route('/reunion/ver/<int:compromiso_id>', methods=['GET'])
+@login_required
+def ver_reunion(compromiso_id):
+    try:
+        reunion_info = service.get_reunion_by_compromiso_id(compromiso_id)
+        if not reunion_info:
+            flash('No se encontró información de la reunión asociada.', 'warning')
+            return redirect(url_for('home.ver_compromisos_compartidos'))
+        reunion_info['origen_name'] = service.get_origen_name(reunion_info['id_origen'])
+        reunion_info['area_name'] = service.get_area_name(reunion_info['id_area'])
+        return render_template('ver_reunion.html', reunion=reunion_info)
+    except Exception as e:
+        logging.error(f"Error al obtener la información de la reunión: {str(e)}")
+        flash('Ocurrió un error al obtener la información de la reunión.', 'danger')
+        return redirect(url_for('home.ver_compromisos_compartidos'))
+
+@reunion.route('/reunion/ver_archivos/<int:reunion_id>', methods=['GET'])
+@login_required
+def ver_archivos(reunion_id):
+    reunion_obj = service.get_reunion_by_id(reunion_id)
+    archivos = []
+    if reunion_obj and reunion_obj.get('acta_pdf'):
+        archivos.append(reunion_obj.get('acta_pdf'))
+    return render_template('ver_archivos.html', archivos=archivos)
+
+@reunion.route('/get_file/<path:filename>', methods=['GET'])
+@login_required
+def get_file(filename):
+    import os
+    static_folder = current_app.config.get('STATIC_FOLDER', 'static')
+    # Si filename incluye "uploads/", retirarlo para evitar duplicar la ruta
+    if filename.startswith("uploads/"):
+        filename = filename[len("uploads/"):]
+    file_path = os.path.join(static_folder, filename)
+    if not os.path.exists(file_path):
+        return "File not found", 404
+    return send_from_directory(static_folder, filename)
 
 

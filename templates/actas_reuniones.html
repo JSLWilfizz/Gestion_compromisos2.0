@@ -187,7 +187,7 @@
                     <tr>
                         <th>Nombre</th>
                         <th>Departamento</th>
-                        <th>Profesion</th>
+                        <th>Cargo</th>
                     </tr>
                 </thead>
                 <tbody id="referentes-table-body"></tbody>
@@ -242,6 +242,7 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
+            // datosReunion in localStorage contains the compromisos info among other meeting data
             const datos = JSON.parse(localStorage.getItem("datosReunion"));
             if (datos) {
                 populateData(datos);
@@ -249,6 +250,7 @@
         });
 
         function populateData(datos) {
+            // Datos de compromiso vienen de datos.compromisos, que forma parte del JSON en datosReunion
             document.getElementById("nombre_reunion").textContent = datos.nombre_reunion;
             document.getElementById("lugar").textContent = datos.lugar;
             document.getElementById("origen").textContent = datos.origen;
@@ -258,7 +260,7 @@
             document.getElementById("temas_analizado").textContent = datos.temas_analizado;
             document.getElementById("proximas_reuniones").textContent = datos.proximas_reuniones;
 
-            populateTable("referentes-table-body", datos.asistentes, ['nombre', 'departamento', 'profesion']);
+            populateTable("referentes-table-body", datos.asistentes, ['nombre', 'departamento', 'cargo']);
             populateTable("invitados-table-body", datos.invitados, ['nombre', 'institucion', 'correo', 'telefono']);
             populateCompromisos(datos.compromisos);
         }
@@ -278,13 +280,15 @@
 
         function populateCompromisos(compromisos) {
             const tableBody = document.getElementById("compromisos-table-body");
+            
+
             compromisos.forEach(compromiso => {
                 const fechaLimite = new Date(compromiso.fecha_limite);
                 const opcionesFecha = { year: 'numeric', month: 'long', day: 'numeric' };
                 const referentesNombres = compromiso.referentes.map(ref => ref.nombre).join(', ');
 
                 const row = tableBody.insertRow();
-                [compromiso.nombre, compromiso.prioridad, fechaLimite.toLocaleDateString('es-ES', opcionesFecha), compromiso.departamento, referentesNombres].forEach(text => {
+                [compromiso.nombre, compromiso.prioridad, fechaLimite.toLocaleDateString('es-ES', opcionesFecha), typeof compromiso.departamento === 'string' ? compromiso.departamento : compromiso.departamento.nombre, referentesNombres].forEach(text => {
                     row.insertCell().textContent = text;
                 });
             });
@@ -317,7 +321,9 @@
             // Añadir la imagen escalada al PDF
             pdf.addImage(imgData, 'PNG', x, y, scaledWidth, scaledHeight);
 
-            pdf.save('Acta_Reunion.pdf');
+            const fechaActual = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
+            const horaActual = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }).replace(/:/g, '-');
+            pdf.save(`Acta_Reunion_${fechaActual}_${horaActual}.pdf`);
         }
     </script>
 </body>

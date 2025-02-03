@@ -57,7 +57,7 @@ class ReunionRepository:
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("""
-                    SELECT p.id, p.name, p.lastname, p.profesion,
+                    SELECT p.id, p.name, p.lastname, p.cargo,
                            d.name AS departamento
                     FROM persona p
                     JOIN persona_departamento pd ON p.id = pd.id_persona
@@ -210,6 +210,7 @@ class ReunionRepository:
                         c.fecha_limite, 
                         c.prioridad, 
                         c.avance,
+                        d.id AS departamento_id,
                         d.name AS departamento,
                         STRING_AGG(
                             p.name || ' ' || p.lastname || 
@@ -223,7 +224,7 @@ class ReunionRepository:
                     LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                     LEFT JOIN persona p ON pc.id_persona = p.id
                     WHERE rc.id_reunion = %s
-                    GROUP BY c.id, d.name
+                    GROUP BY c.id, d.id, d.name
                 """, (reunion_id,))
                 return cursor.fetchall()
         except Exception as e:
@@ -238,6 +239,47 @@ class ReunionRepository:
         except Exception as e:
             self.conn.rollback()
             raise e
+
+    def fetch_reunion_by_compromiso_id(self, compromiso_id):
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT r.*
+                    FROM reunion r
+                    JOIN reunion_compromiso rc ON r.id = rc.id_reunion
+                    WHERE rc.id_compromiso = %s
+                """, (compromiso_id,))
+                return cursor.fetchone()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+
+    def fetch_origen_name(self, origen_id):
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT name FROM origen WHERE id = %s", (origen_id,))
+                result = cursor.fetchone()
+                return result['name'] if result else None
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+
+    def fetch_area_name(self, area_id):
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT name FROM area WHERE id = %s", (area_id,))
+                result = cursor.fetchone()
+                return result['name'] if result else None
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+
+    def fetch_reunion_by_id(self, reunion_id):
+        query = "SELECT * FROM reunion WHERE id = %s"
+        with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(query, (reunion_id,))
+            result = cursor.fetchone()  # result is a dict if found
+        return result
 
     def commit(self):
         try:

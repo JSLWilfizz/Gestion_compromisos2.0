@@ -141,6 +141,9 @@ def ver_compromisos_compartidos():
 
     # Obtener compromisos compartidos con filtros aplicados
     compromisos_compartidos = compromiso_service.get_compromisos_compartidos(user_id, the_big_boss or es_director, search, estado, avance, fecha_limite)
+    for comp in compromisos_compartidos:
+        reunion_item = reunion_service.get_reunion_by_compromiso_id(comp['compromiso_id'])
+        comp['tiene_reunion'] = bool(reunion_item)
     
     return render_template('ver_compromisos_compartidos.html', compromisos=compromisos_compartidos, user=user)
 

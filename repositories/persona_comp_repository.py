@@ -158,7 +158,7 @@ class PersonaCompRepository:
                         ca.*, 
                         d.name AS departamento_name, 
                         p.name AS archivado_por_nombre,
-                        STRING_AGG(r.nombre, ', ') AS reuniones_asociadas,
+                        MAX(r.nombre) AS reuniones_asociadas,
                         STRING_AGG(
                             p2.name || ' ' || p2.lastname || 
                             CASE WHEN pca.es_responsable_principal THEN ' (*)' ELSE '' END,
@@ -187,7 +187,7 @@ class PersonaCompRepository:
                         ce.*, 
                         d.name AS departamento_name, 
                         p.name AS eliminado_por_nombre,
-                        STRING_AGG(r.nombre, ', ') AS reuniones_asociadas,
+                        MAX(r.nombre) AS reuniones_asociadas,
                         STRING_AGG(
                             p2.name || ' ' || p2.lastname || 
                             CASE WHEN pce.es_responsable_principal THEN ' (*)' ELSE '' END,

@@ -30,7 +30,7 @@ class ReunionService:
 
         personas = self.repo.fetch_personas()
         referentes_choices = [
-            (p['id'], f"{p['name']} {p['lastname']}", p['departamento'], p['profesion'])
+            (p['id'], f"{p['name']} {p['lastname']}", p['departamento'], p['cargo'])
             for p in personas
         ]
         form.compromisos[0].referentes.choices = referentes_choices
@@ -148,6 +148,12 @@ class ReunionService:
             return self.repo.insert_area(new_area)
         return form.area.data
 
+    def get_origen_name(self, origen_id):
+        return self.repo.fetch_origen_name(origen_id)
+
+    def get_area_name(self, area_id):
+        return self.repo.fetch_area_name(area_id)
+
     def get_mis_reuniones(self, user_id):
         return self.repo.fetch_mis_reuniones(user_id)
 
@@ -156,3 +162,9 @@ class ReunionService:
 
     def add_invitado(self, nombre, institucion, correo, telefono):
         return self.repo.insert_invitado(nombre, institucion, correo, telefono)
+
+    def get_reunion_by_compromiso_id(self, compromiso_id):
+        return self.repo.fetch_reunion_by_compromiso_id(compromiso_id)
+    
+    def get_reunion_by_id(self, reunion_id):
+        return self.repo.fetch_reunion_by_id(reunion_id)

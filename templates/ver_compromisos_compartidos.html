@@ -184,6 +184,19 @@
             background-color: #2ecc71;
             color: white;
         }
+
+        .btn-no-reunion {
+            background-color: #3498db;
+            color: #ffffff;
+            border-radius: 4px;
+            padding: 6px 10px;
+            text-decoration: none;
+            font-size: 12px;
+            transition: background-color 0.3s;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
     </style>
     <script>
         function getProgressBarColor(value) {
@@ -324,9 +337,11 @@
                         {% else %}
                         <a href="#" class="btn" style="pointer-events: none; opacity: 0.5;"><i class="fas fa-share"></i> Derivar</a>
                         {% endif %}
-                        
-                        <a href="#" class="btn"><i class="fas fa-calendar-alt"></i> Ver Reunion (Pronto)</a>
-                        
+                        <a href="{{ url_for('reunion.ver_reunion', compromiso_id=compromiso.compromiso_id) }}"
+                           class="btn {% if not compromiso.tiene_reunion %}btn-no-reunion{% else %}btn-primary{% endif %}">
+                           <i class="fas fa-calendar-alt"></i>
+                           Ver reunión
+                        </a>
                         <!-- Delete button -->
                         <form method="POST" action="{{ url_for('home.eliminar_compromiso', compromiso_id=compromiso.compromiso_id) }}" style="display:inline;">
                             <button type="submit" class="btn" onclick="return confirm('¿Estás seguro de que deseas eliminar este compromiso?');"><i class="fas fa-trash-alt"></i> Eliminar</button>

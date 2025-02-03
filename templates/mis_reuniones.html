@@ -93,6 +93,12 @@
         .btn-secondary:hover {
             background-color: #4a5568;
         }
+        .btn-tertiary {
+            background-color: #f56565;
+        }
+        .btn-tertiary:hover {
+            background-color: #e53e3e;
+        }
         .footer {
             background-color: #edf2f7;
             text-align: center;
@@ -143,9 +149,17 @@
                             <td>{{ reunion.asistentes }}</td>
                             <td>
                                 <a href="{{ url_for('home.ver_compromisos_reunion', reunion_id=reunion.id) }}" class="btn"><i class="fas fa-eye"></i> Ver Compromisos</a>
-                                <a href="#" class="btn btn-secondary"><i class="fas fa-folder"></i> Ver Archivos (Pronto)</a>
+                                <a href="{{ url_for('reunion.ver_archivos', reunion_id=reunion.id) }}" class="btn btn-secondary"><i class="fas fa-folder"></i>Ver Archivos</a>
                                 {% if reunion.acta_pdf %}
-                                <a href="{{ reunion.acta_pdf }}" class="btn btn-secondary" target="_blank"><i class="fas fa-file-pdf"></i> Ver Acta</a>
+                                    {% if reunion.acta_pdf[:12] == 'Acta_Reunion' and reunion.acta_pdf[-4:] == '.pdf' %}
+                                        <a href="{{ url_for('reunion.get_file', filename=reunion.acta_pdf) }}" class="btn btn-tertiary" target="_blank">
+                                            <i class="fas fa-file-pdf"></i> Ver Acta
+                                        </a>
+                                    {% else %}
+                                        <a href="{{ reunion.acta_pdf }}" class="btn btn-tertiary" target="_blank">
+                                            <i class="fas fa-file-pdf"></i> Ver Acta
+                                        </a>
+                                    {% endif %}
                                 {% endif %}
                             </td>
                         </tr>
