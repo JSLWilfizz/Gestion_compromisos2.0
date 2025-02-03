@@ -335,18 +335,23 @@ def archivar_compromiso(compromiso_id):
 @login_required
 def ver_compromisos_archivados():
     user_id = session['user_id']
-    if not session.get('the_big_boss'):
+    user = compromiso_service.get_user_info(user_id)
+    if not (session.get('the_big_boss') or user['cargo'] != 'FUNCIONARIO'):
         flash('No tienes permiso para ver los compromisos archivados.', 'danger')
         return redirect(url_for('home.home_view'))
 
     compromisos_archivados = persona_comp_service.get_compromisos_archivados()
-    return render_template('ver_compromisos_archivados.html', compromisos=compromisos_archivados)
+    return render_template('ver_compromisos_archivados.html', compromisos=compromisos_archivados, user=user)
 
 @home.route('/desarchivar_compromiso/<int:compromiso_id>', methods=['POST'])
 @login_required
 def desarchivar_compromiso(compromiso_id):
     user_id = session['user_id']
-    if not session.get('the_big_boss'):
+    user = compromiso_service.get_user_info(user_id)
+    compromiso = compromiso_service.get_compromiso_by_id(compromiso_id)
+
+    # Verificar si el usuario tiene permiso para desarchivar el compromiso
+    if not (session.get('the_big_boss') or compromiso['id_departamento'] == user['id_departamento']):
         flash('No tienes permiso para desarchivar este compromiso.', 'danger')
         return redirect(url_for('home.home_view'))
 

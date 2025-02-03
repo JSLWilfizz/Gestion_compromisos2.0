@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
+
     <style>
         :root {
             --primary-color: #005a87;
@@ -256,7 +258,9 @@
             document.getElementById("origen").textContent = datos.origen;
             document.getElementById("area").textContent = datos.area;
             document.getElementById("tema").textContent = datos.tema;
-            document.getElementById("fecha_reunion").textContent = datos.fecha_reunion;
+            const fechaReunion = new Date(datos.fecha_reunion);
+            const opcionesFecha = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            document.getElementById("fecha_reunion").textContent = fechaReunion.toLocaleDateString('es-ES', opcionesFecha);
             document.getElementById("temas_analizado").textContent = datos.temas_analizado;
             document.getElementById("proximas_reuniones").textContent = datos.proximas_reuniones;
 

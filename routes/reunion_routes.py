@@ -18,7 +18,7 @@ reunion = Blueprint('reunion', __name__)
 service = ReunionService()
 
 UPLOAD_FOLDER = 'uploads/actas/'
-ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'zip', 'ppt', 'pptx', 'xls', 'xlsx', 'pbix'}
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -39,12 +39,15 @@ def crear_reunion_paso1():
 
     if request.method == 'POST' and ReunionValidator.validate_first_step(form):
         try:
-            acta_pdf = request.files.get('acta_pdf')
-            acta_pdf_path = None
-            if (acta_pdf and allowed_file(acta_pdf.filename)):
-                acta_pdf_filename = secure_filename(acta_pdf.filename)
-                acta_pdf.save(os.path.join(UPLOAD_FOLDER, acta_pdf_filename))
-                acta_pdf_path = os.path.join(UPLOAD_FOLDER, acta_pdf_filename)
+            uploaded_files = request.files.getlist('acta_pdf')
+            file_paths = []
+            for file_item in uploaded_files:
+                if file_item and allowed_file(file_item.filename):
+                    filename = secure_filename(file_item.filename)
+                    file_item.save(os.path.join(UPLOAD_FOLDER, filename))
+                    file_paths.append(os.path.join(UPLOAD_FOLDER, filename))
+
+            acta_pdf_path = ';'.join(file_paths) if file_paths else None
 
             tema_values = [value.replace('\n', ';') for value in request.form.getlist('tema')]
             temas_analizados_values = [value.replace('\n', ';') for value in request.form.getlist('temas_analizado')]
@@ -120,7 +123,10 @@ def ver_archivos(reunion_id):
     reunion_obj = service.get_reunion_by_id(reunion_id)
     archivos = []
     if reunion_obj and reunion_obj.get('acta_pdf'):
-        archivos.append(reunion_obj.get('acta_pdf'))
+        file_paths = reunion_obj['acta_pdf'].split(';')
+        for p in file_paths:
+            if p.strip():
+                archivos.append(p.strip())
     return render_template('ver_archivos.html', archivos=archivos)
 
 @reunion.route('/get_file/<path:filename>', methods=['GET'])

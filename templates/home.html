@@ -310,9 +310,11 @@
                 <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn btn-compromisosdepartamentales">
                     <i class="fas fa-users mr-2"></i> Compromisos Departamentales
                 </a>
+                {% if the_big_boss or user.cargo != 'FUNCIONARIO' %}    
                 <a href="{{ url_for('home.ver_compromisos_archivados') }}" class="btn btn-secondary">
                     <i class="fas fa-archive mr-2"></i> Compromisos Archivados
                 </a>
+                {% endif %}
                 <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">
                     <i class="fas fa-sign-out-alt mr-2"></i> Cerrar Sesión
                 </a>

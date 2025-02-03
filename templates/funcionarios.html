@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
+
     <title>Funcionarios - Servicio de Salud del Maule</title>
     <style>
         * {
@@ -263,11 +265,30 @@
         </div>
     </div>
     <footer class="footer">
-        Servicio de Salud del Maule
-        <div>
+        <div class="footer-content">
+            <span>Servicio de Salud del Maule</span>
             <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
         </div>
     </footer>
+    <style>
+        .footer {
+            background-color: #3498db;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .footer-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .footer-content img {
+            margin-left: 10px;
+            height: 30px;
+        }
+    </style>
 </body>
 
 </html>

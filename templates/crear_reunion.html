@@ -344,9 +344,10 @@
                     <div>
                         <label for="acta_pdf" class="block text-sm font-medium text-gray-700">Subir acta de la
                             reunión</label>
-                        <input type="file" id="acta_pdf" name="acta_pdf"
-                            accept="application/pdf, image/png, image/jpeg" class="form-control mt-1">
-                    </div>
+                            <input type="file" id="acta_pdf" name="acta_pdf" multiple 
+                            accept=".pdf, .png, .jpeg, .jpg, .doc, .docx, .zip, .ppt, .pptx, .xls, .xlsx, .pbix"
+                            class="form-control mt-1">
+                                              </div>
                     <button type="submit" class="btn btn-primary btn-confirm"><i class="fas fa-check"></i> Confirmar Reunión y Compromisos</button>
                 </div>
             </form>

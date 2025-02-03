@@ -151,15 +151,17 @@
                                 <a href="{{ url_for('home.ver_compromisos_reunion', reunion_id=reunion.id) }}" class="btn"><i class="fas fa-eye"></i> Ver Compromisos</a>
                                 <a href="{{ url_for('reunion.ver_archivos', reunion_id=reunion.id) }}" class="btn btn-secondary"><i class="fas fa-folder"></i>Ver Archivos</a>
                                 {% if reunion.acta_pdf %}
-                                    {% if reunion.acta_pdf[:12] == 'Acta_Reunion' and reunion.acta_pdf[-4:] == '.pdf' %}
-                                        <a href="{{ url_for('reunion.get_file', filename=reunion.acta_pdf) }}" class="btn btn-tertiary" target="_blank">
-                                            <i class="fas fa-file-pdf"></i> Ver Acta
-                                        </a>
-                                    {% else %}
-                                        <a href="{{ reunion.acta_pdf }}" class="btn btn-tertiary" target="_blank">
-                                            <i class="fas fa-file-pdf"></i> Ver Acta
-                                        </a>
-                                    {% endif %}
+                                    {% set file_list = reunion.acta_pdf.split(';') %}
+                                    {% for file_path in file_list %}
+                                        {% set fp = file_path.strip() %}
+                                        {% set base_name = fp.split('/')[-1] %}
+                                        {% if fp and base_name.startswith('Acta_Reunion') and base_name.endswith('.pdf') %}
+                                            <a href="{{ url_for('reunion.get_file', filename=fp) }}"
+                                               class="btn btn-tertiary" target="_blank">
+                                               <i class="fas fa-file-pdf"></i> Ver Acta
+                                            </a>
+                                        {% endif %}
+                                    {% endfor %}
                                 {% endif %}
                             </td>
                         </tr>

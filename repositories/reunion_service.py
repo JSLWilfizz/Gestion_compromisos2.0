@@ -97,7 +97,7 @@ class ReunionService:
             origen_id,
             asistentes_concatenados,
             correos_final,
-            acta_pdf_path,
+            acta_pdf_path,  # now possibly contains multiple paths separated by semicolons
             lugar,
             tema_concatenado,
             temas_analizado_concatenado,
