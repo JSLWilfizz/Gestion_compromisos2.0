@@ -57,7 +57,7 @@ class ReunionRepository:
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("""
-                    SELECT p.id, p.name, p.lastname, p.correo, p.profesion,
+                    SELECT p.id, p.name, p.lastname, p.profesion,
                            d.name AS departamento
                     FROM persona p
                     JOIN persona_departamento pd ON p.id = pd.id_persona

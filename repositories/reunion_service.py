@@ -30,7 +30,7 @@ class ReunionService:
 
         personas = self.repo.fetch_personas()
         referentes_choices = [
-            (p['id'], f"{p['name']} {p['lastname']} - {p['departamento']} - {p['profesion']}", p['correo'])
+            (p['id'], f"{p['name']} {p['lastname']}", p['departamento'], p['profesion'])
             for p in personas
         ]
         form.compromisos[0].referentes.choices = referentes_choices
@@ -52,7 +52,9 @@ class ReunionService:
             raise ValueError("El campo 'area' es requerido")
 
         name_list = []
-        correo_list = []
+        departamento_list = []
+        profesion_list = []
+        correo_list = []    
         # Obtener los asistentes existentes
         asistentes_list = request_data.getlist('asistentes[]')
         for asistente_id in asistentes_list:
@@ -60,7 +62,8 @@ class ReunionService:
             if not user:
                 raise ValueError(f"No se encontró información del usuario con ID {asistente_id}")
             name_list.append(f"{user['name']} {user['lastname']}")
-            correo_list.append(user['correo'] or '')
+            departamento_list.append(user['departamento'] or '')
+            profesion_list.append(user['profesion'] or '')
 
         # Recoger invitados y crearlos en la tabla persona
         invitado_nombres = request_data.getlist('invitado-nombre')

@@ -194,8 +194,8 @@
                     <div id="asistentes-group" class="col-span-2">
                         <label for="asistentes-select" class="block text-sm font-medium text-gray-700">Asistentes</label>
                         <select id="asistentes-select" name="asistentes[]" class="form-control select2 w-full" multiple>
-                            {% for value, label, correo in form.compromisos[0].referentes.choices %}
-                            <option value="{{ value }}" data-correo="{{ correo }}">{{ label }}</option>
+                            {% for value, label, departamento, profesion in form.compromisos[0].referentes.choices %}
+                            <option value="{{ value }}" data-departamento="{{ departamento }}" data-profesion="{{ profesion }}">{{ label }}</option>
                             {% endfor %}
                         </select>
                         <label for="invitados-select" class="block text-sm font-medium text-gray-700">Invitados</label>
@@ -219,25 +219,21 @@
                             <input type="text" id="invitado-telefono" name="invitado-telefono" class="form-control" placeholder="Introduce el teléfono del invitado">
                             <button type="button" id="btn-save-invitado" class="btn btn-primary mt-2"><i class="fas fa-save"></i> Guardar Invitado</button>
                         </div>
+                     
                     <h3 class="text-lg font-medium text-gray-900">Participantes</h3>
-                    <table class="min-w-full divide-y divide-gray-200 mt-3">
+                    <table for="tabla-referentes" class="min-w-full divide-y divide-gray-200 mt-3">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Asistente</th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Correo</th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Acciones</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asistente</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Departamento</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profesion</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="correos-body" class="bg-white divide-y divide-gray-200">
-                            <!-- Aquí se añadirán dinámicamente los asistentes seleccionados con su correo -->
                         </tbody>
                     </table>
+                    <!--    
                     <br>
                     <h3 class="text-lg font-medium text-gray-900 mt-6">Invitados</h3>
                     <br>
@@ -253,24 +249,23 @@
                                 </tr>
                             </thead>
                             <tbody id="invitados-body" class="bg-white divide-y divide-gray-200">
-                                <!-- Aquí se añadirán dinámicamente los invitados seleccionados con su correo -->
                             </tbody>
                         </table>
                     </div>
-        
+                    -->
                 <br>
                 <div class="mt-6">
                     <h3 class="text-lg font-medium text-gray-900">Temas Analizados en Reunión</h3>
-                    <textarea id="temas_analizado" name="temas_analizado" class="form-control mt-1"></textarea>
+                    <textarea for = "temas_analizado" id="temas_analizado" name="temas_analizado" class="form-control mt-1"></textarea>
                 </div>
                 <div class="mt-6">
                     <h3 class="text-lg font-medium text-gray-900">Proximas Fechas de Reuniones</h3>
-                    <textarea id="descripcion1" name="proximas_fechas" class="form-control mt-1"></textarea>
+                    <textarea for= "proximas_reuniones" id="proximas_reuniones" name="proximas_reuniones" class="form-control mt-1"></textarea>
                 </div>
                 <br>
                 <div class="mt-6">
                     <h2 class="text-xl font-medium text-gray-900">Compromisos de la Reunión</h2>
-                    <table class="min-w-full divide-y divide-gray-200 mt-3" id="compromisos-table">
+                    <table for= "tabla-compromisos" class="min-w-full divide-y divide-gray-200 mt-3" id="compromisos-table">
                         <thead class="bg-gray-50">
                             <tr>
                                 <th
@@ -319,7 +314,7 @@
                                         <select id="referentes-select"
                                             name="compromisos-{{ loop.index }}-referentes"
                                             class="form-control select2" multiple="multiple" required>
-                                            {% for value, label, correo in form.compromisos[0].referentes.choices %}
+                                            {% for value, label, departamento, profesion in form.compromisos[0].referentes.choices %}
                                             <option value="{{ value }}">{{ label }}</option>
                                             {% endfor %}
                                         </select>
@@ -359,438 +354,318 @@
                     alt="Logotipo del Servicio de Salud del Maule" class="h-16">
             </div>
         </div>
-</body>
-</div>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas/dist/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var easyMDE = new EasyMDE({ element: document.getElementById('descripcion') });
-        var easyMDE1 = new EasyMDE({ element: document.getElementById('descripcion1') });
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var easyMDE = new EasyMDE({ element: document.getElementById('descripcion') });
+            var easyMDE1 = new EasyMDE({ element: document.getElementById('descripcion1') });
 
-        document.getElementById('export-pdf').addEventListener('click', function() {
-            const form = document.getElementById('form-reunion');
-            const formData = new FormData(form);
-            const datosReunion = {};
-            formData.forEach((value, key) => {
-                datosReunion[key] = value;
-            });
-            localStorage.setItem('datosReunion', JSON.stringify(datosReunion));
-            window.open("{{url_for('reunion.actas_reuniones')}}", "_blank");
-        });
+            document.getElementById('export-pdf').addEventListener('click', function() {
+                const form = document.getElementById('form-reunion');
+                const formData = new FormData(form);
+                const datosReunion = {};
 
-        // Inicializar select2
-        $('.select2').select2({
-            placeholder: "Selecciona ",
-            allowClear: true,
-            width: '100%'
-        });
+                // Recopilar campos de texto y textarea
+                datosReunion.nombre_reunion = formData.get('nombre_reunion');
+                datosReunion.lugar = formData.get('lugar');
+                datosReunion.tema = formData.get('tema');
+                datosReunion.fecha_reunion = formData.get('fecha_reunion');
+                datosReunion.temas_analizado = formData.get('temas_analizado');
+                datosReunion.descripcion1 = formData.get('descripcion1'); // Asegurarse de que el name es 'descripcion1'
 
-        let compromisoIndex = $('#compromisos-table tbody tr').length + 1;
+                // Recopilar 'origen'
+                if (formData.get('new_origen') && formData.get('new_origen').trim() !== "") {
+                    datosReunion.origen = formData.get('new_origen').trim();
+                } else {
+                    const origenSelect = document.querySelector('select[name="origen"]');
+                    const selectedOrigenOption = origenSelect.options[origenSelect.selectedIndex];
+                    datosReunion.origen = selectedOrigenOption.text;
+                }
 
-        $('#btn-add-origen').on('click', function () {
-            const origenSelect = $('select[name="origen"]');
-            const newOrigenInput = $('#new-origen');
+                // Recopilar 'area'
+                if (formData.get('new_area') && formData.get('new_area').trim() !== "") {
+                    datosReunion.area = formData.get('new_area').trim();
+                } else {
+                    const areaSelect = document.querySelector('select[name="area"]');
+                    const selectedAreaOption = areaSelect.options[areaSelect.selectedIndex];
+                    datosReunion.area = selectedAreaOption.text;
+                }
 
-            if (newOrigenInput.hasClass('hidden')) {
-                newOrigenInput.removeClass('hidden');
-                origenSelect.addClass('hidden');
-                $(this).text('Usar origen existente');
-            } else {
-                newOrigenInput.addClass('hidden');
-                origenSelect.removeClass('hidden');
-                $(this).text('Añadir nuevo Origen');
-            }
-        });
+                // Recopilar 'asistentes-select'
+                const asistentesOptions = Array.from(document.querySelectorAll('select[name="asistentes[]"] option:checked'));
+                datosReunion.asistentes = asistentesOptions.map(option => ({
+                    id: option.value,
+                    nombre: option.text,
+                    departamento: option.getAttribute('data-departamento'),
+                    profesion: option.getAttribute('data-profesion')
+                }));
 
-        $('#btn-add-area').on('click', function () {
-            const areaSelect = $('select[name="area"]');
-            const newAreaInput = $('#new-area');
+                // Recopilar 'invitados-select'
+                const invitadosOptions = Array.from(document.querySelectorAll('select[name="invitados[]"] option:checked'));
+                datosReunion.invitados = invitadosOptions.map(option => ({
+                    id: option.value,
+                    nombre: option.text.split(' - ')[0],
+                    institucion: option.text.split(' - ')[1],
+                    correo: option.getAttribute('data-correo'),
+                    telefono: option.getAttribute('data-telefono')
+                }));
 
-            if (newAreaInput.hasClass('hidden')) {
-                newAreaInput.removeClass('hidden');
-                areaSelect.addClass('hidden');
-                $(this).text('Usar área existente');
-            } else {
-                newAreaInput.addClass('hidden');
-                areaSelect.removeClass('hidden');
-                $(this).text('Añadir nueva Área');
-            }
-        });
+                // Recopilar 'compromisos' de la tabla
+                const compromisos = [];
+                const compromisosRows = document.querySelectorAll('#compromisos-table tbody tr');
+                compromisosRows.forEach(row => {
+                    const nombre = row.querySelector('textarea[name$="-nombre"]').value;
+                    const prioridad = row.querySelector('select[name$="-prioridad"]').value;
+                    const fecha_limite = row.querySelector('input[name$="-fecha_limite"]').value;
+                    // Extract department from referentes
+                    const referentesOptions = Array.from(row.querySelectorAll('select[name$="-referentes"] option:checked'));
+                    const departamentos = referentesOptions.map(option => {
+                        const parts = option.text.split(' - ');
+                        return parts[1]; // Assuming format "Name - Department - Profession"
+                    });
+                    const departamento = departamentos.join(', '); // Combine if multiple
 
-        $('#add-compromiso').on('click', function () {
-            const newRow = `
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap"><textarea name="compromisos-${compromisoIndex}-nombre" class="form-control compromiso-textarea resize-vertical text-left" rows="2" required></textarea></td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <select name="compromisos-${compromisoIndex}-prioridad" class="form-control" required>
-                                <option value="Alta">Alta</option>
-                                <option value="Media">Media</option>
-                                <option value="Baja">Baja</option>
-                            </select>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap"><input type="datetime-local" name="compromisos-${compromisoIndex}-fecha_limite" class="form-control" required /></td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <select name="compromisos-${compromisoIndex}-departamento" class="form-control" required>
-                                {% for value, label in form.compromisos[0].departamento.choices %}
-                                    <option value="{{ value }}">{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </td>
-                        <td class="referentes-select">
-                            <select name="compromisos-${compromisoIndex}-referentes" class="form-control select2" multiple="multiple" style="width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; allowClear: true;" required>
-                                {% for value, label, correo in form.compromisos[0].referentes.choices %}
-                                    <option value="{{ value }}">{{ label }}</option>
-                                {% endfor %}
-                            </select>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <button type="button" class="btn btn-danger btn-remove"><i class="fas fa-trash"></i> Eliminar</button>
-                            <button type="button" class="btn btn-secondary btn-view-order hidden"><i class="fas fa-eye"></i> Ver Orden</button>
-                        </td>
-                    </tr>
-                `;
-
-            $('#compromisos-table tbody').append(newRow);
-
-            $(`select[name="compromisos-${compromisoIndex}-referentes"]`).select2({
-                placeholder: "Selecciona referentes",
-                allowClear: true
-            });
-
-            compromisoIndex++;
-        });
-
-        $('#compromisos-table').on('click', '.btn-remove', function () {
-            $(this).closest('tr').remove();
-        });
-
-        $("#asistentes-select").select2({
-            placeholder: "Selecciona Referentes",
-            allowClear: true,
-            width: '100%'
-        });
-
-        const asistentesSelect = document.getElementById("asistentes-select");
-        const correosBody = document.getElementById("correos-body");
-
-        $(asistentesSelect).on("change", function () {
-            const seleccionados = $(this).val();
-            correosBody.innerHTML = "";
-
-            seleccionados.forEach(function (id) {
-                const nombre = $(`#asistentes-select option[value="${id}"]`).text();
-                const correo = $(`#asistentes-select option[value="${id}"]`).data('correo');
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap">${nombre}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <input type="email" name="correo-${id}" class="form-control" value="${correo}" placeholder="Correo del asistente" required>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <button type="button" class="btn btn-danger btn-remove" data-id="${id}">
-                            <i class="fas fa-trash"></i> Eliminar
-                        </button>
-                        <button type="button" class="btn btn-secondary btn-view-order hidden"><i class="fas fa-eye"></i> Ver Orden</button>
-                    </td>
-                `;
-                correosBody.appendChild(row);
-            });
-        });
-
-        correosBody.addEventListener("click", function (e) {
-            if (e.target && e.target.classList.contains("btn-remove")) {
-                const id = e.target.getAttribute("data-id");
-                $(`#asistentes-select option[value="${id}"]`).prop("selected", false);
-                $(asistentesSelect).trigger("change");
-            }
-        });
-
-        $('#btn-add-invitado').on('click', function () {
-            $('#invitado-form').toggleClass('hidden');
-        });
-
-        $('#btn-save-invitado').on('click', function () {
-            const nombre = $('#invitado-nombre').val();
-            const institucion = $('#invitado-institucion').val();
-            const correo = $('#invitado-correo').val();
-            const telefono = $('#invitado-telefono').val();
-
-            if (nombre && institucion && correo && telefono) {
-                $.ajax({
-                    url: "{{ url_for('reunion.add_invitado') }}",  // Corrected blueprint name
-                    method: "POST",
-                    data: {
-                        nombre: nombre,
-                        institucion: institucion,
-                        correo: correo,
-                        telefono: telefono
-                    },
-                    success: function(response) {
-                        const newOption = new Option(`${response.nombre} - ${response.institucion}`, response.id, true, true);
-                        $(newOption).attr('data-correo', response.correo).attr('data-telefono', response.telefono);
-                        $('#invitados-select').append(newOption).trigger('change');
-                        
-                        $('#invitado-form').addClass('hidden');
-                        $('#invitado-nombre').val('');
-                        $('#invitado-institucion').val('');
-                        $('#invitado-correo').val('');
-                        $('#invitado-telefono').val('');
-                    },
-                    error: function(error) {
-                        console.error('Error al guardar el invitado:', error);
-                        alert('Error al guardar el invitado. Por favor, inténtelo de nuevo.');
-                    }
+                    compromisos.push({
+                        nombre,
+                        prioridad,
+                        fecha_limite,
+                        departamento,
+                        referentes: referentesOptions.map(option => ({
+                            nombre: option.text.split(' - ')[0],
+                            departamento: option.text.split(' - ')[1]
+                        }))
+                    });
                 });
-            } else {
-                alert('Por favor, complete todos los campos del invitado.');
-            }
-        });
+                datosReunion.compromisos = compromisos;
 
-        // Actualizar el manejador de eliminación para quitar la opción del select
-        $('#invitados-body').on('click', '.btn-remove', function () {
-            const row = $(this).closest('tr');
-            const nombre = row.find('td:nth-child(1)').text();
-            const institucion = row.find('td:nth-child(2)').text();
-            // Encontrar el valor correspondiente en el select basado en nombre e institución
-            $('#invitados-select option').each(function() {
-                const optionText = $(this).text();
-                if (optionText.startsWith(nombre) && optionText.includes(`- ${institucion}`)) {
-                    $(this).remove();
-                    return false; // Salir del loop
+                // Recopilar "Próximas Reuniones"
+                datosReunion.proximas_reuniones = formData.get('proximas_reuniones');
+
+                // Almacenar en localStorage
+                localStorage.setItem('datosReunion', JSON.stringify(datosReunion));
+                window.open("{{url_for('reunion.actas_reuniones')}}", "_blank");
+            });
+
+            // Inicializar select2
+            $('.select2').select2({
+                placeholder: "Selecciona Referentes",
+                allowClear: true,
+                width: '100%'
+            });
+
+            let compromisoIndex = $('#compromisos-table tbody tr').length + 1;
+
+            $('#btn-add-origen').on('click', function () {
+                const origenSelect = $('select[name="origen"]');
+                const newOrigenInput = $('#new-origen');
+
+                if (newOrigenInput.hasClass('hidden')) {
+                    newOrigenInput.removeClass('hidden');
+                    origenSelect.addClass('hidden');
+                    $(this).text('Usar origen existente');
+                } else {
+                    newOrigenInput.addClass('hidden');
+                    origenSelect.removeClass('hidden');
+                    $(this).text('Añadir nuevo Origen');
                 }
             });
-            row.remove();
-        });
 
-        // Manejar la selección de invitados existentes
-        $('#invitados-select').on('change', function () {
-            const seleccionados = $(this).val();
-            $('#invitados-body').empty(); // Limpiar la tabla de invitados
+            $('#btn-add-area').on('click', function () {
+                const areaSelect = $('select[name="area"]');
+                const newAreaInput = $('#new-area');
 
-            seleccionados.forEach(function (id) {
-                const option = $(`#invitados-select option[value="${id}"]`);
-                const nombreInstitucion = option.text().split(' - ');
-                const nombre = nombreInstitucion[0];
-                const institucion = nombreInstitucion[1];
-                const correo = option.data('correo');
-                const telefono = option.data('telefono');
-                const row = `
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap" data-label="Nombre">${nombre}</td>
-                        <td class="px-6 py-4 whitespace-nowrap" data-label="Institución">${institucion}</td>
-                        <td class="px-6 py-4 whitespace-nowrap" data-label="Correo">${correo}</td>
-                        <td class="px-6 py-4 whitespace-nowrap" data-label="Teléfono">${telefono}</td>
-                        <td class="px-6 py-4 whitespace-nowrap" data-label="Acciones">
-                            <button type="button" class="btn btn-danger btn-remove"><i class="fas fa-trash"></i> Eliminar</button>
-                        </td>
-                    </tr>
-                `;
-                $('#invitados-body').append(row);
-            });
-        });
-
-        //usar gtm -3 
-        var now = new Date();
-        var localDatetime = now.toISOString().slice(0, 16);
-        document.getElementById('fecha_reunion').value = localDatetime -3; 
-        
-        $('#add-invitado').on('click', function () {
-            const nombre = $('#nombre-invitado').val();
-            const institucion = $('#institucion-invitado').val();
-            const correo = $('#correo-invitado').val();
-            const telefono = $('#telefono-invitado').val();
-
-            if(nombre && institucion && correo && telefono){
-                const newRow = `
-                    <tr>
-                        <td>${nombre}</td>
-                        <td>${institucion}</td>
-                        <td>${correo}</td>
-                        <td>${telefono}</td>
-                        <td>
-                            <button type="button" class="btn btn-danger btn-remove"><i class="fas fa-trash"></i> Eliminar</button>
-                        </td>
-                    </tr>
-                `;
-                $('#invitados-body').append(newRow);
-                
-                // Clear input fields
-                $('#nombre-invitado').val('');
-                $('#institucion-invitado').val('');
-                $('#correo-invitado').val('');
-                $('#telefono-invitado').val('');
-            } else {
-                alert('Por favor, complete todos los campos del invitado.');
-            }
-        });
-
-        // Function to maintain order of selection
-        function maintainOrder(selectElement) {
-            const selectedOptions = Array.from(selectElement.selectedOptions);
-            const allOptions = Array.from(selectElement.options);
-            allOptions.forEach(option => {
-                if (selectedOptions.includes(option)) {
-                    selectElement.appendChild(option);
+                if (newAreaInput.hasClass('hidden')) {
+                    newAreaInput.removeClass('hidden');
+                    areaSelect.addClass('hidden');
+                    $(this).text('Usar área existente');
+                } else {
+                    newAreaInput.addClass('hidden');
+                    areaSelect.removeClass('hidden');
+                    $(this).text('Añadir nueva Área');
                 }
             });
-        }
 
-        // Apply maintainOrder function to asistentes-select
-        $('#asistentes-select').on('change', function() {
-            maintainOrder(this);
-        });
+            $('#add-compromiso').on('click', function () {
+                addCompromisoRow(compromisoIndex);
+                compromisoIndex++;
+                // Re-inicializar select2 para los nuevos selects
+                $('.select2').select2({
+                    placeholder: "Selecciona referentes",
+                    allowClear: true,
+                    width: '100%'
+                });
+            });
 
-        // Apply maintainOrder function to invitados-select
-        $('#invitados-select').on('change', function() {
-            maintainOrder(this);
-        });
+            $('#compromisos-table').on('click', '.btn-remove', function () {
+                $(this).closest('tr').remove();
+            });
 
-        // Apply maintainOrder function to compromisos referentes select
-        $('#compromisos-table').on('change', 'select[name*="referentes"]', function() {
-            maintainOrder(this);
-        });
+            $("#asistentes-select").select2({
+                placeholder: "Selecciona Referentes",
+                allowClear: true,
+                width: '100%'
+            });
 
-        // Apply maintainOrder function to asistentes-select
-        $('#asistentes-select').on('change', function() {
-            maintainOrder(this);
-        });
-
-        // Apply maintainOrder function to invitados-select
-        $('#invitados-select').on('change', function() {
-            maintainOrder(this);
-        });
-
-        // Apply maintainOrder function to compromisos referentes select
-        $('#compromisos-table').on('change', 'select[name*="referentes"]', function() {
-            maintainOrder(this);
-        });
-
-        // Initialize Select2
-        $('.select2').select2({
-            placeholder: "Selecciona un nombre",
-            allowClear: true,
-            width: '100%'
-        });
-
-        // Arrays to track selection order
-        const asistentesOrder = [];
-        const compromisosReferentesOrder = {};
-
-        // Handle change for asistentes-select
-        $('#asistentes-select').on('change', function() {
-            const selectedValues = Array.from(this.selectedOptions).map(option => option.value);
-            // Update asistentesOrder array based on selection order
-            asistentesOrder.length = 0; // Clear existing order
-            selectedValues.forEach(value => asistentesOrder.push(value));
-            // Update the displayed order without altering the DOM options
-            updateAsistentesDisplay();
-        });
-
-        // Handle change for compromisos referentes selects
-        $('#compromisos-table').on('change', 'select[name*="referentes"]', function() {
-            const selectId = $(this).attr('name'); // e.g., compromisos-1-referentes
-            if (!compromisosReferentesOrder[selectId]) {
-                compromisosReferentesOrder[selectId] = [];
-            }
-            const selectedValues = Array.from(this.selectedOptions).map(option => option.value);
-            compromisosReferentesOrder[selectId].length = 0; // Clear existing order
-            selectedValues.forEach(value => compromisosReferentesOrder[selectId].push(value));
-            // Update the displayed order without altering the DOM options
-            updateCompromisosReferentesDisplay(selectId);
-        });
-
-        // Function to update asistentes display based on asistentesOrder
-        function updateAsistentesDisplay() {
+            const asistentesSelect = document.getElementById("asistentes-select");
             const correosBody = document.getElementById("correos-body");
-            correosBody.innerHTML = "";
-            asistentesOrder.forEach(function(id) {
-                const option = $(`#asistentes-select option[value="${id}"]`);
-                const nombre = option.text();
-                const correo = option.data('correo');
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap">${nombre}</td>
+
+            $(asistentesSelect).on("change", function () {
+                const seleccionados = $(this).val();
+                correosBody.innerHTML = "";
+
+                seleccionados.forEach(function (id) {
+                    const nombre = $(`#asistentes-select option[value="${id}"]`).text();
+                    const departamento = $(`#asistentes-select option[value="${id}"]`).data('departamento');
+                    const profesion = $(`#asistentes-select option[value="${id}"]`).data('profesion');
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${nombre}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${departamento}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${profesion}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <button type="button" class="btn btn-danger btn-remove" data-id="${id}">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </td>
+                    `;
+                    correosBody.appendChild(row);
+                });
+            });
+
+            correosBody.addEventListener("click", function (e) {
+                if (e.target && e.target.classList.contains("btn-remove")) {
+                    const id = e.target.getAttribute("data-id");
+                    $(`#asistentes-select option[value="${id}"]`).prop("selected", false);
+                    $(asistentesSelect).trigger("change");
+                }
+            });
+
+            $('#btn-add-invitado').on('click', function () {
+                $('#invitado-form').toggleClass('hidden');
+            });
+
+            $('#btn-save-invitado').on('click', function () {
+                const nombre = $('#invitado-nombre').val();
+                const institucion = $('#invitado-institucion').val();
+                const correo = $('#invitado-correo').val();
+                const telefono = $('#invitado-telefono').val();
+
+                if (nombre && institucion && correo && telefono) {
+                    $.ajax({
+                        url: "{{ url_for('reunion.add_invitado') }}",  // Corrected blueprint name
+                        method: "POST",
+                        data: {
+                            nombre: nombre,
+                            institucion: institucion,
+                            correo: correo,
+                            telefono: telefono
+                        },
+                        success: function(response) {
+                            const newOption = new Option(`${response.nombre} - ${response.institucion}`, response.id, true, true);
+                            $(newOption).attr('data-correo', response.correo).attr('data-telefono', response.telefono);
+                            $('#invitados-select').append(newOption).trigger('change');
+                            
+                            $('#invitado-form').addClass('hidden');
+                            $('#invitado-nombre').val('');
+                            $('#invitado-institucion').val('');
+                            $('#invitado-correo').val('');
+                            $('#invitado-telefono').val('');
+                        },
+                        error: function(error) {
+                            console.error('Error al guardar el invitado:', error);
+                            alert('Error al guardar el invitado. Por favor, inténtelo de nuevo.');
+                        }
+                    });
+                } else {
+                    alert('Por favor, complete todos los campos del invitado.');
+                }
+            });
+
+            // Agregar manejo para invitados-select (copied from rr.html)
+            const invitadosSelect = document.getElementById("invitados-select");
+            const invitadosBody = document.getElementById("invitados-body");
+
+            invitadosSelect.addEventListener("change", function () {
+                const seleccionados = Array.from(this.selectedOptions);
+                invitadosBody.innerHTML = "";
+
+                seleccionados.forEach(function (option) {
+                    const nombre = option.text.split(' - ')[0];
+                    const institucion = option.text.split(' - ')[1];
+                    const correo = option.getAttribute('data-correo');
+                    const telefono = option.getAttribute('data-telefono');
+
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap">${nombre}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${institucion}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${correo}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">${telefono}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <button type="button" class="btn btn-danger btn-remove-invitado" data-id="${option.value}">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </td>
+                    `;
+                    invitadosBody.appendChild(row);
+                });
+            });
+
+            invitadosBody.addEventListener("click", function (e) {
+                if (e.target && e.target.closest(".btn-remove-invitado")) {
+                    const button = e.target.closest(".btn-remove-invitado");
+                    const id = button.getAttribute("data-id");
+                    // Desseleccionar la opción en el select
+                    const option = invitadosSelect.querySelector(`option[value="${id}"]`);
+                    if (option) {
+                        option.selected = false;
+                    }
+                    // Actualizar la tabla
+                    invitadosSelect.dispatchEvent(new Event('change'));
+                }
+            });
+
+        });
+
+        function addCompromisoRow(index) {
+            const newRow = `
+                <tr>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <input type="email" name="correo-${id}" class="form-control" value="${correo}" placeholder="Correo del asistente" required>
+                        <textarea name="compromisos-${index}-nombre" class="form-control compromiso-textarea resize-vertical text-left" rows="2" required></textarea>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <button type="button" class="btn btn-danger btn-remove" data-id="${id}">
-                            <i class="fas fa-trash"></i> Eliminar
-                        </button>
-                        <button type="button" class="btn btn-secondary btn-view-order hidden"><i class="fas fa-eye"></i> Ver Orden</button>
+                        <select name="compromisos-${index}-prioridad" class="form-control" required>
+                            <option value="Alta">Alta</option>
+                            <option value="Media">Media</option>
+                            <option value="Baja">Baja</option>
+                        </select>
                     </td>
-                `;
-                correosBody.appendChild(row);
-            });
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="datetime-local" name="compromisos-${index}-fecha_limite" class="form-control" required />
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="text" name="compromisos-${index}-departamento" class="form-control" placeholder="Departamento" required />
+                    </td>
+                    <td class="referentes-select">
+                        <select name="compromisos-${index}-referentes" class="form-control select2" multiple="multiple" required>
+                            {% for value, label, departamento, profesion in form.compromisos[0].referentes.choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button type="button" class="btn btn-danger btn-remove"><i class="fas fa-trash"></i> Eliminar</button>
+                    </td>
+                </tr>
+            `;
+            $('#compromisos-table tbody').append(newRow);
         }
-
-        // Function to update compromisos referentes display based on compromisosReferentesOrder
-        function updateCompromisosReferentesDisplay(selectId) {
-            // Implement similar logic if needed for compromisos referentes
-            // Example: Update a specific section based on selectId
-            // This section can be customized as per requirements
-        }
-
-        // Remove redundant maintainOrder functions and event handlers
-        // <!-- Removed the maintainOrder function and related event listeners -->
-
-        // Array para rastrear el orden de selección de referentes
-        const referentesOrder = [];
-
-        // Manejar cambios en el select de referentes
-        $('select[name="referentes"]').on('change', function() {
-            const selectedValues = Array.from(this.selectedOptions).map(option => option.value);
-            referentesOrder.length = 0; // Limpiar el orden existente
-            selectedValues.forEach(value => referentesOrder.push(value));
-            updateReferentesDisplay();
-        });
-
-        // Función para actualizar la visualización basada en referentesOrder
-        function updateReferentesDisplay() {
-            const list = document.getElementById('referentes-list');
-            list.innerHTML = '';
-            referentesOrder.forEach(function(id, index) {
-                const option = $('select[name="referentes"] option[value="' + id + '"]');
-                const label = option.text();
-                const listItem = document.createElement('li');
-                listItem.textContent = label;
-                list.appendChild(listItem);
-            });
-        }
-
-        // Toggle Orden Button
-        document.getElementById('btn-toggle-orden').addEventListener('click', function() {
-            const ordenContainer = document.getElementById('referentes-order');
-            if (ordenContainer.classList.contains('hidden')) {
-                ordenContainer.classList.remove('hidden');
-                this.textContent = 'Ocultar Orden';
-            } else {
-                ordenContainer.classList.add('hidden');
-                this.textContent = 'Ver Orden';
-            }
-        });
-
-        // Mostrar el contenedor de orden al agregar referentes
-        $('select[name="referentes"]').on('change', function() {
-            if (referentesOrder.length > 0) {
-                document.getElementById('referentes-order').classList.remove('hidden');
-            } else {
-                document.getElementById('referentes-order').classList.add('hidden');
-            }
-        });
-
-        // Agregar botón "Ver Orden" al eliminar referentes
-        $('#correos-body').on('click', '.btn-remove', function () {
-            updateReferentesDisplay();
-        });
-
-        
-    });
-</script>
+    </script>
 </body>
 </html>

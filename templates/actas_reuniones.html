@@ -3,23 +3,322 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acta de Reunión</title>
+    <title>Acta de Reuniones - Dirección de Servicio de Salud del Maule</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #005a87;
+            --secondary-color: #007bff;
+            --background-color: #f4f7f9;
+            --text-color: #333;
+            --border-color: #ddd;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            max-width: 150px;
+            height: auto;
+        }
+
+        h1, h2, h3 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            font-size: 1.4em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background-color: white;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f8f8;
+        }
+        .btn-pdf {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 850px;
+        }
+
+        .btn-pdf:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-pdf i {
+            margin-right: 10px;
+            
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .logo {
+                margin-bottom: 20px;
+            }
+
+            table, th, td {
+                font-size: 0.9em;
+            }
+        }
+
+        #temas_analizado, #proximas_reuniones {
+            white-space: pre-line;
+        }
+
+        /* Clase para ocultar elementos al generar el PDF */
+        .no-print {
+            display: none !important;
+        }
+
+        /* Mejorar la calidad del PDF */
+        canvas {
+            max-width: 100%;
+        }
+
+    </style>
 </head>
 <body>
-    <h1>Acta de Reunión</h1>
-    <h2 id="nombre_reunion"></h2>
-    <p><strong>Fecha:</strong> <span id="fecha_reunion"></span></p>
-    <p><strong>Tema:</strong> <span id="tema"></span></p>
+    <div class="container">
+        <header class="header">
+            <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Ministerio de Salud" class="logo">
+            <h1>Acta de Reuniones</h1>
+        </header>
+
+        <section>
+            <h2>Antecedentes</h2>
+            <table>
+                <tr>
+                    <th>Nombre Reunión</th>
+                    <td id="nombre_reunion"></td>
+                    <th>Lugar</th>
+                    <td id="lugar"></td>
+                </tr>
+                <tr>
+                    <th>Origen</th>
+                    <td id="origen"></td>
+                    <th>Área</th>
+                    <td id="area"></td>
+                </tr>
+                <tr>
+                    <th>Tema</th>
+                    <td id="tema"></td>
+                    <th>Fecha y Hora de la Reunión</th>
+                    <td id="fecha_reunion"></td>
+                </tr>
+            </table>
+        </section>
+
+        <section>
+            <h2>Participantes</h2>
+            <h3>Funcionarios/as</h3>
+            <table id="referentes-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Departamento</th>
+                        <th>Profesion</th>
+                    </tr>
+                </thead>
+                <tbody id="referentes-table-body"></tbody>
+            </table>
+
+            <h3>Invitados/as</h3>
+            <table id="invitados-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Institución</th>
+                        <th>Correo</th>
+                        <th>Anexo Telefónico</th>
+                    </tr>
+                </thead>
+                <tbody id="invitados-table-body"></tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>Temas Analizados</h2>
+            <p id="temas_analizado"></p>
+        </section>
+
+        <section>
+            <h2>Compromisos</h2>
+            <table id="compromisos-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Prioridad</th>
+                        <th>Fecha Límite</th>
+                        <th>Departamento</th>
+                        <th>Referentes</th>
+                    </tr>
+                </thead>
+                <tbody id="compromisos-table-body"></tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>Próximas Reuniones</h2>
+            <p id="proximas_reuniones"></p>
+        </section>
+        <br>
+    </div>
+    <br>
+    <!-- Mover el botón fuera del contenedor para que no se incluya en el PDF -->
+    <button class="btn-pdf" onclick="exportToPDF()">
+        <i class="fas fa-file-pdf"></i> Exportar a PDF
+    </button>
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const datos = JSON.parse(localStorage.getItem("datosReunion"));
             if (datos) {
-                document.getElementById("nombre_reunion").innerText = datos.nombre_reunion;
-                document.getElementById("fecha_reunion").innerText = datos.fecha_reunion;
-                document.getElementById("tema").innerText = datos.tema;
+                populateData(datos);
             }
         });
+
+        function populateData(datos) {
+            document.getElementById("nombre_reunion").textContent = datos.nombre_reunion;
+            document.getElementById("lugar").textContent = datos.lugar;
+            document.getElementById("origen").textContent = datos.origen;
+            document.getElementById("area").textContent = datos.area;
+            document.getElementById("tema").textContent = datos.tema;
+            document.getElementById("fecha_reunion").textContent = datos.fecha_reunion;
+            document.getElementById("temas_analizado").textContent = datos.temas_analizado;
+            document.getElementById("proximas_reuniones").textContent = datos.proximas_reuniones;
+
+            populateTable("referentes-table-body", datos.asistentes, ['nombre', 'departamento', 'profesion']);
+            populateTable("invitados-table-body", datos.invitados, ['nombre', 'institucion', 'correo', 'telefono']);
+            populateCompromisos(datos.compromisos);
+        }
+
+        function populateTable(tableId, data, fields) {
+            const tableBody = document.getElementById(tableId);
+            tableBody.innerHTML = ""; // Clear existing rows
+
+            data.forEach(item => {
+                const row = tableBody.insertRow();
+                fields.forEach(field => {
+                    const cell = row.insertCell();
+                    cell.textContent = item[field];
+                });
+            });
+        }
+
+        function populateCompromisos(compromisos) {
+            const tableBody = document.getElementById("compromisos-table-body");
+            compromisos.forEach(compromiso => {
+                const fechaLimite = new Date(compromiso.fecha_limite);
+                const opcionesFecha = { year: 'numeric', month: 'long', day: 'numeric' };
+                const referentesNombres = compromiso.referentes.map(ref => ref.nombre).join(', ');
+
+                const row = tableBody.insertRow();
+                [compromiso.nombre, compromiso.prioridad, fechaLimite.toLocaleDateString('es-ES', opcionesFecha), compromiso.departamento, referentesNombres].forEach(text => {
+                    row.insertCell().textContent = text;
+                });
+            });
+        }
+
+        async function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const element = document.querySelector('.container');
+
+            const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+            const imgData = canvas.toDataURL('image/png');
+
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+
+            const imgProps = pdf.getImageProperties(imgData);
+            const imgWidth = imgProps.width;
+            const imgHeight = imgProps.height;
+
+            // Calcular factor de escala para que la imagen quepa en una sola página
+            const scale = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+            const scaledWidth = imgWidth * scale;
+            const scaledHeight = imgHeight * scale;
+
+            // Calcular posición para centrar la imagen
+            const x = (pdfWidth - scaledWidth) / 2;
+            const y = (pdfHeight - scaledHeight) / 2;
+
+            // Añadir la imagen escalada al PDF
+            pdf.addImage(imgData, 'PNG', x, y, scaledWidth, scaledHeight);
+
+            pdf.save('Acta_Reunion.pdf');
+        }
     </script>
 </body>
 </html>
