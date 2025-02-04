@@ -4,101 +4,189 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mis Reuniones - Servicio de Salud del Maule</title>
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+        <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #2b6cb0;
+            --secondary-color: #4299e1;
+            --background-color: #f0f2f5;
+            --sidebar-bg: #1a202c;
+            --sidebar-text: #cbd5e0;
+            --sidebar-hover: #2d3748;
+            --text-color: #333;
+            --border-color: #e2e8f7;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            background-color: #f0f2f5;
+            background-color: var(--background-color);
+            color: var(--text-color);
         }
+
         .wrapper {
             display: flex;
             flex: 1;
         }
+
         .sidebar {
             width: 250px;
-            background-color: #1a202c;
-            color: white;
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-text);
             padding: 20px;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1);
         }
+
         .sidebar h3 {
             margin-bottom: 20px;
             font-size: 1.2em;
             color: #e2e8f0;
         }
+
         .sidebar a {
-            display: block;
-            color: #cbd5e0;
+            display: flex;
+            align-items: center;
+            color: var(--sidebar-text);
             text-decoration: none;
             padding: 10px;
             margin-bottom: 10px;
             border-radius: 5px;
             transition: background-color 0.3s;
         }
-        .sidebar a:hover {
-            background-color: #2d3748;
+
+        .sidebar a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
         }
+
+        .sidebar a:hover {
+            background-color: var(--sidebar-hover);
+        }
+
         .main-content {
             flex: 1;
             padding: 20px;
             overflow-y: auto;
         }
+
         .container {
             background-color: white;
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             padding: 20px;
-        }
-        h1 {
-            color: #2b6cb0;
             margin-bottom: 20px;
         }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .filter-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .filter-form label {
+            font-weight: bold;
+        }
+
+        .filter-form input,
+        .filter-form select {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            width: 200px;
+        }
+
+        .filter-form button {
+            padding: 10px 20px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
+        }
+
+        .filter-form button:hover {
+            background-color: var(--primary-color);
+        }
+
+        .filter-form .btn-clear {
+            background-color: #dc3545;
+        }
+
+        .filter-form .btn-clear:hover {
+            background-color: #c82333;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
         }
+
         th, td {
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-color);
             padding: 12px;
             text-align: left;
         }
+
         th {
             background-color: #edf2f7;
             font-weight: bold;
         }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
         .btn {
             display: inline-block;
             padding: 8px 12px;
-            background-color: #4299e1;
+            background-color: var(--secondary-color);
             color: white;
             text-decoration: none;
             border-radius: 4px;
             font-size: 14px;
             margin-right: 5px;
+            margin-bottom: 5px;
             transition: background-color 0.3s;
         }
+
         .btn:hover {
-            background-color: #3182ce;
+            background-color: var(--primary-color);
         }
+
         .btn-secondary {
             background-color: #718096;
         }
+
         .btn-secondary:hover {
             background-color: #4a5568;
         }
+
         .btn-tertiary {
             background-color: #f56565;
         }
+
         .btn-tertiary:hover {
             background-color: #e53e3e;
         }
+
         .footer {
             background-color: #edf2f7;
             text-align: center;
@@ -107,9 +195,24 @@
             color: #4a5568;
             margin-top: auto;
         }
+
         .footer img {
             width: 80px;
             margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .wrapper {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
         }
     </style>
 </head>
@@ -125,49 +228,72 @@
 
         <div class="main-content">
             <div class="container">
-                <h1>Mis Reuniones</h1>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Fecha</th>
-                            <th>Lugar</th>
-                            <th>Origen</th>
-                            <th>Tema</th>
-                            <th>Asistentes</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for reunion in reuniones %}
-                        <tr>
-                            <td>{{ reunion.nombre }}</td>
-                            <td>{{ reunion.fecha_creacion.strftime('%d-%m-%Y %H:%M') }}</td>
-                            <td>{{ reunion.lugar }}</td>
-                            <td>{{ reunion.origen_name }}</td>
-                            <td>{{ reunion.tema }}</td>
-                            <td>{{ reunion.asistentes }}</td>
-                            <td>
-                                <a href="{{ url_for('home.ver_compromisos_reunion', reunion_id=reunion.id) }}" class="btn"><i class="fas fa-eye"></i> Ver Compromisos</a>
-                                <a href="{{ url_for('reunion.ver_archivos', reunion_id=reunion.id) }}" class="btn btn-secondary"><i class="fas fa-folder"></i>Ver Archivos</a>
-                                {% if reunion.acta_pdf %}
-                                    {% set file_list = reunion.acta_pdf.split(';') %}
-                                    {% for file_path in file_list %}
-                                        {% set fp = file_path.strip() %}
-                                        {% set base_name = fp.split('/')[-1] %}
-                                        {% if fp and base_name.startswith('Acta_Reunion') and base_name.endswith('.pdf') %}
-                                            <a href="{{ url_for('reunion.get_file', filename=fp) }}"
-                                               class="btn btn-tertiary" target="_blank">
-                                               <i class="fas fa-file-pdf"></i> Ver Acta
-                                            </a>
-                                        {% endif %}
-                                    {% endfor %}
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <h1><i class= "fas fa-handshake mr-2"></i> Mis Reuniones</h1>
+                <form method="POST" action="{{ url_for('reunion.filtrar_reuniones') }}" class="filter-form">
+                    <div>
+                        <label for="search">Buscar:</label>
+                        <input type="text" id="search" name="search" placeholder="Nombre, Tema, Lugar, Referente">
+                    </div>
+                    <div>
+                        <label for="origen">Origen:</label>
+                        <select id="origen" name="origen">
+                            <option value="">Todos</option>
+                            {% for origen in origenes %}
+                                <option value="{{ origen.id }}">{{ origen.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="fecha">Fecha específica:</label>
+                        <input type="date" id="fecha" name="fecha">
+                    </div>
+                    <button type="submit">Filtrar</button>
+                    <a href="{{ url_for('reunion.mis_reuniones') }}" class="btn btn-clear"><i class="fas fa-filter"></i> Borrar Filtros</a>
+                </form>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Fecha</th>
+                                <th>Lugar</th>
+                                <th>Origen</th>
+                                <th>Tema</th>
+                                <th>Asistentes</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reunion in reuniones %}
+                            <tr>
+                                <td>{{ reunion.nombre }}</td>
+                                <td>{{ reunion.fecha_creacion.strftime('%d-%m-%Y %H:%M') }}</td>
+                                <td>{{ reunion.lugar }}</td>
+                                <td>{{ reunion.origen_name }}</td>
+                                <td>{{ reunion.tema }}</td>
+                                <td>{{ reunion.asistentes }}</td>
+                                <td>
+                                    <a href="{{ url_for('home.ver_compromisos_reunion', reunion_id=reunion.id) }}" class="btn"><i class="fas fa-eye"></i> Ver Compromisos</a>
+                                    <a href="{{ url_for('reunion.ver_archivos', reunion_id=reunion.id) }}" class="btn btn-secondary"><i class="fas fa-folder"></i> Ver Archivos</a>
+                                    {% if reunion.acta_pdf %}
+                                        {% set file_list = reunion.acta_pdf.split(';') %}
+                                        {% for file_path in file_list %}
+                                            {% set fp = file_path.strip() %}
+                                            {% set base_name = fp.split('/')[-1] %}
+                                            {% if fp and base_name.startswith('Acta_Reunion') and base_name.endswith('.pdf') %}
+                                                <a href="{{ url_for('reunion.get_file', filename=fp) }}"
+                                                   class="btn btn-tertiary" target="_blank">
+                                                   <i class="fas fa-file-pdf"></i> Ver Acta
+                                                </a>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

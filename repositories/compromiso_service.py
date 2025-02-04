@@ -136,20 +136,19 @@ class CompromisoService:
             for p in referentes
         ]
 
-    def get_compromisos_by_user(self, user_id):
-        # Obtener los compromisos del usuario (director o no director)
-        return self.repo.fetch_compromisos_by_referente(user_id)
+    def get_compromisos_by_user(self, user_id, search='', prioridad='', estado='', fecha_limite=''):
+        return self.repo.fetch_compromisos_by_referente(user_id, search, prioridad, estado, fecha_limite)
 
     def update_compromiso(self, compromiso_id, descripcion, estado, prioridad, avance, comentario, comentario_direccion, user_id, referentes):
         self.repo.update_compromiso(compromiso_id, descripcion, estado, prioridad, avance, comentario, comentario_direccion, user_id, referentes)
         self.repo.log_modificacion(compromiso_id, user_id)
         self.repo.commit()
 
-    def get_compromisos_by_departamento(self, departamento_id):
+    def get_compromisos_by_departamento(self, departamento_id, search='', prioridad='', estado='', fecha_limite=''):
         """
         Obtener compromisos de un departamento.
         """
-        return self.repo.fetch_compromisos_by_departamento(departamento_id)
+        return self.repo.fetch_compromisos_by_departamento(departamento_id, search, prioridad, estado, fecha_limite)
 
     def get_compromisos_by_filtro(self, departamento_id=None, mes=None, area_id=None):
         # Si el mes es "Todos" o no está presente, no filtramos por mes
@@ -173,9 +172,8 @@ class CompromisoService:
     def get_departamentos(self):
         return self.repo.fetch_departamentos()
 
-    def get_all_compromisos(self):
-        return self.repo.fetch_all_compromisos()
-        pass
+    def get_all_compromisos(self, search='', prioridad='', estado='', fecha_limite=''):
+        return self.repo.fetch_all_compromisos(search, prioridad, estado, fecha_limite)
 
     def get_compromisos_compartidos(self, user_id, is_director, search='', estado='', avance='', fecha_limite=''):
         if not user_id:

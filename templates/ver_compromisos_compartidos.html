@@ -197,6 +197,45 @@
             opacity: 0.5;
         }
 
+        .filter-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .filter-form input,
+        .filter-form select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 200px;
+        }
+
+        .filter-form button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
+        }
+
+        .filter-form button:hover {
+            background-color: #2980b9;
+        }
+
+        .filter-form .btn-clear {
+            background-color: #e74c3c;
+        }
+
+        .filter-form .btn-clear:hover {
+            background-color: #c0392b;
+        }
     </style>
     <script>
         function getProgressBarColor(value) {
@@ -251,7 +290,7 @@
         <a href="/home" class="btn btn-primary"><i class="fas fa-home"></i> Volver al Inicio</a>
         <br>
         <br>
-        <form method="GET" action="{{ url_for('home.ver_compromisos_compartidos') }}">
+        <form method="GET" action="{{ url_for('home.ver_compromisos_compartidos') }}" class="filter-form">
             <input type="text" name="search" placeholder="Buscar por persona o departamento" value="{{ request.args.get('search', '') }}">
             <select name="estado">
                 <option value="">Todos los estados</option>
@@ -271,7 +310,7 @@
                 <option value="desc" {% if request.args.get('fecha_limite') == 'desc' %}selected{% endif %}>Más lejana</option>
             </select>
             <button type="submit"><i class="fa-solid fa-magnifying-glass"></i>Buscar</button>
-            <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn"><i class="fas fa-filter"></i> Borrar Filtros</a>
+            <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn btn-clear"><i class="fas fa-filter"></i> Borrar Filtros</a>
         </form>
         <table>
             <thead>
@@ -347,7 +386,7 @@
                             <button type="submit" class="btn" onclick="return confirm('¿Estás seguro de que deseas eliminar este compromiso?');"><i class="fas fa-trash-alt"></i> Eliminar</button>
                         </form>
                         <!-- Archivado button -->
-                        {% if compromiso.estado == 'Completado' and user.cargo == 'DIRECTOR DE SERVICIO' or user.cargo == 'JEFE/A DE DEPARTAMENTO' or user.cargo == 'SUBDIRECTOR/A' or user.cargo == 'JEFE/A DE UNIDAD' %}
+                        {% if compromiso.estado == 'Completado' and user.nivel_jerarquico == 'DIRECTOR DE SERVICIO' or user.nivel_jerarquico == 'JEFE/A DE DEPARTAMENTO' or user.nivel_jerarquico == 'SUBDIRECTOR/A' or user.nivel_jerarquico == 'JEFE/A DE UNIDAD' %}
                         <form method="POST" action="{{ url_for('home.archivar_compromiso', compromiso_id=compromiso.compromiso_id) }}" style="display:inline;">
                             <button type="submit" class="btn" onclick="return confirm('¿Estás seguro de que deseas archivar este compromiso?');"><i class="fas fa-archive"></i> Archivar</button>
                         </form>

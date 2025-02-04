@@ -67,6 +67,20 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             width: 100%;
         }
+        .btn {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        
 
         table {
             width: 100%;
@@ -179,6 +193,50 @@
                 font-size: 14px;
             }
         }
+
+        .filter-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .filter-form input,
+        .filter-form select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            width: 200px;
+        }
+
+        .filter-form button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
+        }
+
+        .filter-form button:hover {
+            background-color: #2980b9;
+        }
+
+        .filter-form .btn-clear {
+            background-color: #e74c3c;
+        }
+
+        .filter-form .btn-clear:hover {
+            background-color: #c0392b;
+        }
+
+        .filter-form i {
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -188,6 +246,24 @@
         <a href="{{ url_for('home.home_view') }}" class="back-button">
             <i class="fas fa-home"></i> Volver al Inicio
         </a>
+
+        <form method="GET" action="{{ url_for('home.ver_compromisos') }}" class="filter-form">
+            <input type="text" name="search" placeholder="Buscar por descripción, departamento o referentes" value="{{ request.args.get('search', '') }}">
+            <select name="prioridad">
+                <option value="">Todas las prioridades</option>
+                <option value="Alta" {% if request.args.get('prioridad') == 'Alta' %}selected{% endif %}>Alta</option>
+                <option value="Media" {% if request.args.get('prioridad') == 'Media' %}selected{% endif %}>Media</option>
+                <option value="Baja" {% if request.args.get('prioridad') == 'Baja' %}selected{% endif %}>Baja</option>
+            </select>
+            <select name="estado">
+                <option value="">Todos los estados</option>
+                <option value="Pendiente" {% if request.args.get('estado') == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                <option value="Completado" {% if request.args.get('estado') == 'Completado' %}selected{% endif %}>Completado</option>
+            </select>
+            <input type="date" name="fecha_limite" value="{{ request.args.get('fecha_limite', '') }}">
+            <button type="submit"><i class="fas fa-filter"></i> Filtrar</button>
+            <a href="{{ url_for('home.ver_compromisos') }}" class="btn btn-clear"><i class="fas fa-times"></i> Borrar Filtros</a>
+        </form>
 
         <div class="table-responsive">
             <table>

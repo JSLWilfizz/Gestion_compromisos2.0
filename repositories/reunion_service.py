@@ -168,3 +168,9 @@ class ReunionService:
     
     def get_reunion_by_id(self, reunion_id):
         return self.repo.fetch_reunion_by_id(reunion_id)
+
+    def filtrar_reuniones(self, user_id, search, fecha, origen, tema, lugar, referente):
+        return self.repo.filtrar_reuniones(user_id, search, fecha, origen, tema, lugar, referente)
+
+    def get_origenes(self):
+        return self.repo.fetch_origenes()

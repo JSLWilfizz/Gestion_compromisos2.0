@@ -106,12 +106,18 @@ def ver_compromisos():
     es_director = session.get('es_director')
     the_big_boss = session.get('the_big_boss')
 
+    # Obtener parámetros de búsqueda y filtro
+    search = request.args.get('search', '')
+    prioridad = request.args.get('prioridad', '')
+    estado = request.args.get('estado', '')
+    fecha_limite = request.args.get('fecha_limite', '')
+
     if es_director:
-        compromisos = compromiso_service.get_compromisos_by_departamento(compromiso_service.get_director_info(user_id)['id_departamento'])
+        compromisos = compromiso_service.get_compromisos_by_departamento(compromiso_service.get_director_info(user_id)['id_departamento'], search, prioridad, estado, fecha_limite)
     elif the_big_boss:
-        compromisos = compromiso_service.get_all_compromisos()
+        compromisos = compromiso_service.get_all_compromisos(search, prioridad, estado, fecha_limite)
     else:
-        compromisos = compromiso_service.get_compromisos_by_user(user_id)
+        compromisos = compromiso_service.get_compromisos_by_user(user_id, search, prioridad, estado, fecha_limite)
 
     todos_referentes = compromiso_service.get_referentes()
 
@@ -264,7 +270,8 @@ def resumen_compromisos():
 def mis_reuniones():
     user_id = session['user_id']
     reuniones = reunion_service.get_mis_reuniones(user_id)
-    return render_template('mis_reuniones.html', reuniones=reuniones)
+    origenes = reunion_service.get_origenes()  # Ensure this line fetches the origenes
+    return render_template('mis_reuniones.html', reuniones=reuniones, origenes=origenes)  # Pass origenes to the template
 
 @home.route('/mis_reuniones/compromisos/<int:reunion_id>')
 @login_required

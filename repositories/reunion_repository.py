@@ -281,6 +281,56 @@ class ReunionRepository:
             result = cursor.fetchone()  # result is a dict if found
         return result
 
+    def filtrar_reuniones(self, user_id, search, fecha, origen, tema, lugar, referente):
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                # First, get the user's full name
+                cursor.execute("""
+                    SELECT COALESCE(name, '') || ' ' || COALESCE(lastname, '') AS full_name
+                    FROM persona
+                    WHERE id = %s
+                    LIMIT 1
+                """, (user_id,))
+                row = cursor.fetchone()
+                full_name = row['full_name'] if row else ''
+
+                query = """
+                    SELECT r.*, o.name AS origen_name
+                    FROM reunion r
+                    LEFT JOIN origen o ON r.id_origen = o.id
+                    WHERE r.asistentes ILIKE %s
+                """
+                params = [f"%{full_name}%"]
+
+                if search:
+                    query += """
+                        AND (r.nombre ILIKE %s OR r.tema ILIKE %s OR r.lugar ILIKE %s OR r.asistentes ILIKE %s)
+                    """
+                    params.extend([f"%{search}%", f"%{search}%", f"%{search}%", f"%{search}%"])
+                if fecha:
+                    query += " AND DATE(r.fecha_creacion) = %s"
+                    params.append(fecha)
+                if origen:
+                    query += " AND o.id = %s"
+                    params.append(origen)
+                if tema:
+                    query += " AND r.tema ILIKE %s"
+                    params.append(f"%{tema}%")
+                if lugar:
+                    query += " AND r.lugar ILIKE %s"
+                    params.append(f"%{lugar}%")
+                if referente:
+                    query += " AND r.asistentes ILIKE %s"
+                    params.append(f"%{referente}%")
+
+                query += " ORDER BY r.fecha_creacion DESC"
+
+                cursor.execute(query, params)
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            raise e
+
     def commit(self):
         try:
             self.conn.commit()

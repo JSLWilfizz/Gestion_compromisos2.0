@@ -1,11 +1,13 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, session
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session, jsonify
 from repositories.compromiso_service import CompromisoService
 from .auth_routes import is_director
 from repositories.gestion_service import GestionService
+from repositories.reportes_service import ReportesService
 
 director_bp = Blueprint('director', __name__)
 compromiso_service = CompromisoService()
 gestion_service = GestionService()
+reportes_service = ReportesService()
 
 @director_bp.route('/director/resumen_compromisos', methods=['GET', 'POST'])
 @is_director
@@ -150,7 +152,7 @@ def departamentos():
     jerarquia = request.args.get('jerarquia', '').strip()
     all_departamentos = gestion_service.get_departamentos()
     departamentos = all_departamentos
-    if jerarquia:
+    if (jerarquia):
         jerarquia_chain = gestion_service.get_departamento_chain_by_name(jerarquia)
         departamentos = jerarquia_chain  # Display filtered departments in the main table
     return render_template(
@@ -199,3 +201,18 @@ def editar_departamento(departamento_id):
         return redirect(url_for('director.departamentos'))
 
     return render_template('editar_departamento.html', departamento=departamento, all_departamentos=all_departamentos)
+
+@director_bp.route('/api/report_data', methods=['GET'])
+@is_director
+def get_report_data():
+    try:
+        report_data = reportes_service.get_report_data()
+        return jsonify(report_data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@director_bp.route('/director/reportes', methods=['GET'])
+@is_director
+def reportes():
+    return render_template('reportes.html')
+

@@ -52,92 +52,145 @@ class CompromisoRepository:
             self.conn.rollback()
             raise e
 
-    def fetch_compromisos_by_departamento(self, departamento_id):
+    def fetch_compromisos_by_departamento(self, departamento_id, search='', prioridad='', estado='', fecha_limite=''):
         try:
+            query = """
+                SELECT 
+                    c.id AS compromiso_id,
+                    c.prioridad,
+                    c.descripcion,
+                    c.estado,
+                    c.avance,
+                    c.fecha_limite,
+                    c.comentario,
+                    c.comentario_direccion,
+                    d.name AS departamento_name,
+                    ARRAY_AGG(p.id) AS referentes_ids,
+                    STRING_AGG(
+                        p.name || ' ' || p.lastname || 
+                        CASE WHEN pc.es_responsable_principal THEN ' (*)' ELSE '' END,
+                        ', '
+                        ORDER BY pc.es_responsable_principal DESC, p.name, p.lastname
+                    ) AS referentes
+                FROM compromiso c
+                LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+                LEFT JOIN persona p ON pc.id_persona = p.id
+                LEFT JOIN departamento d ON c.id_departamento = d.id
+                WHERE c.id_departamento = %s
+            """
+            params = [departamento_id]
+
+            if search:
+                query += " AND (c.descripcion ILIKE %s OR d.name ILIKE %s OR CONCAT(p.name, ' ', p.lastname) ILIKE %s)"
+                params.extend([f"%{search}%", f"%{search}%", f"%{search}%"])
+
+            if prioridad:
+                query += " AND c.prioridad = %s"
+                params.append(prioridad)
+
+            if estado:
+                query += " AND c.estado = %s"
+                params.append(estado)
+
+            if fecha_limite:
+                query += " AND c.fecha_limite = %s"
+                params.append(fecha_limite)
+
+            query += """
+                GROUP BY 
+                    c.id,
+                    c.prioridad,
+                    c.descripcion,
+                    c.estado,
+                    c.avance,
+                    c.fecha_limite,
+                    c.comentario,
+                    c.comentario_direccion,
+                    d.name
+            """
+
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute("""
-                    SELECT 
-                        c.id AS compromiso_id,
-                        c.prioridad,
-                        c.descripcion,
-                        c.estado,
-                        c.avance,
-                        c.fecha_limite,
-                        c.comentario,
-                        c.comentario_direccion,
-                        d.name AS departamento_name,
-                        ARRAY_AGG(p.id) AS referentes_ids,
-                        STRING_AGG(
-                            p.name || ' ' || p.lastname || 
-                            CASE WHEN pc.es_responsable_principal THEN ' (*)' ELSE '' END,
-                            ', '
-                            ORDER BY pc.es_responsable_principal DESC, p.name, p.lastname
-                        ) AS referentes
-                    FROM compromiso c
-                    LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
-                    LEFT JOIN persona p ON pc.id_persona = p.id
-                    LEFT JOIN departamento d ON c.id_departamento = d.id
-                    WHERE c.id_departamento = %s
-                    GROUP BY 
-                        c.id,
-                        c.prioridad,
-                        c.descripcion,
-                        c.estado,
-                        c.avance,
-                        c.fecha_limite,
-                        c.comentario,
-                        c.comentario_direccion,
-                        d.name
-                """, (departamento_id,))
+                cursor.execute(query, params)
                 return cursor.fetchall()
         except Exception as e:
             self.conn.rollback()
             raise e
 
-    def fetch_compromisos_by_referente(self, user_id):
+    def fetch_compromisos_by_referente(self, user_id, search='', prioridad='', estado='', fecha_limite=''):
         try:
-            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute("""
-                    SELECT 
-                        c.id AS compromiso_id,
-                        c.prioridad,
-                        c.descripcion,
-                        c.estado,
-                        c.avance,
-                        c.fecha_limite,
-                        c.comentario,
-                        c.comentario_direccion,
-                        d.name AS departamento_name,
-                        ARRAY_AGG(p.id) AS referentes_ids,
-                        STRING_AGG(
-                            CASE 
-                                WHEN pc.es_responsable_principal THEN p.name || ' ' || p.lastname || ' (*)'
-                                ELSE p.name || ' ' || p.lastname
-                            END,
-                            ', '
-                        ) AS referentes
-                    FROM compromiso c
-                    LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
-                    LEFT JOIN persona p ON pc.id_persona = p.id
-                    LEFT JOIN departamento d ON c.id_departamento = d.id
-                    WHERE c.id IN (
-                        SELECT c2.id
-                        FROM compromiso c2
-                        JOIN persona_compromiso pc2 ON c2.id = pc2.id_compromiso
-                        WHERE pc2.id_persona = %s
+            query = """
+                SELECT 
+                    c.id AS compromiso_id,
+                    c.prioridad,
+                    c.descripcion,
+                    c.estado,
+                    c.avance,
+                    c.fecha_limite,
+                    c.comentario,
+                    c.comentario_direccion,
+                    d.name AS departamento_name,
+                    ARRAY_AGG(p.id) AS referentes_ids,
+                    STRING_AGG(
+                        CASE 
+                            WHEN pc.es_responsable_principal THEN p.name || ' ' || p.lastname || ' (*)'
+                            ELSE p.name || ' ' || p.lastname
+                        END,
+                        ', '
+                    ) AS referentes
+                FROM compromiso c
+                LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+                LEFT JOIN persona p ON pc.id_persona = p.id
+                LEFT JOIN departamento d ON c.id_departamento = d.id
+                WHERE c.id IN (
+                    SELECT c2.id
+                    FROM compromiso c2
+                    LEFT JOIN persona_compromiso pc2 ON c2.id = pc2.id_compromiso
+                    LEFT JOIN persona p2 ON pc2.id_persona = p2.id
+                    WHERE pc2.id_persona = %s
+                )
+            """
+            params = [user_id]
+
+            if search:
+                query += """
+                    AND c.id IN (
+                        SELECT c3.id
+                        FROM compromiso c3
+                        LEFT JOIN persona_compromiso pc3 ON c3.id = pc3.id_compromiso
+                        LEFT JOIN persona p3 ON pc3.id_persona = p3.id
+                        WHERE c3.descripcion ILIKE %s OR d.name ILIKE %s OR CONCAT(p3.name, ' ', p3.lastname) ILIKE %s
                     )
-                    GROUP BY 
-                        c.id,
-                        c.prioridad,
-                        c.descripcion,
-                        c.estado,
-                        c.avance,
-                        c.fecha_limite,
-                        c.comentario,
-                        c.comentario_direccion,
-                        d.name
-                    ORDER BY c.fecha_limite
-                """, (user_id,))
+                """
+                params.extend([f"%{search}%", f"%{search}%", f"%{search}%"])
+
+            if prioridad:
+                query += " AND c.prioridad = %s"
+                params.append(prioridad)
+
+            if estado:
+                query += " AND c.estado = %s"
+                params.append(estado)
+
+            if fecha_limite:
+                query += " AND c.fecha_limite = %s"
+                params.append(fecha_limite)
+
+            query += """
+                GROUP BY 
+                    c.id,
+                    c.prioridad,
+                    c.descripcion,
+                    c.estado,
+                    c.avance,
+                    c.fecha_limite,
+                    c.comentario,
+                    c.comentario_direccion,
+                    d.name
+                ORDER BY c.fecha_limite
+            """
+
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute(query, params)
                 return cursor.fetchall()
         except Exception as e:
             self.conn.rollback()
@@ -217,25 +270,6 @@ class CompromisoRepository:
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("SELECT id, name FROM departamento")
-                return cursor.fetchall()
-        except Exception as e:
-            self.conn.rollback()
-            raise e
-
-    def fetch_compromisos_by_departamento(self, departamento_id):
-        try:
-            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute("""
-                    SELECT c.id AS compromiso_id, c.prioridad, c.descripcion, c.estado, c.avance, c.fecha_limite, 
-                           c.comentario, c.comentario_direccion,
-                           ARRAY_AGG(DISTINCT p.id) AS referentes_ids, -- IDs de los referentes
-                           STRING_AGG(DISTINCT p.name || ' ' || p.lastname, ', ') AS referentes -- Nombres de los referentes
-                    FROM compromiso c
-                    LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
-                    LEFT JOIN persona p ON pc.id_persona = p.id
-                    WHERE c.id_departamento = %s
-                    GROUP BY c.id
-                """, (departamento_id,))
                 return cursor.fetchall()
         except Exception as e:
             self.conn.rollback()
@@ -533,42 +567,65 @@ class CompromisoRepository:
     def close(self):
         self.conn.close()
 
-    def fetch_all_compromisos(self):
+    def fetch_all_compromisos(self, search='', prioridad='', estado='', fecha_limite=''):
         try:
+            query = """
+                SELECT 
+                    c.id AS compromiso_id,
+                    c.prioridad,
+                    c.descripcion,
+                    c.estado,
+                    c.avance,
+                    c.fecha_limite,
+                    c.comentario,
+                    c.comentario_direccion,
+                    d.name AS departamento_name,
+                    ARRAY_AGG(p.id) AS referentes_ids,
+                    STRING_AGG(
+                        p.name || ' ' || p.lastname || 
+                        CASE WHEN pc.es_responsable_principal THEN ' (*)' ELSE '' END,
+                        ', '
+                        ORDER BY pc.es_responsable_principal DESC, p.name, p.lastname
+                    ) AS referentes
+                FROM compromiso c
+                LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
+                LEFT JOIN persona p ON pc.id_persona = p.id
+                LEFT JOIN departamento d ON c.id_departamento = d.id
+                WHERE 1=1
+            """
+            params = []
+
+            if search:
+                query += " AND (c.descripcion ILIKE %s OR d.name ILIKE %s OR p.name ILIKE %s OR p.lastname ILIKE %s)"
+                params.extend([f"%{search}%", f"%{search}%", f"%{search}%", f"%{search}%"])
+
+            if prioridad:
+                query += " AND c.prioridad = %s"
+                params.append(prioridad)
+
+            if estado:
+                query += " AND c.estado = %s"
+                params.append(estado)
+
+            if fecha_limite:
+                query += " AND c.fecha_limite = %s"
+                params.append(fecha_limite)
+
+            query += """
+                GROUP BY 
+                    c.id,
+                    c.prioridad,
+                    c.descripcion,
+                    c.estado,
+                    c.avance,
+                    c.fecha_limite,
+                    c.comentario,
+                    c.comentario_direccion,
+                    d.name
+            """
+
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute("""
-                    SELECT 
-                        c.id AS compromiso_id,
-                        c.prioridad,
-                        c.descripcion,
-                        c.estado,
-                        c.avance,
-                        c.fecha_limite,
-                        c.comentario,
-                        c.comentario_direccion,
-                        d.name AS departamento_name,
-                        ARRAY_AGG(p.id) AS referentes_ids,
-                        STRING_AGG(
-                            p.name || ' ' || p.lastname || 
-                            CASE WHEN pc.es_responsable_principal THEN ' (*)' ELSE '' END,
-                            ', '
-                            ORDER BY pc.es_responsable_principal DESC, p.name, p.lastname
-                        ) AS referentes
-                    FROM compromiso c
-                    LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
-                    LEFT JOIN persona p ON pc.id_persona = p.id
-                    LEFT JOIN departamento d ON c.id_departamento = d.id
-                    GROUP BY 
-                        c.id,
-                        c.prioridad,
-                        c.descripcion,
-                        c.estado,
-                        c.avance,
-                        c.fecha_limite,
-                        c.comentario,
-                        c.comentario_direccion,
-                        d.name
-                """)
+                cursor.execute(query, params)
                 return cursor.fetchall()
         except Exception as e:
             self.conn.rollback()

@@ -142,4 +142,29 @@ def get_file(filename):
         return "File not found", 404
     return send_from_directory(static_folder, filename)
 
+@reunion.route('/reunion/filtrar', methods=['GET', 'POST'])
+@login_required
+def filtrar_reuniones():
+    user_id = session.get('user_id')
+    if request.method == 'POST':
+        search = request.form.get('search')
+        fecha = request.form.get('fecha')
+        origen = request.form.get('origen')
+        tema = request.form.get('tema')
+        lugar = request.form.get('lugar')
+        referente = request.form.get('referente')
+
+        reuniones = service.filtrar_reuniones(user_id, search, fecha, origen, tema, lugar, referente)
+        return render_template('mis_reuniones.html', reuniones=reuniones)
+
+    origenes = service.get_origenes()
+    return render_template('filtrar_reuniones.html', origenes=origenes)
+
+@reunion.route('/reunion/mis_reuniones', methods=['GET'])
+@login_required
+def mis_reuniones():
+    user_id = session.get('user_id')
+    reuniones = service.get_mis_reuniones(user_id)
+    return render_template('mis_reuniones.html', reuniones=reuniones)
+
 
