@@ -23,5 +23,15 @@ class ReportesService:
             'percentage_completados_por_persona': self.repo.get_percentage_completados_por_persona(),
             'percentage_completados_por_departamento': self.repo.get_percentage_completados_por_departamento(),
             'compromisos_por_dia_por_departamento': self.repo.get_compromisos_por_dia_por_departamento(),
-            'reuniones_por_dia': self.repo.get_reuniones_por_dia()  # New key for meetings by day data
+            'reuniones_por_dia': self.repo.get_reuniones_por_dia(),  # New key for meetings by day data
+            'compromisos_por_jerarquia_departamento': self.repo.get_compromisos_por_jerarquia_departamento()  # New key for commitments by department hierarchy data
         }
+
+    def get_reuniones_por_dia_filtered(self, day=None, month=None, year=None):
+        return self.repo.get_reuniones_por_dia(day, month, year)
+
+    def get_compromisos_por_dia_filtered(self, day=None, month=None, year=None):
+        return self.repo.get_compromisos_por_dia(day, month, year)
+
+    def get_personas_mas_filtered(self, search_name=None):
+        return self.repo.get_personas_mas(search_name)

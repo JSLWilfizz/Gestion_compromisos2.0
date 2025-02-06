@@ -174,6 +174,14 @@
       from { opacity: 0; }
       to { opacity: 1; }
     }
+    #filtroPersonas {
+      display: block;
+      width: 20%;
+      padding: 4px;
+      border: 2px solid var(--primary-color);
+      border-radius: 8px;
+      color: var(--secondary-color);
+    }
   </style>
 </head>
 <body>
@@ -234,6 +242,9 @@
   <div id="personasSection" class="section">
     <div class="card">
       <h2>Personas con Más Compromisos</h2>
+      <label for="filtroPersonas">Búsqueda por Funcionario/a:
+        <input type="text" id="filtroPersonas"></label>
+      
       <table>
         <thead>
           <tr>
@@ -253,8 +264,9 @@
   <div id="chartSection" class="section">
     <div class="card">
       <h2>Compromisos Por Fecha</h2>
-      <label for="agrupacion">Agrupar por:</label>
-      <select id="agrupacion">
+      <label for="agrupacionCompromisos">Agrupar por:</label>
+      <!-- Se asigna id único -->
+      <select id="agrupacionCompromisos">
         <option value="dia" selected>Día</option>
         <option value="mes">Mes</option>
         <option value="anio">Año</option>
@@ -266,6 +278,13 @@
   <div id="chartDeptSection" class="section">
     <div class="card">
       <h2>Compromisos Por Fecha y Departamento</h2>
+      <label for="agrupacionDept">Agrupar por:</label>
+      <!-- Se asigna id único -->
+      <select id="agrupacionDept">
+        <option value="dia" selected>Día</option>
+        <option value="mes">Mes</option>
+        <option value="anio">Año</option>
+      </select>
       <canvas id="compromisosDeptChart"></canvas>
     </div>
   </div>
@@ -274,6 +293,13 @@
   <div id="chartReunionesSection" class="section">
     <div class="card">
       <h2>Reuniones Por Día</h2>
+      <label for="agrupacionReuniones">Agrupar por:</label>
+      <!-- Se asigna id único -->
+      <select id="agrupacionReuniones">
+        <option value="dia" selected>Día</option>
+        <option value="mes">Mes</option>
+        <option value="anio">Año</option>
+      </select>
       <canvas id="reunionesChart"></canvas>
     </div>
   </div>
@@ -292,6 +318,7 @@
   <script>
     let datos = [];
     let deptData = [];
+    let personasData = [];
     let currentSection = 0;
     const sections = ['deptSection', 'personasSection', 'chartSection', 'chartDeptSection', 'chartReunionesSection'];
 
@@ -320,10 +347,27 @@
         console.log("Fetched Report Data:", data);
         datos = data.compromisos_por_dia || [];
         deptData = data.compromisos_por_dia_por_departamento || [];
+        reunionesData = data.reuniones_por_dia || [];
         updateReportData(data);
       } catch (error) {
         console.error("Error fetching report data:", error);
       }
+    }
+
+    function renderPersonasTable(personas) {
+        const personasTableBody = document.getElementById('personasTableBody');
+        personasTableBody.innerHTML = '';
+        personas.forEach(p => {
+            const total = p.pendientes + p.completados;
+            const percentage = total ? ((p.completados*100)/total).toFixed(2) : '0.00';
+            const row = `<tr>
+                <td>${p.persona}</td>
+                <td>${p.pendientes}</td>
+                <td>${p.completados}</td>
+                <td>${percentage}%</td>
+            </tr>`;
+            personasTableBody.insertAdjacentHTML('beforeend', row);
+        });
     }
 
     function updateReportData(data) {
@@ -341,15 +385,9 @@
 
       const deptTableBody = document.getElementById('deptTableBody');
       deptTableBody.innerHTML = '';
-      if (data.compromisos_por_departamento && data.percentage_completados_por_departamento) {
-        data.compromisos_por_departamento.forEach((dept, index) => {
-          const row = `<tr>
-            <td>${dept.nombre}</td>
-            <td>${dept.total}</td>
-            <td>${(parseFloat(data.percentage_completados_por_departamento[index].porcentaje_completados) || 0).toFixed(2)}%</td>
-          </tr>`;
-          deptTableBody.insertAdjacentHTML('beforeend', row);
-        });
+      if (data.compromisos_por_jerarquia_departamento) {
+        const deptHierarchy = buildDeptHierarchy(data.compromisos_por_jerarquia_departamento);
+        renderDeptHierarchy(deptTableBody, deptHierarchy);
       }
 
       const personasTableBody = document.getElementById('personasTableBody');
@@ -366,46 +404,158 @@
         });
       }
 
-      renderCharts(datos, deptData);
+      renderCharts(datos, deptData, data.compromisos_por_jerarquia_departamento);
       // Render new Reuniones chart from data fetched
       if(data.reuniones_por_dia) {
          renderReunionesChart(data.reuniones_por_dia);
       }
+      // Actualizar tabla de Personas y guardar data para filtro
+      personasData = data.personas_mas || [];
+      renderPersonasTable(personasData);
     }
 
-    function agruparDatos(tipo) {
-      if (tipo === 'dia') return datos;
-      const agrupados = {};
-      datos.forEach(item => {
-        const date = new Date(item.dia);
-        let key;
-        if (tipo === 'mes') {
-          key = `${date.getFullYear()}-${date.getMonth() + 1}`;
-        } else if (tipo === 'anio') {
-          key = `${date.getFullYear()}`;
+    // Reemplazar la función buildDeptHierarchy existente por la siguiente:
+    function buildDeptHierarchy(departments) {
+      const buildTree = (parentId) => {
+        return departments
+          .filter(dept => dept.id_departamento_padre === parentId)
+          .map(dept => {
+            const children = buildTree(dept.id);
+            return {
+              ...dept,
+              children,
+              totalWithChildren: dept.total + children.reduce((acc, child) => acc + child.totalWithChildren, 0)
+            };
+          });
+      }
+      return buildTree(null);
+    }
+
+    function renderDeptHierarchy(container, hierarchy, level = 0) {
+      hierarchy.forEach(dept => {
+        const row = document.createElement('tr');
+        row.classList.add('dept-row');
+        row.dataset.id = dept.id;
+        row.dataset.parentId = dept.id_departamento_padre || '';
+        row.dataset.total = dept.total;
+        row.dataset.totalWithChildren = dept.totalWithChildren;
+        row.style.display = level === 0 ? '' : 'none';
+        row.innerHTML = `
+          <td style="padding-left: ${level * 20}px;">
+            ${dept.children.length > 0 ? `<button class="toggle-btn">+</button>` : ''}
+            ${dept.departamento}
+          </td>
+          <td>${dept.totalWithChildren}</td>
+          <td>${(parseFloat(dept.porcentaje_completados) || 0).toFixed(2)}%</td>
+        `;
+        container.appendChild(row);
+        if (dept.children.length > 0) {
+          renderDeptHierarchy(container, dept.children, level + 1);
         }
-        agrupados[key] = (agrupados[key] || 0) + item.total;
+      });
+      // Se elimina el binding individual de eventos aquí
+    }
+
+    // Nuevo listener de delegación para botones toggle en deptTableBody
+    document.getElementById('deptTableBody').addEventListener('click', function(e) {
+      if (e.target.classList.contains('toggle-btn')) {
+        const btn = e.target;
+        const row = btn.closest('tr');
+        const id = row.dataset.id;
+        const isExpanded = btn.textContent === '-';
+        btn.textContent = isExpanded ? '+' : '-';
+        toggleDeptRows(id, !isExpanded);
+        updateDeptTotals();
+      }
+    });
+
+    function toggleDeptRows(parentId, show) {
+      document.querySelectorAll(`.dept-row[data-parent-id="${parentId}"]`).forEach(row => {
+        row.style.display = show ? '' : 'none';
+        if (show) {
+          const btn = row.querySelector('.toggle-btn');
+          if (btn && btn.textContent === '-') {
+            toggleDeptRows(row.dataset.id, true);
+          }
+        }
+      });
+    }
+
+    function updateDeptTotals() {
+      document.querySelectorAll('.dept-row').forEach(row => {
+        const btn = row.querySelector('.toggle-btn');
+        // Si hay botón y está expandido ('-'), mostrar el total propio, sino el total acumulado
+        row.querySelector('td:nth-child(2)').textContent = (btn && btn.textContent === '-') 
+          ? row.dataset.total 
+          : row.dataset.totalWithChildren;
+      });
+    }
+
+    // Nueva función para formatear la fecha según el tipo de agrupación
+    function formatearFecha(fecha, tipo) {
+      if (!fecha) return '';
+      if (tipo === 'dia') {
+          let date = new Date(fecha);
+          if (isNaN(date)) { 
+              date = new Date(fecha + 'T00:00:00');
+          }
+          return date.toLocaleDateString('es-ES');
+      } else if (tipo === 'mes') {
+          // Extraer "YYYY-MM" de "YYYY-MM-DD"
+          return fecha.substring(0,7);
+      } else if (tipo === 'anio') {
+          // Extraer "YYYY" de "YYYY-MM-DD"
+          return fecha.substring(0,4);
+      }
+  }
+
+    // Función para agrupar datos (genérica) basándose en "dia" y sumando "total"
+    function agruparDatos(data, tipo) {
+      if (tipo === 'dia') return data; // Devolver data original sin formateo
+      const agrupados = {};
+      data.forEach(item => {
+          const key = item.dia.substring(0, tipo === 'mes' ? 7 : 4);
+          agrupados[key] = (agrupados[key] || 0) + item.total;
       });
       return Object.keys(agrupados).map(key => ({ dia: key, total: agrupados[key] }));
     }
-    
-    function renderCharts(data, deptData) {
-      console.log("Data for chart:", data); // Add this line to log the data
-      const labels = data.map(item => new Date(item.dia).toLocaleDateString('es-ES'));
+
+    // Nueva función para agrupar datos de departamentos respetando cada uno
+    function agruparDeptData(data, tipo) {
+      if (tipo === 'dia') {
+          // Formatear "dia" para que coincida con las etiquetas (DD/MM/AAAA)
+          return data.map(item => ({ ...item, dia: formatearFecha(item.dia, 'dia') }));
+      }
+      const agrupados = {};
+      data.forEach(item => {
+          const key = formatearFecha(item.dia, tipo) + '|' + item.departamento;
+          agrupados[key] = (agrupados[key] || 0) + item.total;
+      });
+      return Object.keys(agrupados).map(key => {
+          const [newDia, dept] = key.split('|');
+          return { dia: newDia, departamento: dept, total: agrupados[key] };
+      });
+    }
+
+    function renderCharts(data, deptData, deptHierarchyData) {
+      // Se formatean las etiquetas usando formatearFecha para obtener DD/MM/AAAA
+      const labels = data.map(item => formatearFecha(item.dia, 'dia'));
       const totals = data.map(item => item.total);
-      const deptLabels = [...new Set(deptData.map(item => item.departamento))];
+      // Aplicar formateo a deptData para "dia" si se requiere
+      const deptDataFormatted = agruparDeptData(deptData, 'dia');
+      const deptLabels = [...new Set(deptDataFormatted.map(item => item.departamento))];
       const deptDatasets = deptLabels.map(dept => {
-        const deptTotals = labels.map(label => {
-          const item = deptData.find(d => new Date(d.dia).toLocaleDateString('es-ES') === label && d.departamento === dept);
-          return item ? item.total : 0;
-        });
-        return {
-          label: dept,
-          data: deptTotals,
-          backgroundColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.4)`,
-          borderColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`,
-          borderWidth: 1
-        };
+          const deptTotals = labels.map(label => {
+              const item = deptDataFormatted.find(d => d.dia === label && d.departamento === dept);
+              return item ? item.total : 0;
+          });
+          return {
+              label: dept,
+              data: deptTotals,
+              backgroundColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.4)`,
+              borderColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`,
+              borderWidth: 1
+          };
       });
 
       // Render chart for commitments by day
@@ -448,11 +598,39 @@
           }
         }
       });
+
+      // Render chart for commitments by department hierarchy if canvas exists
+      const canvasHierarchy = document.getElementById('compromisosDeptHierarchyChart');
+      if (canvasHierarchy) {
+          if (window.myDeptHierarchyChart) window.myDeptHierarchyChart.destroy();
+          const ctxDeptHierarchy = canvasHierarchy.getContext('2d');
+          window.myDeptHierarchyChart = new Chart(ctxDeptHierarchy, {
+              type: 'bar',
+              data: {
+                  labels: deptHierarchyData.map(item => item.departamento),
+                  datasets: [{
+                      label: 'Compromisos',
+                      data: deptHierarchyData.map(item => item.total),
+                      backgroundColor: 'rgba(255, 159, 64, 0.4)',
+                      borderColor: 'rgba(255, 159, 64, 1)',
+                      borderWidth: 1
+                  }]
+              },
+              options: {
+                  responsive: true,
+                  scales: { x: { display: true }, y: { beginAtZero: true } },
+                  plugins: {
+                      legend: { display: true, position: 'top' },
+                      title: { display: true, text: 'Compromisos Por Jerarquía de Departamento' }
+                  }
+              }
+          });
+      }
     }
     
-    // New function to render the Reuniones Por Día chart
     function renderReunionesChart(reunionesData) {
-      const labels = reunionesData.map(item => new Date(item.dia).toLocaleDateString('es-ES'));
+      // Utilizar formatearFecha para obtener el formato DD/MM/AAAA
+      const labels = reunionesData.map(item => formatearFecha(item.dia, 'dia'));
       const totals = reunionesData.map(item => item.total);
       if(window.myReunionesChart) window.myReunionesChart.destroy();
       const ctxReuniones = document.getElementById('reunionesChart').getContext('2d');
@@ -479,12 +657,119 @@
       });
     }
     
-    document.getElementById('agrupacion').addEventListener('change', (e) => {
+    // Los listeners individuales para cada select continúan activos
+
+    // Listener individual para Compromisos Por Fecha
+    document.getElementById('agrupacionCompromisos').addEventListener('change', (e) => {
       const tipo = e.target.value;
-      const dataAgrupada = agruparDatos(tipo);
-      renderCharts(dataAgrupada, deptData);
+      const datosAgrupados = agruparDatos(datos, tipo);
+      const labels = tipo === 'dia' 
+            ? datosAgrupados.map(item => formatearFecha(item.dia, 'dia'))
+            : datosAgrupados.map(item => item.dia);
+      const totals = datosAgrupados.map(item => item.total);
+      if(window.myChart) window.myChart.destroy();
+      const ctx = document.getElementById('compromisosChart').getContext('2d');
+      window.myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Compromisos',
+            data: totals,
+            backgroundColor: 'rgba(75, 192, 192, 0.4)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { x: { display: true }, y: { beginAtZero: true } },
+          plugins: {
+            legend: { display: true, position: 'top' },
+            title: { display: true, text: 'Compromisos Por Fecha' }
+          }
+        }
+      });
     });
-    
+
+    // Listener individual para Compromisos Por Fecha y Departamento
+    document.getElementById('agrupacionDept').addEventListener('change', (e) => {
+      const tipo = e.target.value;
+      const deptDataAgrupada = agruparDeptData(deptData, tipo);
+      const datosAgrupados = agruparDatos(datos, tipo);
+      const labels = tipo === 'dia'
+           ? datosAgrupados.map(item => formatearFecha(item.dia, 'dia'))
+           : datosAgrupados.map(item => item.dia);
+      const deptLabels = [...new Set(deptDataAgrupada.map(item => item.departamento))];
+      const deptDatasets = deptLabels.map(dept => {
+          const deptTotals = labels.map(label => {
+              const item = deptDataAgrupada.find(d => d.dia === label && d.departamento === dept);
+              return item ? item.total : 0;
+          });
+          return {
+              label: dept,
+              data: deptTotals,
+              backgroundColor: `rgba(${Math.floor(Math.random()*255)}, ${Math.floor(Math.random()*255)}, ${Math.floor(Math.random()*255)}, 0.4)`,
+              borderColor: `rgba(${Math.floor(Math.random()*255)}, ${Math.floor(Math.random()*255)}, ${Math.floor(Math.random()*255)}, 1)`,
+              borderWidth: 1
+          };
+      });
+      if (window.myDeptChart) window.myDeptChart.destroy();
+      const ctxDept = document.getElementById('compromisosDeptChart').getContext('2d');
+      window.myDeptChart = new Chart(ctxDept, {
+        type: 'bar',
+        data: { labels, datasets: deptDatasets },
+        options: {
+          responsive: true,
+          scales: { x: { display: true }, y: { beginAtZero: true } },
+          plugins: {
+            legend: { display: true, position: 'top' },
+            title: { display: true, text: 'Compromisos Por Fecha y Departamento' }
+          }
+        }
+      });
+    });
+
+    // Listener individual para Reuniones Por Día
+    document.getElementById('agrupacionReuniones').addEventListener('change', (e) => {
+      const tipo = e.target.value;
+      const reunionesAgrupadas = agruparDatos(reunionesData, tipo);
+      const labels = tipo === 'dia'
+           ? reunionesAgrupadas.map(item => formatearFecha(item.dia, 'dia'))
+           : reunionesAgrupadas.map(item => item.dia);
+      const totals = reunionesAgrupadas.map(item => item.total);
+      if(window.myReunionesChart) window.myReunionesChart.destroy();
+      const ctxReuniones = document.getElementById('reunionesChart').getContext('2d');
+      window.myReunionesChart = new Chart(ctxReuniones, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Reuniones',
+            data: totals,
+            backgroundColor: 'rgba(153, 102, 255, 0.4)',
+            borderColor: 'rgba(153, 102, 255, 1)',
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { x: { display: true }, y: { beginAtZero: true } },
+          plugins: {
+            legend: { display: true, position: 'top' },
+            title: { display: true, text: 'Reuniones Por Día' }
+          }
+        }
+      });
+    });
+
+    // Listener para filtrar empleados
+    document.getElementById('filtroPersonas').addEventListener('input', function(){
+        const search = this.value.toLowerCase();
+        const filtered = personasData.filter(p => p.persona.toLowerCase().includes(search));
+        renderPersonasTable(filtered);
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
       fetchReportData();
       showSection(0);
