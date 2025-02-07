@@ -149,15 +149,15 @@
         <ul>
             {% for archivo in archivos %}
                 <li>
-                    <a href="{{ url_for('reunion.get_file', filename=archivo) }}" target="_blank">
+                    <a href="{{ url_for('uploaded_file', filename=((archivo[8:] if archivo.startswith('uploads/') else archivo).replace('\\', '/'))) }}" target="_blank">
                         <i class="fas fa-download"></i> {{ archivo }}
                     </a>
                     {% if archivo.endswith('.pdf') or archivo.endswith('.png') or archivo.endswith('.jpg') or archivo.endswith('.jpeg') %}
-                        <button onclick="previewFile('{{ url_for('reunion.get_file', filename=archivo) }}')">
+                        <button onclick="previewFile('{{ url_for('uploaded_file', filename=((archivo[8:] if archivo.startswith('uploads/') else archivo).replace('\\', '/'))) }}')">
                             <i class="fas fa-eye"></i> Previsualizar
                         </button>
                     {% else %}
-                        <button onclick="window.open('{{ url_for('reunion.get_file', filename=archivo) }}', '_blank')">
+                        <button onclick="window.open('{{ url_for('uploaded_file', filename=((archivo[8:] if archivo.startswith('uploads/') else archivo).replace('\\', '/'))) }}', '_blank')">
                             <i class="fas fa-download"></i> Descargar
                         </button>
                     {% endif %}

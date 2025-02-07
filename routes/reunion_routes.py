@@ -17,7 +17,7 @@ import logging
 reunion = Blueprint('reunion', __name__)
 service = ReunionService()
 
-UPLOAD_FOLDER = 'uploads/actas/'
+UPLOAD_FOLDER = 'uploads/'  # Changed from 'uploads/actas/'
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'zip', 'ppt', 'pptx', 'xls', 'xlsx', 'pbix'}
 
 if not os.path.exists(UPLOAD_FOLDER):
@@ -43,10 +43,20 @@ def crear_reunion_paso1():
             file_paths = []
             for file_item in uploaded_files:
                 if file_item and allowed_file(file_item.filename):
+                    ext = file_item.filename.rsplit('.', 1)[1].lower()
+                    from datetime import datetime
+                    now = datetime.now()
+                    year = now.strftime("%Y")
+                    month = now.strftime("%m")
+                    day = now.strftime("%d")
+                    # Build folder path: uploads/{ext}/{year}/{month}/{day}
+                    target_folder = os.path.join(UPLOAD_FOLDER, ext, year, month, day)
+                    if not os.path.exists(target_folder):
+                        os.makedirs(target_folder)
                     filename = secure_filename(file_item.filename)
-                    file_item.save(os.path.join(UPLOAD_FOLDER, filename))
-                    file_paths.append(os.path.join(UPLOAD_FOLDER, filename))
-
+                    file_save_path = os.path.join(target_folder, filename)
+                    file_item.save(file_save_path)
+                    file_paths.append(file_save_path)
             acta_pdf_path = ';'.join(file_paths) if file_paths else None
 
             tema_values = [value.replace('\n', ';') for value in request.form.getlist('tema')]
@@ -133,14 +143,16 @@ def ver_archivos(reunion_id):
 @login_required
 def get_file(filename):
     import os
-    static_folder = current_app.config.get('STATIC_FOLDER', 'static')
-    # Si filename incluye "uploads/", retirarlo para evitar duplicar la ruta
+    # Normalize separators and remove any 'uploads/' prefix
+    filename = filename.replace('\\', '/')
     if filename.startswith("uploads/"):
         filename = filename[len("uploads/"):]
-    file_path = os.path.join(static_folder, filename)
+    filename = os.path.normpath(filename)
+    base_folder = os.path.join(current_app.root_path, UPLOAD_FOLDER)
+    file_path = os.path.join(base_folder, filename)
     if not os.path.exists(file_path):
         return "File not found", 404
-    return send_from_directory(static_folder, filename)
+    return send_from_directory(base_folder, filename)
 
 @reunion.route('/reunion/filtrar', methods=['GET', 'POST'])
 @login_required

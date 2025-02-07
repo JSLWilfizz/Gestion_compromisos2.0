@@ -278,10 +278,15 @@
                                     {% if reunion.acta_pdf %}
                                         {% set file_list = reunion.acta_pdf.split(';') %}
                                         {% for file_path in file_list %}
-                                            {% set fp = file_path.strip() %}
+                                            {% set fp = file_path.strip().replace('\\', '/') %}
                                             {% set base_name = fp.split('/')[-1] %}
                                             {% if fp and base_name.startswith('Acta_Reunion') and base_name.endswith('.pdf') %}
-                                                <a href="{{ url_for('reunion.get_file', filename=fp) }}"
+                                                {% if fp.startswith("uploads/") %}
+                                                    {% set relative_fp = fp[8:] %}
+                                                {% else %}
+                                                    {% set relative_fp = fp %}
+                                                {% endif %}
+                                                <a href="{{ url_for('uploaded_file', filename=relative_fp) }}"
                                                    class="btn btn-tertiary" target="_blank">
                                                    <i class="fas fa-file-pdf"></i> Ver Acta
                                                 </a>
