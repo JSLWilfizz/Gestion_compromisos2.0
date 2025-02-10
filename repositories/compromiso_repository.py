@@ -81,7 +81,15 @@ class CompromisoRepository:
             params = [departamento_id]
 
             if search:
-                query += " AND (c.descripcion ILIKE %s OR d.name ILIKE %s OR CONCAT(p.name, ' ', p.lastname) ILIKE %s)"
+                query += """
+                    AND c.id IN (
+                        SELECT c2.id
+                        FROM compromiso c2
+                        LEFT JOIN persona_compromiso pc2 ON c2.id = pc2.id_compromiso
+                        LEFT JOIN persona p2 ON pc2.id_persona = p2.id
+                        WHERE c2.descripcion ILIKE %s OR d.name ILIKE %s OR CONCAT(p2.name, ' ', p2.lastname) ILIKE %s
+                    )
+                """
                 params.extend([f"%{search}%", f"%{search}%", f"%{search}%"])
 
             if prioridad:
@@ -719,7 +727,15 @@ class CompromisoRepository:
 
         # Add search filter
         if search:
-            query += " AND (p.name ILIKE %s OR p.lastname ILIKE %s OR d.name ILIKE %s OR c.descripcion ILIKE %s)"
+            query += """
+                AND c.id IN (
+                    SELECT c2.id
+                    FROM compromiso c2
+                    LEFT JOIN persona_compromiso pc2 ON c2.id = pc2.id_compromiso
+                    LEFT JOIN persona p2 ON pc2.id_persona = p2.id
+                    WHERE p2.name ILIKE %s OR p2.lastname ILIKE %s OR d.name ILIKE %s OR c2.descripcion ILIKE %s
+                )
+            """
             params.extend([f"%{search}%", f"%{search}%", f"%{search}%", f"%{search}%"])
 
         # Add estado filter

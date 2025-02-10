@@ -23,6 +23,7 @@ def redirect_home():
 @home.route('/home')
 @login_required
 def home_view():
+    alert = session.pop('alert', None)
     if 'user_id' not in session:
         return redirect(url_for('auth.login'))
 
@@ -43,8 +44,11 @@ def home_view():
     if not user:
         return redirect(url_for('auth.login'))
 
-    return render_template('home.html', user=user, es_director=es_director,the_big_boss=the_big_boss)
+    return render_template('home.html', user=user, es_director=es_director,the_big_boss=the_big_boss, alert=alert)
 
+
+def set_alert(message, alert_type='info'):
+    session['alert'] = {'message': message, 'type': alert_type}
 
 @home.route('/ver_compromisos', methods=['GET', 'POST'])
 @login_required
@@ -55,7 +59,7 @@ def ver_compromisos():
             try:
                 compromiso = compromiso_service.get_compromiso_by_id(compromiso_id)
                 if not compromiso:
-                    flash('Compromiso no encontrado.', 'danger')
+                    set_alert('Compromiso no encontrado.', 'danger')
                     return redirect(url_for('home.ver_compromisos'))
 
                 user_id = session['user_id']
@@ -64,7 +68,7 @@ def ver_compromisos():
 
                 # Verificar permisos
                 if not (es_director or the_big_boss or compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento'])):
-                    flash('No tienes permiso para actualizar este compromiso.', 'danger')
+                    set_alert('No tienes permiso para actualizar este compromiso.', 'danger')
                     return redirect(url_for('home.ver_compromisos'))
 
                 # Obtener los nuevos valores del formulario
@@ -94,14 +98,14 @@ def ver_compromisos():
                     user_id=user_id
                 )
 
-                flash('Compromiso actualizado con éxito.', 'success')
+                set_alert('Compromiso actualizado con éxito.', 'success')
             except Exception as e:
                 print(e)
-                flash(f'Error al actualizar el compromiso: {str(e)}', 'danger')
+                set_alert(f'Error al actualizar el compromiso: {str(e)}', 'danger')
 
         return redirect(url_for('home.ver_compromisos'))
 
-    # Si es un GET, obtener los compromisos para mostrar
+    alert = session.pop('alert', None)  # Added alert retrieval
     user_id = session['user_id']
     es_director = session.get('es_director')
     the_big_boss = session.get('the_big_boss')
@@ -128,12 +132,14 @@ def ver_compromisos():
         es_director=es_director,
         the_big_boss=the_big_boss,
         user_id=user_id,
-        user=compromiso_service.get_user_info(user_id)  # Pass the user variable to the template
+        user=compromiso_service.get_user_info(user_id),  # Pass the user variable to the template
+        alert=alert    # Pass alert to the template
     )
 
 @home.route('/ver_compromisos_compartidos')
 @login_required
 def ver_compromisos_compartidos():
+    alert = session.pop('alert', None)  # Retrieve alert
     user_id = session['user_id']
     es_director = session.get('es_director')
     the_big_boss = session.get('the_big_boss')
@@ -151,11 +157,12 @@ def ver_compromisos_compartidos():
         reunion_item = reunion_service.get_reunion_by_compromiso_id(comp['compromiso_id'])
         comp['tiene_reunion'] = bool(reunion_item)
     
-    return render_template('ver_compromisos_compartidos.html', compromisos=compromisos_compartidos, user=user)
+    return render_template('ver_compromisos_compartidos.html', compromisos=compromisos_compartidos, user=user, alert=alert)
 
 @home.route('/editar_compromiso/<int:compromiso_id>', methods=['GET', 'POST'])
 @login_required
 def editar_compromiso(compromiso_id):
+    alert = session.pop('alert', None)
     try:
         user_id = session['user_id']
         user = compromiso_service.get_user_info(user_id)
@@ -165,7 +172,7 @@ def editar_compromiso(compromiso_id):
 
         # Verificar si el usuario es el jefe del departamento correspondiente al compromiso
         if not (compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento']) or direccion):
-            flash('No tienes permiso para editar este compromiso.', 'danger')
+            set_alert('No tienes permiso para editar este compromiso.', 'danger')
             return redirect(url_for('home.ver_compromisos_compartidos'))
 
         if request.method == 'POST':
@@ -183,15 +190,15 @@ def editar_compromiso(compromiso_id):
                     compromiso_id, descripcion, estado, prioridad, avance, comentario, 
                     comentario_direccion, user_id, referentes
                 )
-                flash('Compromiso actualizado con éxito.', 'success')
+                set_alert('Compromiso actualizado con éxito.', 'success')
                 return redirect(url_for('home.ver_compromisos_compartidos'))
             except ResponsablePrincipalError:
-                flash('Error: No se puede eliminar al responsable principal del compromiso. ' 
-                      'Por favor, asegúrese de mantener al responsable principal en la lista de referentes.', 'error')
+                set_alert('Error: No se puede eliminar al responsable principal del compromiso. ' 
+                      'Por favor, asegúrese de mantener al responsable principal en la lista de referentes.', 'danger')
                 return redirect(request.url)
 
     except Exception as e:
-        flash(f'Error inesperado: {str(e)}', 'error')
+        set_alert(f'Error inesperado: {str(e)}', 'danger')
         return redirect(url_for('home.ver_compromisos_compartidos'))
 
     return render_template('editar_derivar_compromiso.html', 
@@ -199,7 +206,8 @@ def editar_compromiso(compromiso_id):
                            todos_referentes=todos_referentes,
                            direccion=direccion,
                            title="Editar Compromiso",
-                           derivar=False)
+                           derivar=False,
+                           alert=alert)
 
 @home.route('/derivar_compromiso/<int:compromiso_id>', methods=['GET', 'POST'])
 @login_required
@@ -212,14 +220,14 @@ def derivar_compromiso(compromiso_id):
 
     # Verificar si el usuario es el jefe del departamento correspondiente al compromiso
     if not (compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento']) or direccion):
-        flash('No tienes permiso para derivar este compromiso.', 'danger')
+        set_alert('No tienes permiso para derivar este compromiso.', 'danger')
         return redirect(url_for('home.ver_compromisos_compartidos'))
 
     if request.method == 'POST':
         referentes = request.form.getlist('referentes')
 
         compromiso_service.update_referentes(compromiso_id, referentes)
-        flash('Compromiso derivado con éxito.', 'success')
+        set_alert('Compromiso derivado con éxito.', 'success')
         return redirect(url_for('home.ver_compromisos_compartidos'))
 
     return render_template('editar_derivar_compromiso.html', 
@@ -288,7 +296,7 @@ def eliminar_compromiso(compromiso_id):
 
     # Verificar si el usuario tiene permiso para eliminar el compromiso
     if not (compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento']) or session.get('the_big_boss') or session.get('es_director')):
-        flash('No tienes permiso para eliminar este compromiso.', 'danger')
+        set_alert('No tienes permiso para eliminar este compromiso.', 'danger')
         return redirect(url_for('home.ver_compromisos_compartidos'))
 
     try:
@@ -297,11 +305,11 @@ def eliminar_compromiso(compromiso_id):
         
         # Eliminar el compromiso usando el servicio
         persona_comp_service.eliminar_compromiso(compromiso_id, user_id)
-        flash('Compromiso eliminado con éxito.', 'success')
+        set_alert('Compromiso eliminado con éxito.', 'success')
     except Exception as e:
         print(f"Error al eliminar el compromiso: {e}")
         traceback.print_exc()
-        flash(f'Error al eliminar el compromiso: {str(e)}', 'danger')
+        set_alert(f'Error al eliminar el compromiso: {str(e)}', 'danger')
     return redirect(url_for('home.ver_compromisos_compartidos'))
 
 @home.route('/ver_compromisos_eliminados')
@@ -309,11 +317,12 @@ def eliminar_compromiso(compromiso_id):
 def ver_compromisos_eliminados():
     user_id = session['user_id']
     if not session.get('the_big_boss'):
-        flash('No tienes permiso para ver los compromisos eliminados.', 'danger')
+        set_alert('No tienes permiso para ver los compromisos eliminados.', 'danger')
         return redirect(url_for('home.home_view'))
 
     compromisos_eliminados = persona_comp_service.get_compromisos_eliminados()
-    return render_template('ver_compromisos_eliminados.html', compromisos=compromisos_eliminados)
+    alert = session.pop('alert', None)  # Retrieve alert for the template
+    return render_template('ver_compromisos_eliminados.html', compromisos=compromisos_eliminados, alert=alert)
 
 @home.route('/archivar_compromiso/<int:compromiso_id>', methods=['POST'])
 @login_required
@@ -324,7 +333,7 @@ def archivar_compromiso(compromiso_id):
 
     # Verificar si el usuario tiene permiso para archivar el compromiso
     if not (compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento']) or session.get('the_big_boss') or session.get('es_director')):
-        flash('No tienes permiso para archivar este compromiso.', 'danger')
+        set_alert('No tienes permiso para archivar este compromiso.', 'danger')
         return redirect(url_for('home.ver_compromisos_compartidos'))
 
     try:
@@ -333,9 +342,9 @@ def archivar_compromiso(compromiso_id):
         
         # Archivar el compromiso usando el servicio
         persona_comp_service.archivar_compromiso(compromiso_id, user_id)
-        flash('Compromiso archivado con éxito.', 'success')
+        set_alert('Compromiso archivado con éxito.', 'success')
     except Exception as e:
-        flash(f'Error al archivar el compromiso: {str(e)}', 'danger')
+        set_alert(f'Error al archivar el compromiso: {str(e)}', 'danger')
     return redirect(url_for('home.ver_compromisos_compartidos'))
 
 @home.route('/ver_compromisos_archivados')
@@ -344,11 +353,12 @@ def ver_compromisos_archivados():
     user_id = session['user_id']
     user = compromiso_service.get_user_info(user_id)
     if not (session.get('the_big_boss') or user['cargo'] != 'FUNCIONARIO'):
-        flash('No tienes permiso para ver los compromisos archivados.', 'danger')
+        set_alert('No tienes permiso para ver los compromisos archivados.', 'danger')
         return redirect(url_for('home.home_view'))
 
     compromisos_archivados = persona_comp_service.get_compromisos_archivados()
-    return render_template('ver_compromisos_archivados.html', compromisos=compromisos_archivados, user=user)
+    alert = session.pop('alert', None)  # Retrieve alert to display after recovery
+    return render_template('ver_compromisos_archivados.html', compromisos=compromisos_archivados, user=user, alert=alert)
 
 @home.route('/desarchivar_compromiso/<int:compromiso_id>', methods=['POST'])
 @login_required
@@ -359,14 +369,14 @@ def desarchivar_compromiso(compromiso_id):
 
     # Verificar si el usuario tiene permiso para desarchivar el compromiso
     if not (session.get('the_big_boss') or compromiso['id_departamento'] == user['id_departamento']):
-        flash('No tienes permiso para desarchivar este compromiso.', 'danger')
+        set_alert('No tienes permiso para desarchivar este compromiso.', 'danger')
         return redirect(url_for('home.home_view'))
 
     try:
         persona_comp_service.desarchivar_compromiso(compromiso_id)
-        flash('Compromiso desarchivado con éxito.', 'success')
+        set_alert('Compromiso desarchivado con éxito.', 'success')
     except Exception as e:
-        flash(f'Error al desarchivar el compromiso: {str(e)}', 'danger')
+        set_alert(f'Error al desarchivar el compromiso: {str(e)}', 'danger')
     return redirect(url_for('home.ver_compromisos_archivados'))
 
 @home.route('/eliminar_permanentemente_compromiso/<int:compromiso_id>', methods=['POST'])
@@ -374,16 +384,16 @@ def desarchivar_compromiso(compromiso_id):
 def eliminar_permanentemente_compromiso(compromiso_id):
     user_id = session['user_id']
     if not session.get('the_big_boss'):
-        flash('No tienes permiso para eliminar permanentemente este compromiso.', 'danger')
+        set_alert('No tienes permiso para eliminar permanentemente este compromiso.', 'danger')
         return redirect(url_for('home.home_view'))
 
     try:
         persona_comp_service.eliminar_permanentemente_compromiso(compromiso_id)
-        flash('Compromiso eliminado permanentemente con éxito.', 'success')
+        set_alert('Compromiso eliminado permanentemente con éxito.', 'success')
     except Exception as e:
         print(f"Error al eliminar permanentemente el compromiso: {e}")
         traceback.print_exc()
-        flash(f'Error al eliminar permanentemente el compromiso: {str(e)}', 'danger')
+        set_alert(f'Error al eliminar permanentemente el compromiso: {str(e)}', 'danger')
     return redirect(url_for('home.ver_compromisos_eliminados'))
 
 @home.route('/forzar_eliminacion_compromisos', methods=['POST'])
@@ -392,11 +402,11 @@ def forzar_eliminacion_compromisos():
     try:
         compromiso_ids = [20, 21]
         persona_comp_service.forzar_eliminacion_compromisos(compromiso_ids)
-        flash('Compromisos eliminados forzosamente con éxito.', 'success')
+        set_alert('Compromisos eliminados forzosamente con éxito.', 'success')
     except Exception as e:
         print(f"Error al forzar la eliminación de los compromisos: {e}")
         traceback.print_exc()
-        flash(f'Error al forzar la eliminación de los compromisos: {str(e)}', 'danger')
+        set_alert(f'Error al forzar la eliminación de los compromisos: {str(e)}', 'danger')
     return redirect(url_for('home.ver_compromisos_compartidos'))
 
 @home.route('/recuperar_compromiso/<int:compromiso_id>', methods=['POST'])
@@ -404,19 +414,20 @@ def forzar_eliminacion_compromisos():
 def recuperar_compromiso(compromiso_id):
     user_id = session['user_id']
     if not session.get('the_big_boss'):
-        flash('No tienes permiso para recuperar este compromiso.', 'danger')
+        set_alert('No tienes permiso para recuperar este compromiso.', 'danger')
         return redirect(url_for('home.home_view'))
 
     try:
         persona_comp_service.recuperar_compromiso(compromiso_id)
-        flash('Compromiso recuperado con éxito.', 'success')
+        set_alert('Compromiso recuperado con éxito.', 'success')
     except Exception as e:
-        flash(f'Error al recuperar el compromiso: {str(e)}', 'danger')
+        set_alert(f'Error al recuperar el compromiso: {str(e)}', 'danger')
     return redirect(url_for('home.ver_compromisos_eliminados'))
 
 @home.route('/crear_compromiso', methods=['GET', 'POST'])
 @login_required
 def crear_compromiso():
+    alert = session.pop('alert', None)
     user_id = session['user_id']
     user = persona_comp_service.get_user_info(user_id)
     form = CreateCompromisoForm()
@@ -448,16 +459,16 @@ def crear_compromiso():
                 # Asociar los referentes al compromiso
                 persona_comp_service.asociar_referentes(compromiso_id, referentes)
                 
-                flash('Compromiso creado con éxito.', 'success')
+                set_alert('Compromiso creado con éxito.', 'success')
                 return redirect(url_for('home.home_view'))
             except Exception as e:
                 print(f"Error al crear compromiso: {e}")
-                flash(f"Error al crear compromiso: {e}", 'danger')
+                set_alert(f"Error al crear compromiso: {e}", 'danger')
         else:
             print("Formulario no válido")
             print(form.errors)
 
-    return render_template('crear_compromiso.html', form=form, user=user)
+    return render_template('crear_compromiso.html', form=form, user=user, alert=alert)
 
 @home.route('/exportar_acta', methods=['GET'])
 def exportar_acta():

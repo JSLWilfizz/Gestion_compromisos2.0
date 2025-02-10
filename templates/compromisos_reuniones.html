@@ -99,6 +99,49 @@
             width: 80px;
             margin-top: 10px;
         }
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            min-width: 300px;
+        }
+
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        .alert-warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+        }
+
+        .alert .close {
+            color: inherit;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -114,6 +157,22 @@
         <div class="main-content">
             <div class="container">
                 <h1>Compromisos de la Reunión</h1>
+
+                <!-- Alert Section -->
+                {% if alert %}
+                <div class="alert alert-{{ alert['type'] }}">
+                    <span>{{ alert['message'] }}</span>
+                    <button type="button" class="close" onclick="this.parentElement.style.display='none';">&times;</button>
+                </div>
+                {% endif %}
+                <script>
+                    setTimeout(function(){
+                        document.querySelectorAll('.alert').forEach(function(alert){
+                            alert.style.display = 'none';
+                        });
+                    }, 2000);
+                </script>
+
                 <table>
                     <thead>
                         <tr>

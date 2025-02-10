@@ -70,10 +70,24 @@
             color: red !important;
             font-weight: bold !important;
         }
+
+        /* Alert Styles */
+        .alert { padding: 15px; margin-bottom: 20px; border: 1px solid transparent; border-radius: 4px; }
+        .alert-success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .alert-danger { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .alert-warning { background-color: #fff3cd; border-color: #ffeeba; color: #856404; }
+        .alert .close { background: none; border: none; font-size: 20px; cursor: pointer; }
     </style>
 </head>
 <body>
 <div class="container">
+        <!-- Alert Section -->
+        {% if alert %}
+        <div class="alert alert-{{ alert['type'] }}">
+            <span>{{ alert['message'] }}</span>
+            <button type="button" class="close" onclick="this.parentElement.style.display='none';">&times;</button>
+        </div>
+        {% endif %}
         <h2>Editar Compromiso</h2>
         <form method="POST" action="{{ url_for('home.edit_compromiso_view', compromiso_id=compromiso_id) }}">
             {{ form.hidden_tag() }}

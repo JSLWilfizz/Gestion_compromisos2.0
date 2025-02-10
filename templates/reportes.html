@@ -186,6 +186,20 @@
 </head>
 <body>
   <h1>Reportes del Sistema Gestor de Compromisos</h1>
+  <!-- Alert Section -->
+  {% if alert %}
+  <div class="alert alert-{{ alert['type'] }}">
+      <span>{{ alert['message'] }}</span>
+      <button type="button" class="close" onclick="this.parentElement.style.display='none';">&times;</button>
+  </div>
+  {% endif %}
+  <script>
+    setTimeout(function(){
+        document.querySelectorAll('.alert').forEach(function(alert){
+            alert.style.display = 'none';
+        });
+    }, 2000);
+  </script>
   <div style="margin-left: 20px 0;">
     <button id="mainScreen" class="nav-button"><i class="fas fa-home"></i> Volver al Inicio</button>  </div>
     <br>

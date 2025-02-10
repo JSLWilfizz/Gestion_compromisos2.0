@@ -27,6 +27,8 @@ if not os.path.exists(UPLOAD_FOLDER):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def set_alert(message, alert_type='info'):
+    session['alert'] = {'message': message, 'type': alert_type}
 
 @reunion.route('/reunion/crear_paso1', methods=['GET', 'POST'])
 @login_required
@@ -72,6 +74,7 @@ def crear_reunion_paso1():
 
             service.create_reunion(form, request.form, acta_pdf_path, tema_concatenado, temas_analizados_concatenado, proximas_reuniones_concatenado, fecha_creacion, fecha_limite)
             print(request.form)
+            set_alert('Reunión creada con éxito.', 'success')
             return redirect(url_for('home.home_view'))
 
         except Exception as e:
@@ -79,11 +82,11 @@ def crear_reunion_paso1():
             detailed_trace = traceback.format_exc()  # Traza completa del error
 
             # Mensaje de error para el usuario
-            flash(f"Ocurrió un error al crear la reunión: {e} en {error_line}", 'danger')
+            set_alert(f"Ocurrió un error al crear la reunión: {e} en {error_line}", 'danger')
 
             # Opcional: imprimir la traza completa en los logs o consola para depuración
             print("Detalles del error:\n", detailed_trace)
-            flash(f'Ocurrió un error al crear la reunión: {e}', 'danger')
+            set_alert(f"Ocurrió un error al crear la reunión: {e} en {error_line}", 'danger')
 
     return render_template('crear_reunion.html', form=form)
 
@@ -117,14 +120,14 @@ def ver_reunion(compromiso_id):
     try:
         reunion_info = service.get_reunion_by_compromiso_id(compromiso_id)
         if not reunion_info:
-            flash('No se encontró información de la reunión asociada.', 'warning')
+            set_alert('No se encontró información de la reunión asociada.', 'warning')
             return redirect(url_for('home.ver_compromisos_compartidos'))
         reunion_info['origen_name'] = service.get_origen_name(reunion_info['id_origen'])
         reunion_info['area_name'] = service.get_area_name(reunion_info['id_area'])
         return render_template('ver_reunion.html', reunion=reunion_info)
     except Exception as e:
         logging.error(f"Error al obtener la información de la reunión: {str(e)}")
-        flash('Ocurrió un error al obtener la información de la reunión.', 'danger')
+        set_alert('Ocurrió un error al obtener la información de la reunión.', 'danger')
         return redirect(url_for('home.ver_compromisos_compartidos'))
 
 @reunion.route('/reunion/ver_archivos/<int:reunion_id>', methods=['GET'])

@@ -250,6 +250,22 @@
         .sidebar-nav a i {
             margin-right: 10px;
         }
+
+        /* Include alert styles if not already added */
+        .alert { 
+            padding: 15px; 
+            margin-bottom: 20px; 
+            border: 1px solid transparent; 
+            border-radius: 4px;
+            position: fixed; /* fixed position */
+            bottom: 20px;    /* bottom offset */
+            right: 20px;     /* right offset */
+            min-width: 300px; 
+        }
+        .alert-success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .alert-danger { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .alert-warning { background-color: #fff3cd; border-color: #ffeeba; color: #856404; }
+        .alert .close { background: none; border: none; font-size: 20px; cursor: pointer; }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
@@ -291,6 +307,13 @@
 
         <div class="main-content">
             <div class="container">
+                <!-- Alert Section -->
+                {% if alert %}
+                <div class="alert alert-{{ alert['type'] }}">
+                    <span>{{ alert['message'] }}</span>
+                    <button type="button" class="close" onclick="this.parentElement.style.display='none';">&times;</button>
+                </div>
+                {% endif %}
                 <h1>Bienvenido, {{ user.name }} {{ user.lastname }}</h1>
                 <p>Departamento: {{ user.departamento_name }}</p>
                 <p>Cargo: {{ user.cargo }}</p>

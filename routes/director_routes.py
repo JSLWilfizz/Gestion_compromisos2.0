@@ -9,24 +9,24 @@ compromiso_service = CompromisoService()
 gestion_service = GestionService()
 reportes_service = ReportesService()
 
+def set_alert(message, alert_type='info'):
+    session['alert'] = {'message': message, 'type': alert_type}
+
 @director_bp.route('/director/resumen_compromisos', methods=['GET', 'POST'])
 @is_director
 def resumen_compromisos():
+    alert = session.pop('alert', None)
     mes = request.args.get('month', 'Todos')
     area_id = request.args.get('area_id')
     year = request.args.get('year', 'Todos')
     departamento_id = request.args.get('departamento_id', '')
 
-    # Convertir area_id y departamento_id a entero si existen
     if area_id:
         area_id = int(area_id)
     if departamento_id:
         departamento_id = int(departamento_id)
 
-    # Obtener el resumen de compromisos con todos los filtros
     resumen = compromiso_service.get_resumen_compromisos(mes, area_id, year, departamento_id)
-
-    # Obtener todas las áreas y departamentos para los filtros
     areas = compromiso_service.get_areas()
     departamentos = compromiso_service.get_departamentos()
 
@@ -37,24 +37,21 @@ def resumen_compromisos():
                          selected_area=area_id,
                          selected_mes=mes,
                          selected_year=year,
-                         selected_departamento=departamento_id)
+                         selected_departamento=departamento_id,
+                         alert=alert)
 
 @director_bp.route('/director/ver_compromisos', methods=['GET', 'POST'])
 @is_director
 def ver_compromisos_director():
-    # Obtener el mes y el departamento de los parámetros de consulta
+    alert = session.pop('alert', None)
     mes = request.args.get('month')
     departamento_id = request.args.get('departamento_id')
     year = request.args.get("year")
 
-    # Comprobar si ambos parámetros están presentes
-    print(mes, departamento_id)
     if not mes or not departamento_id:
-        # Redirigir a la página de resumen si faltan parámetros
-        flash("Faltan parámetros para filtrar los compromisos.", "error")
+        set_alert("Faltan parámetros para filtrar los compromisos.", "danger")
         return redirect(url_for('director.resumen_compromisos'))
 
-    # Mapear el mes a su valor numérico
     mappeo_meses = {
         "Enero": 1, "Febrero": 2, "Marzo": 3, "Abril": 4, "Mayo": 5,
         "Junio": 6, "Julio": 7, "Agosto": 8, "Septiembre": 9,
@@ -63,27 +60,25 @@ def ver_compromisos_director():
     mes_numero = mappeo_meses.get(mes)
     print(year) 
     if request.method == 'POST':
-        # Si se está enviando el formulario, procesar la actualización de los compromisos
         compromisos = compromiso_service.get_compromisos_by_mes_departamento(mes_numero, departamento_id, year)
         try:
             compromiso_service.actualizar_compromisos(request, compromisos, session['user_id'], es_director=True)
-            flash("Los compromisos se han actualizado con éxito.", "success")
+            set_alert("Los compromisos se han actualizado con éxito.", "success")
         except Exception as e:
-            flash(f"Error al actualizar los compromisos: {str(e)}", "error")
+            set_alert(f"Error al actualizar los compromisos: {str(e)}", "danger")
 
-        # Redirigir de nuevo a la misma página para evitar múltiples envíos del formulario
         return redirect(url_for('director.ver_compromisos_director', mes=mes, departamento_id=departamento_id))
 
-    # Obtener los compromisos filtrados por mes y departamento
     compromisos = compromiso_service.get_compromisos_by_mes_departamento(mes_numero, departamento_id, year)
     print(f"Compromisos: {compromisos}")
     todos_referentes = compromiso_service.get_referentes()
 
-    return render_template('director_ver_compromisos.html', compromisos=compromisos, todos_referentes=todos_referentes)
+    return render_template('director_ver_compromisos.html', compromisos=compromisos, todos_referentes=todos_referentes, alert=alert)
 
 @director_bp.route('/director/compromisos_por_mes', methods=['GET', 'POST'])
 @is_director
 def resumen_compromisos_por_mes():
+    alert = session.pop('alert', None)
     month = request.args.get('month', None)
     year = request.args.get('year', None)
 
@@ -94,35 +89,32 @@ def resumen_compromisos_por_mes():
     else:
         compromisos = []
 
-    return render_template('resumen_compromisos_mes.html', compromisos=compromisos, month=month, year=year)
+    return render_template('resumen_compromisos_mes.html', compromisos=compromisos, month=month, year=year, alert=alert)
 
 @director_bp.route('/director/editar_compromisos', methods=['GET', 'POST'])
 @is_director
 def editar_compromisos():
-    # Obtener filtros de mes, departamento y área
+    alert = session.pop('alert', None)
     departamento_id = request.args.get('departamento_id')
     mes = request.args.get('month')
     area_id = request.args.get('area_id')
-    print(area_id,mes,departamento_id)
+    print(area_id, mes, departamento_id)
 
-    # Obtener compromisos filtrados por mes, departamento y área
     compromisos = compromiso_service.get_compromisos_by_filtro(departamento_id, mes, area_id)
-
-    # Obtener todos los referentes para mostrarlos en los select
     todos_referentes = compromiso_service.get_referentes()
     print(f"Comentarios: {compromisos[0]['comentario_direccion']}")
 
     if request.method == 'POST':
-        # Si se envía el formulario, procesar la actualización
         compromiso_service.actualizar_compromisos(request, compromisos, session['user_id'], es_director=True)
-        flash('Compromisos actualizados con éxito.', 'success')
+        set_alert('Compromisos actualizados con éxito.', 'success')
         return redirect(
             url_for('director.resumen_compromisos', departamento_id=departamento_id, month=mes, area_id=area_id))
 
-    return render_template('editar_compromisos.html', compromisos=compromisos, todos_referentes=todos_referentes)
+    return render_template('editar_compromisos.html', compromisos=compromisos, todos_referentes=todos_referentes, alert=alert)
 
 @director_bp.route('/funcionarios', methods=['GET'])
 def funcionarios():
+    alert = session.pop('alert', None)
     search = request.args.get('search', '')
     departamento_raw = request.args.get('departamento', '')
     nivel_jerarquico = request.args.get('nivel_jerarquico', '')
@@ -144,27 +136,31 @@ def funcionarios():
         niveles_jerarquicos=niveles_jerarquicos,
         search=search,
         departamento=departamento_raw,
-        nivel_jerarquico=nivel_jerarquico
+        nivel_jerarquico=nivel_jerarquico,
+        alert=alert
     )
 
 @director_bp.route('/departamentos')
 def departamentos():
+    alert = session.pop('alert', None)
     jerarquia = request.args.get('jerarquia', '').strip()
     all_departamentos = gestion_service.get_departamentos()
     departamentos = all_departamentos
-    if (jerarquia):
+    if jerarquia:
         jerarquia_chain = gestion_service.get_departamento_chain_by_name(jerarquia)
-        departamentos = jerarquia_chain  # Display filtered departments in the main table
+        departamentos = jerarquia_chain
     return render_template(
         'departamentos.html',
         departamentos=departamentos,
         all_departamentos=all_departamentos,
-        selected_jerarquia=jerarquia
+        selected_jerarquia=jerarquia,
+        alert=alert
     )
 
 @director_bp.route('/director/editar_funcionario/<int:funcionario_id>', methods=['GET', 'POST'])
 @is_director
 def editar_funcionario(funcionario_id):
+    alert = session.pop('alert', None)
     funcionario = gestion_service.get_funcionario_by_id(funcionario_id)
     departamentos = gestion_service.get_departamentos()
     niveles_jerarquicos = gestion_service.get_niveles_jerarquicos()
@@ -181,14 +177,15 @@ def editar_funcionario(funcionario_id):
         anexo_telefonico = request.form.get('anexo_telefonico')
 
         gestion_service.update_funcionario(funcionario_id, rut, name, lastname, profesion, departamento_id, nivel_jerarquico, cargo, correo, anexo_telefonico)
-        flash('Funcionario actualizado con éxito.', 'success')
+        set_alert('Funcionario actualizado con éxito.', 'success')
         return redirect(url_for('director.funcionarios'))
 
-    return render_template('editar_funcionario.html', funcionario=funcionario, departamentos=departamentos, niveles_jerarquicos=niveles_jerarquicos)
+    return render_template('editar_funcionario.html', funcionario=funcionario, departamentos=departamentos, niveles_jerarquicos=niveles_jerarquicos, alert=alert)
 
 @director_bp.route('/director/editar_departamento/<int:departamento_id>', methods=['GET', 'POST'])
 @is_director
 def editar_departamento(departamento_id):
+    alert = session.pop('alert', None)
     departamento = gestion_service.get_departamento_by_id(departamento_id)
     all_departamentos = gestion_service.get_departamentos()
 
@@ -197,10 +194,10 @@ def editar_departamento(departamento_id):
         id_departamento_padre = request.form.get('id_departamento_padre')
 
         gestion_service.update_departamento(departamento_id, name, id_departamento_padre)
-        flash('Departamento actualizado con éxito.', 'success')
+        set_alert('Departamento actualizado con éxito.', 'success')
         return redirect(url_for('director.departamentos'))
 
-    return render_template('editar_departamento.html', departamento=departamento, all_departamentos=all_departamentos)
+    return render_template('editar_departamento.html', departamento=departamento, all_departamentos=all_departamentos, alert=alert)
 
 @director_bp.route('/api/report_data', methods=['GET'])
 @is_director
@@ -214,5 +211,6 @@ def get_report_data():
 @director_bp.route('/director/reportes', methods=['GET'])
 @is_director
 def reportes():
-    return render_template('reportes.html')
+    alert = session.pop('alert', None)
+    return render_template('reportes.html', alert=alert)
 
