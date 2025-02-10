@@ -17,7 +17,6 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            set_alert("Por favor, inicia sesión para acceder a esta página.", "warning")
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
@@ -34,10 +33,12 @@ def is_director(f):
 
 def set_alert(message, alert_type='info'):
     session['alert'] = {'message': message, 'type': alert_type}
+    print(f"Alert set: {session['alert']}")  # Debugging statement
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
-    alert = session.pop('alert', None)
+    alert = session.pop('alert', None)  # Clear the alert after retrieving it
+    print(f"Alert retrieved at start: {alert}")  # Debugging statement
     if request.method == 'POST':
         rut = request.form['rut']
         password = request.form['password']
@@ -51,13 +52,13 @@ def login():
             WHERE u.username = %s
         """, (rut,))
         user = cursor.fetchone()
-        print(user)
+        print(f"User retrieved: {user}")  # Debugging statement
 
         if user:
             stored_password = user[2]
             if password == stored_password:
                 session['user_id'] = user[0]
-                print(user[0])
+                print(f"User ID set in session: {session['user_id']}")  # Debugging statement
                 set_alert('Bienvenido/a, {}!'.format(user[3]), 'success')
                 return redirect(url_for('home.home_view'))
             else:
@@ -68,6 +69,8 @@ def login():
         cursor.close()
         conn.close()
 
+    alert = session.pop('alert', None)  # Retrieve the alert again after setting it
+    print(f"Alert retrieved at end: {alert}")  # Debugging statement
     return render_template('login.html', alert=alert)
 
 @auth.route('/logout')

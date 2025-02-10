@@ -444,6 +444,7 @@ class CompromisoRepository:
                     c.id AS compromiso_id,
                     c.descripcion,
                     c.estado,
+                    c.prioridad,
                     c.avance,
                     c.fecha_limite,
                     c.comentario,

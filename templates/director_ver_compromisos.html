@@ -216,7 +216,7 @@
             </div>
             {% endif %}
 
-            <form id="compromisos-form" method="POST" action="{{ url_for('director.ver_compromisos_director', month=request.args.get('month'), departamento_id=request.args.get('departamento_id')) }}">
+            <form id="compromisos-form" method="POST" action="{{ url_for('director.ver_compromisos_director', month=request.args.get('month'), departamento_id=request.args.get('departamento_id'), year=request.args.get('year')) }}">
                 <div class="table-container">
                     <table>
                         <thead>

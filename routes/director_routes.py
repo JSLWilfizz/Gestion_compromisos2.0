@@ -58,7 +58,7 @@ def ver_compromisos_director():
         "Octubre": 10, "Noviembre": 11, "Diciembre": 12, "Todos": "Todos"
     }
     mes_numero = mappeo_meses.get(mes)
-    print(year) 
+
     if request.method == 'POST':
         compromisos = compromiso_service.get_compromisos_by_mes_departamento(mes_numero, departamento_id, year)
         try:
@@ -67,10 +67,9 @@ def ver_compromisos_director():
         except Exception as e:
             set_alert(f"Error al actualizar los compromisos: {str(e)}", "danger")
 
-        return redirect(url_for('director.ver_compromisos_director', mes=mes, departamento_id=departamento_id))
+        return redirect(url_for('director.ver_compromisos_director', month=mes, departamento_id=departamento_id, year=year))
 
     compromisos = compromiso_service.get_compromisos_by_mes_departamento(mes_numero, departamento_id, year)
-    print(f"Compromisos: {compromisos}")
     todos_referentes = compromiso_service.get_referentes()
 
     return render_template('director_ver_compromisos.html', compromisos=compromisos, todos_referentes=todos_referentes, alert=alert)
@@ -146,7 +145,7 @@ def departamentos():
     jerarquia = request.args.get('jerarquia', '').strip()
     all_departamentos = gestion_service.get_departamentos()
     departamentos = all_departamentos
-    if jerarquia:
+    if (jerarquia):
         jerarquia_chain = gestion_service.get_departamento_chain_by_name(jerarquia)
         departamentos = jerarquia_chain
     return render_template(
