@@ -56,6 +56,16 @@ class GestionRepository:
             cursor.execute(query, (rut, name, lastname, profesion, nivel_jerarquico, cargo, correo, anexo_telefonico, funcionario_id))
             conn.commit()
 
+        # Actualizar la relación entre el funcionario y el departamento
+        query = """
+            UPDATE persona_departamento
+            SET id_departamento = %s
+            WHERE id_persona = %s
+        """
+        with conn.cursor() as cursor:
+            cursor.execute(query, (departamento_id, funcionario_id))
+            conn.commit()
+
     def fetch_departamentos(self):
         conn = get_db_connection()
         with conn.cursor() as cur:
