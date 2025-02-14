@@ -306,7 +306,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for compromiso in compromisos if user_id in compromiso.referentes_ids %}
+                    {% for compromiso in compromisos %}
                     <tr>
                         <form method="POST" action="{{ url_for('home.ver_compromisos') }}">
                             <input type="hidden" name="compromiso_id" value="{{ compromiso.compromiso_id }}">

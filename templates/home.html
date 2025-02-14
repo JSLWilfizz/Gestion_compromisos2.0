@@ -144,7 +144,12 @@
         .btn-danger:hover {
             background-color: #c82333;
         }
-
+        .btn-archivados {
+            background-color: #b16634;
+        }
+        .btn-archivados:hover {
+            background-color: #633d19;
+        }
         /* Footer Styles */
         .footer {
             background-color: #f8f9fa;
@@ -321,20 +326,20 @@
                 <a href="{{ url_for('reunion.crear_reunion_paso1') }}" class="btn btn-primary">
                     <i class="fas fa-calendar-plus mr-2"></i> Crear Reunión
                 </a>
+                <a href="{{url_for('home.mis_reuniones')}}" class="btn btn-reu">
+                    <i class="fas fa-handshake mr-2"></i> Mis Reuniones
+                </a>
                 <a href="{{ url_for('home.crear_compromiso') }}" class="btn btn-comp">
-                    <i class="fas fa-tasks mr-2"></i> Crear Compromisos
+                    <i class="fas fa-tasks mr-2"></i> Crear Tarea/Compromiso
                 </a>
                 <a href="{{ url_for('home.ver_compromisos') }}" class="btn btn-secondary">
                     <i class="fas fa-list mr-2"></i> Mis Compromisos
                 </a>
-                <a href="{{url_for('home.mis_reuniones')}}" class="btn btn-reu">
-                    <i class="fas fa-handshake mr-2"></i> Mis Reuniones
-                </a>
                 <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn btn-compromisosdepartamentales">
                     <i class="fas fa-users mr-2"></i> Compromisos Departamentales
                 </a>
-                {% if the_big_boss or user.cargo != 'FUNCIONARIO' %}    
-                <a href="{{ url_for('home.ver_compromisos_archivados') }}" class="btn btn-secondary">
+                {% if the_big_boss or user.nivel_jerarquico != 'FUNCIONARIO/A' %}
+                <a href="{{ url_for('home.ver_compromisos_archivados') }}" class="btn btn-archivados">
                     <i class="fas fa-archive mr-2"></i> Compromisos Archivados
                 </a>
                 {% endif %}

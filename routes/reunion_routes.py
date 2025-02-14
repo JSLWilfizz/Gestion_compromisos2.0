@@ -63,11 +63,17 @@ def crear_reunion_paso1():
 
             tema_values = [value.replace('\n', ';') for value in request.form.getlist('tema')]
             temas_analizados_values = [value.replace('\n', ';') for value in request.form.getlist('temas_analizado')]
-            proximas_reuniones_values = [value.replace('\n', ';') for value in request.form.getlist('proximas_fechas')]
-
+            # Extraer proximas reuniones desde el textarea
+            proximas_reuniones_text = request.form.get('proximas_reuniones', '').replace('\n', ';')
+            
             tema_concatenado = ';'.join(tema_values)
             temas_analizados_concatenado = ';'.join(temas_analizados_values)
-            proximas_reuniones_concatenado = ';'.join(proximas_reuniones_values)
+            proximas_reuniones_concatenado = proximas_reuniones_text
+
+            # Nuevos logs para depurar
+            current_app.logger.debug(f"tema_concatenado: {tema_concatenado}")
+            current_app.logger.debug(f"temas_analizados_concatenado: {temas_analizados_concatenado}")
+            current_app.logger.debug(f"proximas_reuniones_concatenado: {proximas_reuniones_concatenado}")
 
             fecha_creacion = request.form.get('fecha_reunion')
             fecha_limite = request.form.get('fecha_limite')

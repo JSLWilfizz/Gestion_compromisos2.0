@@ -52,36 +52,37 @@ class ReunionService:
             raise ValueError("El campo 'area' es requerido")
 
         name_list = []
-        departamento_list = []
-        profesion_list = []
         correo_list = []    
-        # Obtener los asistentes existentes
+        # Obtener los asistentes existentes (se usan sus correos)
         asistentes_list = request_data.getlist('asistentes[]')
         for asistente_id in asistentes_list:
             user = self.repo.fetch_user_info(asistente_id)
             if not user:
                 raise ValueError(f"No se encontró información del usuario con ID {asistente_id}")
             name_list.append(f"{user['name']} {user['lastname']}")
-            departamento_list.append(user['departamento'] or '')
-            profesion_list.append(user['profesion'] or '')
+            correo_list.append(user['correo'] or '')
 
-        # Recoger invitados y crearlos en la tabla persona
+        # Procesar invitados para insertarlos en la tabla (sin afectar los correos finales)
         invitado_nombres = request_data.getlist('invitado-nombre')
         invitado_instituciones = request_data.getlist('invitado-institucion')
         invitado_correos = request_data.getlist('invitado-correo')
-
+        invitado_telefonos = request_data.getlist('invitado-telefono')
         for i in range(len(invitado_nombres)):
             nombre = invitado_nombres[i]
             institucion = invitado_instituciones[i]
             correo = invitado_correos[i]
+            telefono = invitado_telefonos[i] if i < len(invitado_telefonos) else ''
             if nombre and institucion and correo:
-                invitado_id = self.repo.insert_invitado(nombre, institucion, correo)
-                invitado_user = self.repo.fetch_user_info(invitado_id)
-                name_list.append(f"{invitado_user['name']} {invitado_user['lastname']}")
-                correo_list.append(invitado_user['correo'] or '')
+                self.repo.insert_invitado(nombre, institucion, correo, telefono)
+                # Solo se agrega el nombre del invitado a la lista de asistentes
+                name_list.append(nombre)
 
         asistentes_concatenados = ';'.join(name_list)
         correos_final = ';'.join(correo_list)
+
+        # Debug de los valores finales
+        print("Correos Final:", correos_final)
+        print("Proximas reuniones concatenado:", proximas_reuniones_concatenado)
 
         lugar = request_data.get('lugar')
         temas = request_data.get('temas')

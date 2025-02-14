@@ -63,13 +63,9 @@ def ver_compromisos():
                     return redirect(url_for('home.ver_compromisos'))
 
                 user_id = session['user_id']
+                # Eliminar la verificación de permisos
                 es_director = session.get('es_director')
                 the_big_boss = session.get('the_big_boss')
-
-                # Verificar permisos
-                if not (es_director or the_big_boss or compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento'])):
-                    set_alert('No tienes permiso para actualizar este compromiso.', 'danger')
-                    return redirect(url_for('home.ver_compromisos'))
 
                 # Obtener los nuevos valores del formulario
                 nuevo_estado = request.form.get('estado')
@@ -77,13 +73,10 @@ def ver_compromisos():
                 nuevo_comentario = request.form.get('comentario')
                 comentario_director = request.form.get('comentario_direccion')
 
-                if es_director or the_big_boss:
-                    nuevos_referentes = request.form.getlist('referentes')
-                    if not nuevos_referentes:
-                        nuevos_referentes = compromiso['referentes_ids']
-                else:
+                # Eliminar la lógica de nuevos referentes basada en permisos
+                nuevos_referentes = request.form.getlist('referentes')
+                if not nuevos_referentes:
                     nuevos_referentes = compromiso['referentes_ids']
-                    comentario_director = compromiso['comentario_direccion']
 
                 # Actualizar el compromiso
                 compromiso_service.update_compromiso(
@@ -119,7 +112,7 @@ def ver_compromisos():
     if es_director:
         compromisos = compromiso_service.get_compromisos_by_departamento(compromiso_service.get_director_info(user_id)['id_departamento'], search, prioridad, estado, fecha_limite)
     elif the_big_boss:
-        compromisos = compromiso_service.get_all_compromisos(search, prioridad, estado, fecha_limite)
+        compromisos = compromiso_service.get_compromisos_by_user(user_id, search, prioridad, estado, fecha_limite)
     else:
         compromisos = compromiso_service.get_compromisos_by_user(user_id, search, prioridad, estado, fecha_limite)
 
@@ -156,6 +149,9 @@ def ver_compromisos_compartidos():
     for comp in compromisos_compartidos:
         reunion_item = reunion_service.get_reunion_by_compromiso_id(comp['compromiso_id'])
         comp['tiene_reunion'] = bool(reunion_item)
+        # Establecer permisos de edición y derivación
+        comp['permiso_editar'] = user['nivel_jerarquico'] == 'DIRECTOR DE SERVICIO' or user['nivel_jerarquico'] == 'SUBDIRECTOR/A' or user['nivel_jerarquico'] == 'JEFE/A DE DEPARTAMENTO' or user['nivel_jerarquico'] == 'JEFE/A DE UNIDAD'
+        comp['permiso_derivar'] = user['nivel_jerarquico'] == 'DIRECTOR DE SERVICIO' or user['nivel_jerarquico'] == 'SUBDIRECTOR/A' or user['nivel_jerarquico'] == 'JEFE/A DE DEPARTAMENTO' or user['nivel_jerarquico'] == 'JEFE/A DE UNIDAD'
     
     return render_template('ver_compromisos_compartidos.html', compromisos=compromisos_compartidos, user=user, alert=alert)
 
@@ -168,7 +164,7 @@ def editar_compromiso(compromiso_id):
         user = compromiso_service.get_user_info(user_id)
         compromiso = compromiso_service.get_compromiso_by_id(compromiso_id)
         todos_referentes = compromiso_service.get_referentes()
-        direccion = session.get('the_big_boss') or session.get('es_director')
+        direccion = session.get('the_big_boss') or session.get('es_director') or user['nivel_jerarquico'] == 'DIRECTOR DE SERVICIO' or user['nivel_jerarquico'] == 'SUBDIRECTOR/A' or user['nivel_jerarquico'] == 'JEFE/A DE DEPARTAMENTO' or user['nivel_jerarquico'] == 'JEFE/A DE UNIDAD'
 
         # Verificar si el usuario es el jefe del departamento correspondiente al compromiso
         if not (compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento']) or direccion):
@@ -216,7 +212,7 @@ def derivar_compromiso(compromiso_id):
     user = compromiso_service.get_user_info(user_id)
     compromiso = compromiso_service.get_compromiso_by_id(compromiso_id)
     todos_referentes = compromiso_service.get_referentes()
-    direccion = session.get('the_big_boss') or session.get('es_director')
+    direccion = session.get('the_big_boss') or session.get('es_director') or user['nivel_jerarquico'] == 'DIRECTOR DE SERVICIO' or user['nivel_jerarquico'] == 'SUBDIRECTOR/A' or user['nivel_jerarquico'] == 'JEFE/A DE DEPARTAMENTO' or user['nivel_jerarquico'] == 'JEFE/A DE UNIDAD'
 
     # Verificar si el usuario es el jefe del departamento correspondiente al compromiso
     if not (compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento']) or direccion):
