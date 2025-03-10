@@ -428,3 +428,14 @@ LEFT JOIN
     departamento d ON ca.id_departamento = d.id
 GROUP BY 
     ca.id, ca.descripcion, ca.estado, ca.fecha_limite, ca.fecha_archivado, d.name;
+
+-- Agregar columnas id_origen e id_area a compromisos_archivados
+ALTER TABLE compromisos_archivados 
+ADD COLUMN id_origen INTEGER,
+ADD COLUMN id_area INTEGER;
+
+-- Agregar columnas id_origen e id_area a compromiso_eliminado  
+ALTER TABLE compromiso_eliminado 
+ADD COLUMN id_origen INTEGER,
+ADD COLUMN id_area INTEGER;
+

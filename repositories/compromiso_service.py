@@ -186,8 +186,30 @@ class CompromisoService:
     def get_compromiso_by_id(self, compromiso_id):
         return self.repo.fetch_compromiso_by_id(compromiso_id)
 
-    def create_compromiso(self, descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento, user_id, referentes):
-        self.repo.create_compromiso(descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento, user_id, referentes)
+    def create_compromiso(self, descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento, user_id, referentes, origen=None, area=None):
+        # Asegurarnos de que origen y area se conviertan correctamente a enteros si son strings
+        try:
+            origen_id = int(origen) if origen and str(origen).strip() else None
+            area_id = int(area) if area and str(area).strip() else None
+            
+            # Log para depurar
+            print(f"DEBUG - create_compromiso: origen={origen_id} (tipo: {type(origen_id)}), area={area_id} (tipo: {type(area_id)})")
+            
+            # Llamar al repositorio con todos los campos necesarios
+            return self.repo.insert_compromiso(
+                descripcion, 
+                prioridad, 
+                fecha_limite, 
+                id_departamento, 
+                0,  # Nivel de avance inicial
+                estado,
+                fecha_creacion,
+                origen_id,  # Pasar origen_id como nuevo parámetro
+                area_id     # Pasar area_id como nuevo parámetro
+            )
+        except Exception as e:
+            print(f"Error en create_compromiso: {e}")
+            raise e
 
     def get_initial_form_data(self, form):
         departamentos = self.get_departamentos()
@@ -222,6 +244,18 @@ class CompromisoService:
         Checks if the user is the principal responsible for the commitment
         """
         return self.repo.is_principal_responsible(user_id, compromiso_id)
+
+    def get_areas_by_departamento(self, departamento_id):
+        """
+        Obtener áreas asociadas a un departamento específico
+        """
+        return self.repo.fetch_areas_by_departamento(departamento_id)
+
+    def get_origenes_by_departamento(self, departamento_id):
+        """
+        Obtener orígenes asociados a un departamento específico
+        """
+        return self.repo.fetch_origenes_by_departamento(departamento_id)
 
 
 

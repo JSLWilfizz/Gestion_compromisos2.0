@@ -69,7 +69,7 @@ class GestionRepository:
     def fetch_departamentos(self):
         conn = get_db_connection()
         with conn.cursor() as cur:
-            cur.execute("SELECT id, name, id_departamento_padre FROM departamento ORDER BY name")
+            cur.execute("SELECT id, name, id_departamento_padre FROM departamento ORDER BY id")
             return cur.fetchall()
 
     def fetch_departamento_by_id(self, departamento_id):

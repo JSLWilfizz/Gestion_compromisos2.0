@@ -48,11 +48,14 @@ def crear_reunion_paso1():
             'lugar': request.form.get('lugar', ''),
             'tema': request.form.get('tema', ''),
             'fecha_reunion': request.form.get('fecha_reunion', ''),
-            'origen': request.form.get('origen', ''),
-            'area': request.form.get('area', ''),
+            'origen': request.form.get('origen', ''),  # Asegúrate de que este campo exista en el formulario
+            'area': request.form.get('area', ''),     # Asegúrate de que este campo exista en el formulario
             'temas_analizado': request.form.get('temas_analizado', ''),
             'proximas_reuniones': request.form.get('proximas_reuniones', '')
         }
+        
+        # Log para depuración
+        print(f"DEBUG - Datos del formulario: origen={form_data['origen']}, area={form_data['area']}")
         
         # Obtener datos de compromisos
         compromisos_data = []
@@ -238,5 +241,25 @@ def mis_reuniones():
     user_id = session.get('user_id')
     reuniones = service.get_mis_reuniones(user_id)
     return render_template('mis_reuniones.html', reuniones=reuniones)
+
+@reunion.route('/get_areas_by_departamento', methods=['GET'])
+@login_required
+def get_areas_by_departamento():
+    departamento_id = request.args.get('departamento_id', type=int)
+    if not departamento_id:
+        return jsonify([])
+    
+    areas = service.get_areas_by_departamento(departamento_id)
+    return jsonify(areas)
+
+@reunion.route('/get_origenes_by_departamento', methods=['GET'])
+@login_required
+def get_origenes_by_departamento():
+    departamento_id = request.args.get('departamento_id', type=int)
+    if not departamento_id:
+        return jsonify([])
+    
+    origenes = service.get_origenes_by_departamento(departamento_id)
+    return jsonify(origenes)
 
 

@@ -267,6 +267,8 @@
                         <th>Prioridad</th>
                         <th>Fecha Límite</th>
                         <th>Departamento</th>
+                        <th>Origen</th>
+                        <th>Área</th>
                         <th>Referentes</th>
                     </tr>
                 </thead>
@@ -291,26 +293,43 @@
             // datosReunion in localStorage contains the compromisos info among other meeting data
             const datos = JSON.parse(localStorage.getItem("datosReunion"));
             if (datos) {
+                // Añadir log para depurar
+                console.log("Datos recuperados:", datos);
+                console.log("Origen:", datos.origen);
+                console.log("Área:", datos.area);
+                
                 populateData(datos);
+            } else {
+                console.error("No se encontraron datos de reunión en localStorage");
             }
         });
 
         function populateData(datos) {
             // Datos de compromiso vienen de datos.compromisos, que forma parte del JSON en datosReunion
-            document.getElementById("nombre_reunion").textContent = datos.nombre_reunion;
-            document.getElementById("lugar").textContent = datos.lugar;
-            document.getElementById("origen").textContent = datos.origen;
-            document.getElementById("area").textContent = datos.area;
-            document.getElementById("tema").textContent = datos.tema;
-            const fechaReunion = new Date(datos.fecha_reunion);
-            const opcionesFecha = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-            document.getElementById("fecha_reunion").textContent = fechaReunion.toLocaleDateString('es-ES', opcionesFecha);
-            document.getElementById("temas_analizado").textContent = datos.temas_analizado;
-            document.getElementById("proximas_reuniones").textContent = datos.proximas_reuniones;
+            document.getElementById("nombre_reunion").textContent = datos.nombre_reunion || "No especificado";
+            document.getElementById("lugar").textContent = datos.lugar || "No especificado";
+            
+            // Asegurar que origen y área siempre tengan un valor para mostrar
+            document.getElementById("origen").textContent = datos.origen || "No especificado";
+            document.getElementById("area").textContent = datos.area || "No especificado";
+            
+            document.getElementById("tema").textContent = datos.tema || "No especificado";
+            
+            if (datos.fecha_reunion) {
+                const fechaReunion = new Date(datos.fecha_reunion);
+                const opcionesFecha = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                document.getElementById("fecha_reunion").textContent = fechaReunion.toLocaleDateString('es-ES', opcionesFecha);
+            } else {
+                document.getElementById("fecha_reunion").textContent = "No especificada";
+            }
+            
+            document.getElementById("temas_analizado").textContent = datos.temas_analizado || "";
+            document.getElementById("proximas_reuniones").textContent = datos.proximas_reuniones || "";
 
-            populateTable("referentes-table-body", datos.asistentes, ['nombre', 'departamento', 'cargo']);
-            populateTable("invitados-table-body", datos.invitados, ['nombre', 'institucion', 'correo', 'telefono']);
-            populateCompromisos(datos.compromisos);
+            // Si asistentes o invitados no están definidos, usar un array vacío
+            populateTable("referentes-table-body", datos.asistentes || [], ['nombre', 'departamento', 'cargo']);
+            populateTable("invitados-table-body", datos.invitados || [], ['nombre', 'institucion', 'correo', 'telefono']);
+            populateCompromisos(datos.compromisos || []);
         }
 
         function populateTable(tableId, data, fields) {
@@ -328,7 +347,7 @@
 
         function populateCompromisos(compromisos) {
             const tableBody = document.getElementById("compromisos-table-body");
-            
+            tableBody.innerHTML = ""; // Clear existing rows
 
             compromisos.forEach(compromiso => {
                 const fechaLimite = new Date(compromiso.fecha_limite);
@@ -336,7 +355,17 @@
                 const referentesNombres = compromiso.referentes.map(ref => ref.nombre).join(', ');
 
                 const row = tableBody.insertRow();
-                [compromiso.nombre, compromiso.prioridad, fechaLimite.toLocaleDateString('es-ES', opcionesFecha), typeof compromiso.departamento === 'string' ? compromiso.departamento : compromiso.departamento.nombre, referentesNombres].forEach(text => {
+                
+                // Añadir todas las celdas incluidas origen y área
+                [
+                    compromiso.nombre, 
+                    compromiso.prioridad, 
+                    fechaLimite.toLocaleDateString('es-ES', opcionesFecha), 
+                    typeof compromiso.departamento === 'string' ? compromiso.departamento : compromiso.departamento.nombre,
+                    compromiso.origen || "No especificado",  // Nueva columna para origen
+                    compromiso.area || "No especificado",    // Nueva columna para área
+                    referentesNombres
+                ].forEach(text => {
                     row.insertCell().textContent = text;
                 });
             });

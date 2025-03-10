@@ -18,24 +18,29 @@ class PersonaCompRepository:
                 # Pasar a la tabla de compromiso_eliminado y sus relaciones antes de borrar
                 cursor.execute("""
                     INSERT INTO compromiso_eliminado (id, descripcion, estado, prioridad, fecha_creacion, avance,
-                                                      fecha_limite, comentario, comentario_direccion, id_departamento, eliminado_por)
+                                                      fecha_limite, comentario, comentario_direccion, id_departamento, 
+                                                      eliminado_por, id_origen, id_area)
                     SELECT id, descripcion, estado, prioridad, fecha_creacion, avance,
-                           fecha_limite, comentario, comentario_direccion, id_departamento, %s
+                           fecha_limite, comentario, comentario_direccion, id_departamento, %s, id_origen, id_area
                     FROM compromiso
                     WHERE id = %s
                 """, (user_id, compromiso_id))
+                
+                # Resto de las consultas para transferir datos a tablas de elementos eliminados
                 cursor.execute("""
                     INSERT INTO reunion_compromiso_eliminado (id_reunion, id_compromiso)
                     SELECT id_reunion, id_compromiso
                     FROM reunion_compromiso
                     WHERE id_compromiso = %s
                 """, (compromiso_id,))
+                
                 cursor.execute("""
                     INSERT INTO persona_compromiso_eliminado (id_persona, id_compromiso, es_responsable_principal)
                     SELECT id_persona, id_compromiso, es_responsable_principal
                     FROM persona_compromiso
                     WHERE id_compromiso = %s
                 """, (compromiso_id,))
+                
                 # NUEVO: Transferir verificadores a la tabla de verificadores eliminados
                 cursor.execute("""
                     INSERT INTO compromiso_eliminado_verificador
@@ -44,17 +49,19 @@ class PersonaCompRepository:
                     FROM compromiso_verificador
                     WHERE id_compromiso = %s
                 """, (compromiso_id,))
+                
                 # Eliminar registros originales
                 cursor.execute("DELETE FROM reunion_compromiso WHERE id_compromiso = %s", (compromiso_id,))
                 cursor.execute("DELETE FROM persona_compromiso WHERE id_compromiso = %s", (compromiso_id,))
                 cursor.execute("DELETE FROM compromiso_verificador WHERE id_compromiso = %s", (compromiso_id,))
                 cursor.execute("DELETE FROM compromiso WHERE id = %s", (compromiso_id,))
+                
                 self.conn.commit()
         except Exception as e:
             self.conn.rollback()
             print(f"Error in eliminar_compromiso: {e}")
             raise e
-        
+
     def archivar_compromiso(self, compromiso_id, user_id):
         try:
             with self.conn.cursor() as cursor:
@@ -62,10 +69,12 @@ class PersonaCompRepository:
                 cursor.execute("""
                     INSERT INTO compromisos_archivados (
                         id, descripcion, estado, prioridad, fecha_creacion, avance,
-                        fecha_limite, comentario, comentario_direccion, id_departamento, archivado_por
+                        fecha_limite, comentario, comentario_direccion, id_departamento, 
+                        archivado_por, id_origen, id_area
                     )
                     SELECT id, descripcion, estado, prioridad, fecha_creacion, avance,
-                           fecha_limite, comentario, comentario_direccion, id_departamento, %s
+                           fecha_limite, comentario, comentario_direccion, id_departamento, 
+                           %s, id_origen, id_area
                     FROM compromiso
                     WHERE id = %s
                 """, (user_id, compromiso_id))
@@ -109,8 +118,12 @@ class PersonaCompRepository:
             with self.conn.cursor() as cursor:
                 # Mover el compromiso de la tabla compromisos_archivados a la tabla compromiso
                 cursor.execute("""
-                    INSERT INTO compromiso (id, descripcion, estado, prioridad, fecha_creacion, avance, fecha_limite, comentario, comentario_direccion, id_departamento)
-                    SELECT id, descripcion, estado, prioridad, fecha_creacion, avance, fecha_limite, comentario, comentario_direccion, id_departamento
+                    INSERT INTO compromiso (id, descripcion, estado, prioridad, fecha_creacion, avance, 
+                                           fecha_limite, comentario, comentario_direccion, id_departamento,
+                                           id_origen, id_area)
+                    SELECT id, descripcion, estado, prioridad, fecha_creacion, avance, 
+                           fecha_limite, comentario, comentario_direccion, id_departamento,
+                           id_origen, id_area
                     FROM compromisos_archivados
                     WHERE id = %s
                 """, (compromiso_id,))
@@ -243,8 +256,12 @@ class PersonaCompRepository:
             with self.conn.cursor() as cursor:
                 # Mover de compromiso_eliminado a compromiso
                 cursor.execute("""
-                    INSERT INTO compromiso (id, descripcion, estado, prioridad, fecha_creacion, avance, fecha_limite, comentario, comentario_direccion, id_departamento)
-                    SELECT id, descripcion, estado, prioridad, fecha_creacion, avance, fecha_limite, comentario, comentario_direccion, id_departamento
+                    INSERT INTO compromiso (id, descripcion, estado, prioridad, fecha_creacion, avance, 
+                                           fecha_limite, comentario, comentario_direccion, id_departamento,
+                                           id_origen, id_area)
+                    SELECT id, descripcion, estado, prioridad, fecha_creacion, avance, 
+                           fecha_limite, comentario, comentario_direccion, id_departamento, 
+                           id_origen, id_area
                     FROM compromiso_eliminado
                     WHERE id = %s
                 """, (compromiso_id,))
@@ -288,23 +305,30 @@ class PersonaCompRepository:
             print(f"Error in recuperar_compromiso: {e}")
             raise e
 
-    def create_compromiso(self, descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento, user_id):
-        query = """
-        INSERT INTO compromiso (descripcion, estado, prioridad, fecha_creacion, avance, fecha_limite, comentario, comentario_direccion, id_departamento)
-        VALUES (%s, %s, %s, %s, 0, %s, %s, %s, %s)
-        RETURNING id
-        """
-        params = (descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento)
+    def create_compromiso(self, descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento, user_id, origen=None, area=None):
         try:
+            # Asegurarse de convertir strings vacías a None y strings numéricas a enteros
+            origen = int(origen) if origen and str(origen).strip() else None
+            area = int(area) if area and str(area).strip() else None
+            
+            print(f"DEBUG - Valores a insertar: id_origen={origen} (tipo: {type(origen)}), id_area={area} (tipo: {type(area)})")
+            
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute(query, params)
+                cursor.execute("""
+                    INSERT INTO compromiso 
+                    (descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento, id_origen, id_area, avance) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
+                    RETURNING id
+                    """, 
+                    (descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento, origen, area, 0)
+                )
                 compromiso_id = cursor.fetchone()['id']
-                print(f"Compromiso creado con ID: {compromiso_id}")
                 self.conn.commit()
+                print(f"Compromiso creado exitosamente con ID: {compromiso_id}, id_origen={origen}, id_area={area}, avance=0")
                 return compromiso_id
         except Exception as e:
             self.conn.rollback()
-            print(f"Error al insertar compromiso en la base de datos: {e}")
+            print(f"Error en create_compromiso: {e}")
             raise e
 
     def asociar_referentes(self, compromiso_id, referentes):

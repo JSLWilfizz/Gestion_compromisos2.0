@@ -88,7 +88,14 @@ class ReunionRepository:
 
     def insert_reunion(self, nombre, area_id, origen_id, asistentes_str, correos_str, acta_pdf_path, lugar, tema, temas_analizado, proximas_reuniones, fecha_creacion):
         try:
-            print(f"Inserting reunion with nombre={nombre}, area_id={area_id}, origen_id={origen_id}, asistentes={asistentes_str}, correos={correos_str}, acta_pdf={acta_pdf_path}, lugar={lugar}, tema={tema}, temas_analizado={temas_analizado}, proximas_reuniones={proximas_reuniones}, fecha_creacion={fecha_creacion}")
+            # Imprimir información de depuración mejorada para comprender los tipos y valores reales
+            print(f"DEBUG - insert_reunion recibió:")
+            print(f"  nombre={nombre}, type={type(nombre)}")
+            print(f"  area_id={area_id}, type={type(area_id)}")
+            print(f"  origen_id={origen_id}, type={type(origen_id)}")
+            print(f"  asistentes_str={asistentes_str[:30]}..., type={type(asistentes_str)}")
+            print(f"  correos_str={correos_str[:30]}..., type={type(correos_str)}")
+            
             with self.conn.cursor() as cursor:
                 cursor.execute("""
                     INSERT INTO reunion (nombre, id_staff, id_area, id_origen, fecha_creacion, asistentes, correos, acta_pdf, lugar, tema, temas_analizado, proximas_reuniones)
@@ -108,21 +115,60 @@ class ReunionRepository:
                     temas_analizado,
                     proximas_reuniones
                 ))
-                return cursor.fetchone()[0]
+                reunion_id = cursor.fetchone()[0]
+                self.conn.commit()
+                print(f"DEBUG - Reunión creada exitosamente con ID: {reunion_id}")
+                return reunion_id
         except Exception as e:
             self.conn.rollback()
+            print(f"ERROR - insert_reunion falló: {e}")
             raise e
 
-    def insert_compromiso(self, descripcion, prioridad, fecha_limite, id_departamento, avance, estado, fecha_creacion):
+    def insert_compromiso(self, descripcion, prioridad, fecha_limite, id_departamento, avance, estado, fecha_creacion, id_origen=None, id_area=None):
         try:
             with self.conn.cursor() as cursor:
-                cursor.execute("""
-                    INSERT INTO compromiso (descripcion, prioridad, fecha_limite, id_departamento, avance, estado, fecha_creacion)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
-                """, (descripcion, prioridad, fecha_limite, id_departamento, avance, estado, fecha_creacion))
-                return cursor.fetchone()[0]
+                # Mejorar la conversión de tipos para asegurar que los IDs sean enteros
+                try:
+                    id_departamento = int(id_departamento) if id_departamento else None
+                    id_origen = int(id_origen) if id_origen else None
+                    id_area = int(id_area) if id_area else None
+                except (ValueError, TypeError):
+                    print(f"ERROR - Conversión de ID fallida: id_departamento={id_departamento}, id_origen={id_origen}, id_area={id_area}")
+                
+                print(f"DEBUG - insert_compromiso después de conversión:")
+                print(f"  id_origen={id_origen}, type={type(id_origen)}")
+                print(f"  id_area={id_area}, type={type(id_area)}")
+                print(f"  id_departamento={id_departamento}, type={type(id_departamento)}")
+                
+                # Corregir la consulta SQL para asegurar que los parámetros estén en el orden correcto
+                if id_origen is None and id_area is None:
+                    cursor.execute("""
+                        INSERT INTO compromiso (descripcion, prioridad, fecha_limite, id_departamento, avance, estado, fecha_creacion)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
+                    """, (descripcion, prioridad, fecha_limite, id_departamento, avance, estado, fecha_creacion))
+                else:
+                    # Imprimir los valores antes de la inserción para depuración
+                    print(f"DEBUG - Insertando con id_origen={id_origen}, id_area={id_area}")
+                    
+                    # Usar la consulta explícita con todos los campos
+                    cursor.execute("""
+                        INSERT INTO compromiso (descripcion, prioridad, fecha_limite, id_departamento, avance, estado, fecha_creacion, id_origen, id_area)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+                    """, (descripcion, prioridad, fecha_limite, id_departamento, avance, estado, fecha_creacion, id_origen, id_area))
+                
+                row = cursor.fetchone()
+                compromiso_id = row[0]
+                self.conn.commit()
+                
+                # Verificar el valor guardado en la base de datos
+                cursor.execute("SELECT id_origen, id_area FROM compromiso WHERE id = %s", (compromiso_id,))
+                saved_values = cursor.fetchone()
+                print(f"DEBUG - Valores guardados en DB: id_origen={saved_values[0]}, id_area={saved_values[1]}")
+                
+                return compromiso_id
         except Exception as e:
             self.conn.rollback()
+            print(f"ERROR - insert_compromiso falló: {e}")
             raise e
 
     def insert_invitado(self, nombre, institucion, correo, telefono):
@@ -329,6 +375,52 @@ class ReunionRepository:
                 return cursor.fetchall()
         except Exception as e:
             self.conn.rollback()
+            raise e
+
+    def fetch_areas_by_departamento(self, departamento_id):
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                # Obtener el departamento padre (primer dígito seguido de dos ceros)
+                # Ejemplo: si departamento_id es 320, el padre sería 300
+                parent_dept_id = (departamento_id // 100) * 100
+                
+                # Incluir áreas del departamento actual, del departamento padre y globales
+                cursor.execute("""
+                    SELECT id, name 
+                    FROM area 
+                    WHERE id_departamento = %s 
+                       OR id_departamento = %s 
+                       OR id_departamento IS NULL
+                    ORDER BY name
+                """, (departamento_id, parent_dept_id))
+                
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            print(f"Error en fetch_areas_by_departamento: {e}")
+            raise e
+
+    def fetch_origenes_by_departamento(self, departamento_id):
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                # Obtener el departamento padre (primer dígito seguido de dos ceros)
+                # Ejemplo: si departamento_id es 320, el padre sería 300
+                parent_dept_id = (departamento_id // 100) * 100
+                
+                # Incluir orígenes del departamento actual, del departamento padre y globales
+                cursor.execute("""
+                    SELECT id, name 
+                    FROM origen 
+                    WHERE id_departamento = %s 
+                       OR id_departamento = %s 
+                       OR id_departamento IS NULL
+                    ORDER BY name
+                """, (departamento_id, parent_dept_id))
+                
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            print(f"Error en fetch_origenes_by_departamento: {e}")
             raise e
 
     def commit(self):

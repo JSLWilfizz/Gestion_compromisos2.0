@@ -280,11 +280,11 @@
                     </div>
                     <div id="origen-group">
                         <label for="origen" class="block text-sm font-medium text-gray-700">Origen</label>
-                        {{ form.origen(class="form-control select2", **{'data-selected': form_data.get('origen', '')}) }}
+                        {{ form.origen(class="form-control select2", id="origen", **{'data-selected': form_data.get('origen', '')}) }}
                     </div>
                     <div id="area-group">
                         <label for="area" class="block text-sm font-medium text-gray-700">Área</label>
-                        {{ form.area(class="form-control select2", **{'data-selected': form_data.get('area', '')}) }}
+                        {{ form.area(class="form-control select2", id="area", **{'data-selected': form_data.get('area', '')}) }}
                     </div>
                     <div id="asistentes-group" class="col-span-2">
                         <label for="asistentes-select" class="block text-sm font-medium text-gray-700">Asistentes</label>
@@ -381,6 +381,13 @@
                                 <th
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Departamento</th>
+                                <!-- We'll show these columns conditionally -->
+                                <th 
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Origen</th>
+                                <th 
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Area</th>
                                 <th
                                     class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Referentes</th>
@@ -405,21 +412,31 @@
                                         class="form-control" required />
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <select name="compromisos-{{ loop.index }}-departamento" class="form-control" required>
+                                    <select name="compromisos-{{ loop.index }}-departamento" class="form-control departamento-select" required>
+                                        <option value="">Seleccione un departamento</option>
                                         {% for value, label in form.compromisos[0].departamento.choices %}
                                         <option value="{{ value }}">{{ label }}</option>
                                         {% endfor %}
                                     </select>
                                 </td>
+                                <!-- Corregir los select de origen y area -->
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <select name="compromisos-{{ loop.index }}-origen" class="form-control origen-select" required>
+                                        <option value="">Seleccione un departamento primero</option>
+                                    </select>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <select name="compromisos-{{ loop.index }}-area" class="form-control area-select" required>
+                                        <option value="">Seleccione un departamento primero</option>
+                                    </select>
+                                </td>
                                 <td class="referentes-select">
-                                        <select id="referentes-select"
-                                            name="compromisos-{{ loop.index }}-referentes"
-                                            class="form-control select2" multiple="multiple" required>
-                                            {% for value, label, departamento, cargo in form.compromisos[0].referentes.choices %}
-                                            <option value="{{ value }}">{{ label }}</option>
-                                            {% endfor %}
-                                        </select>
-                                    </label>
+                                    <select name="compromisos-{{ loop.index }}-referentes"
+                                        class="form-control select2" multiple="multiple" required>
+                                        {% for value, label, departamento, cargo in form.compromisos[0].referentes.choices %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <button type="button" class="btn btn-danger btn-remove"><i class="fas fa-trash"></i> Eliminar</button>
@@ -609,7 +626,7 @@
 
             // Inicializar select2 para campos generales y también para 'origen' y 'area'
             $('.select2').select2({
-                placeholder: "Selecciona Referentes",
+                placeholder: "Selecciona",
                 allowClear: true,
                 width: '100%'
             });
@@ -652,8 +669,12 @@
                     datosReunion.origen = formData.get('new_origen').trim();
                 } else {
                     const origenSelect = document.querySelector('select[name="origen"]');
-                    const selectedOrigenOption = origenSelect.options[origenSelect.selectedIndex];
-                    datosReunion.origen = selectedOrigenOption.text;
+                    if (origenSelect && origenSelect.selectedIndex >= 0) {
+                        const selectedOrigenOption = origenSelect.options[origenSelect.selectedIndex];
+                        datosReunion.origen = selectedOrigenOption.text;
+                    } else {
+                        datosReunion.origen = "No especificado";
+                    }
                 }
 
                 // Recopilar 'area'
@@ -661,8 +682,12 @@
                     datosReunion.area = formData.get('new_area').trim();
                 } else {
                     const areaSelect = document.querySelector('select[name="area"]');
-                    const selectedAreaOption = areaSelect.options[areaSelect.selectedIndex];
-                    datosReunion.area = selectedAreaOption.text;
+                    if (areaSelect && areaSelect.selectedIndex >= 0) {
+                        const selectedAreaOption = areaSelect.options[areaSelect.selectedIndex];
+                        datosReunion.area = selectedAreaOption.text;
+                    } else {
+                        datosReunion.area = "No especificado";
+                    }
                 }
 
                 // Recopilar 'asistentes-select'
@@ -691,15 +716,26 @@
                     const nombre = row.querySelector('textarea[name$="-nombre"]').value;
                     const prioridad = row.querySelector('select[name$="-prioridad"]').value;
                     const fecha_limite = row.querySelector('input[name$="-fecha_limite"]').value;
-                    // Get the department text from the selected option instead of its value
+                    
+                    // Get the department, origen and area text from the selected options
                     const departamentoSelect = row.querySelector('select[name$="-departamento"]');
                     const departamento = departamentoSelect.selectedOptions[0].text;
+                    
+                    const origenSelect = row.querySelector('select[name$="-origen"]');
+                    const origen = origenSelect.selectedOptions[0].text;
+                    
+                    const areaSelect = row.querySelector('select[name$="-area"]');
+                    const area = areaSelect.selectedOptions[0].text;
+                    
                     const referentesOptions = Array.from(row.querySelectorAll('select[name$="-referentes"] option:checked'));
+                    
                     compromisos.push({
                         nombre,
                         prioridad,
                         fecha_limite,
                         departamento,
+                        origen,
+                        area,
                         referentes: referentesOptions.map(option => ({
                             nombre: option.text.split(' - ')[0],
                             departamento: option.text.split(' - ')[1]
@@ -711,6 +747,11 @@
                 // Recopilar "Próximas Reuniones"
                 datosReunion.proximas_reuniones = formData.get('proximas_reuniones');
 
+                // Imprimir datos para depuración
+                console.log("Datos a guardar:", datosReunion);
+                console.log("Origen:", datosReunion.origen);
+                console.log("Área:", datosReunion.area);
+                
                 // Almacenar en localStorage
                 localStorage.setItem('datosReunion', JSON.stringify(datosReunion));
                 window.open("{{url_for('reunion.actas_reuniones')}}", "_blank");
@@ -718,7 +759,7 @@
 
             // Inicializar select2
             $('.select2').select2({
-                placeholder: "Selecciona Referentes",
+                placeholder: "Selecciona",
                 allowClear: true,
                 width: '100%'
             });
@@ -760,7 +801,7 @@
                 compromisoIndex++;
                 // Re-inicializar select2 para los nuevos selects
                 $('.select2').select2({
-                    placeholder: "Selecciona referentes",
+                    placeholder: "Selecciona Referentes",
                     allowClear: true,
                     width: '100%'
                 });
@@ -947,68 +988,143 @@
                         </select>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <input type="datetime-local" name="compromisos-${index}-fecha_limite" class="form-control" required />
+                        <input type="datetime-local" name="compromisos-${index}-fecha_limite" class="form-control" required>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <select name="compromisos-${index}-departamento" class="form-control" required>
-                            {% for value, label in form.compromisos[0].departamento.choices %}
-                                <option value="{{ value }}">{{ label }}</option>
-                            {% endfor %}
-                        </select>
-                    </td>
-                    <td class="referentes-select">
-                        <select name="compromisos-${index}-referentes" class="form-control select2" multiple="multiple" required>
-                            {% for value, label, departamento, cargo in form.compromisos[0].referentes.choices %}
-                                <option value="{{ value }}">{{ label }}</option>
-                            {% endfor %}
+                            <option value="">Seleccione departamento</option>
+                            <!-- Las opciones se cargarán dinámicamente -->
                         </select>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <button type="button" class="btn btn-danger btn-remove"><i class="fas fa-trash"></i> Eliminar</button>
+                        <!-- Campo para origen específico del compromiso -->
+                        <select name="compromisos-${index}-origen" class="form-control">
+                            <option value="">Seleccione origen</option>
+                            <!-- Las opciones se cargarán cuando se seleccione un departamento -->
+                        </select>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <!-- Campo para área específica del compromiso -->
+                        <select name="compromisos-${index}-area" class="form-control">
+                            <option value="">Seleccione área</option>
+                            <!-- Las opciones se cargarán cuando se seleccione un departamento -->
+                        </select>
+                    </td>
+                    <td class="referentes-select">
+                        <select name="compromisos-${index}-referentes" class="form-control select2" multiple>
+                            <!-- Las opciones se cargarán dinámicamente -->
+                        </select>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button type="button" class="btn btn-danger btn-remove"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>
             `;
             $('#compromisos-table tbody').append(newRow);
+            
+            // Inicializar select2 para la nueva fila
+            $(`select[name="compromisos-${index}-referentes"]`).select2({
+                placeholder: "Selecciona referentes",
+                allowClear: true,
+                width: '100%'
+            });
+
+            // Activar el evento change para el departamento
+            $(`select[name="compromisos-${index}-departamento"]`).on('change', function() {
+                const row = $(this).closest('tr');
+                const departamentoId = $(this).val();
+                const areaSelect = row.find('select[name$="-area"]');
+                const origenSelect = row.find('select[name$="-origen"]');
+                
+                cargarAreasYOrigenesPorDepartamento(departamentoId, areaSelect, origenSelect);
+            });
         }
 
-        // Función para mostrar alertas
-        function mostrarAlerta(mensaje, tipo) {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert alert-' + tipo;
-            alertDiv.innerHTML = '<span>' + mensaje + '</span><button type="button" class="close" onclick="this.parentElement.style.display=\'none\';">&times;</button>';
+        // Función para cargar áreas y orígenes según el departamento
+        function cargarAreasYOrigenesPorDepartamento(departamentoId, areaSelect, origenSelect) {
+            if (!departamentoId) {
+                // Si no hay departamento seleccionado, limpiar los selectores
+                areaSelect.empty().append('<option value="">Seleccione un departamento primero</option>');
+                origenSelect.empty().append('<option value="">Seleccione un departamento primero</option>');
+                return;
+            }
             
-            const acta_content = document.getElementById('acta-content');
-            acta_content.insertBefore(alertDiv, acta_content.firstChild);
+            // Mostrar indicador de carga
+            areaSelect.empty().append('<option value="">Cargando áreas...</option>');
+            origenSelect.empty().append('<option value="">Cargando orígenes...</option>');
             
-            setTimeout(function() {
-                alertDiv.style.display = 'none';
-            }, tipo === 'danger' ? 8000 : 5000);
+            // Cargar áreas
+            $.ajax({
+                url: '{{ url_for("reunion.get_areas_by_departamento") }}',
+                type: 'GET',
+                data: { departamento_id: departamentoId },
+                success: function(areas) {
+                    areaSelect.empty();
+                    
+                    // Agregar opción predeterminada
+                    if (areas.length === 0) {
+                        areaSelect.append('<option value="">No hay áreas disponibles</option>');
+                    } else {
+                        areaSelect.append('<option value="">Seleccione un área</option>');
+                        
+                        // Agregar áreas filtradas
+                        $.each(areas, function(index, area) {
+                            areaSelect.append($('<option>', {
+                                value: area.id,
+                                text: area.name
+                            }));
+                        });
+                    }
+                },
+                error: function() {
+                    areaSelect.empty().append('<option value="">Error al cargar áreas</option>');
+                }
+            });
+            
+            // Cargar orígenes
+            $.ajax({
+                url: '{{ url_for("reunion.get_origenes_by_departamento") }}',
+                type: 'GET',
+                data: { departamento_id: departamentoId },
+                success: function(origenes) {
+                    origenSelect.empty();
+                    
+                    // Agregar opción predeterminada
+                    if (origenes.length === 0) {
+                        origenSelect.append('<option value="">No hay orígenes disponibles</option>');
+                    } else {
+                        origenSelect.append('<option value="">Seleccione un origen</option>');
+                        
+                        // Agregar orígenes filtrados
+                        $.each(origenes, function(index, origen) {
+                            origenSelect.append($('<option>', {
+                                value: origen.id,
+                                text: origen.name
+                            }));
+                        });
+                    }
+                },
+                error: function() {
+                    origenSelect.empty().append('<option value="">Error al cargar orígenes</option>');
+                }
+            });
         }
-        
-        // Función para restablecer el estado de carga
-        function resetLoadingState() {
-            const loadingOverlay = document.getElementById('loading-overlay');
-            if (loadingOverlay) {
-                loadingOverlay.classList.remove('active');
-            }
+
+        // Manejar cambio de departamento en cada fila de compromiso
+        $('#compromisos-table').on('change', 'select[name$="-departamento"]', function() {
+            const row = $(this).closest('tr');
+            const departamentoId = $(this).val();
+            const areaSelect = row.find('select[name$="-area"]');
+            const origenSelect = row.find('select[name$="-origen"]');
             
-            const submitBtn = document.getElementById('submit-btn');
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-check"></i> Confirmar Reunión y Compromisos';
-            }
-            
-            if (window.spinnerTimeout) {
-                clearTimeout(window.spinnerTimeout);
-            }
-        }
-        
-        // Agregar evento para cancelar la carga con ESC
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                resetLoadingState();
-                mostrarAlerta('Operación cancelada por el usuario.', 'info');
-            }
+            cargarAreasYOrigenesPorDepartamento(departamentoId, areaSelect, origenSelect);
+        });
+
+        // Inicializar áreas y orígenes para los compromisos existentes
+        $('.select2').select2({
+            placeholder: "Selecciona referentes",
+            allowClear: true,
+            width: '100%'
         });
     </script>
 </body>

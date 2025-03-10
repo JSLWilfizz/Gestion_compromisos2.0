@@ -38,8 +38,8 @@ class PersonaCompService:
     def get_compromisos_eliminados(self):
         return self.repo_persona.get_compromisos_eliminados()
     
-    def create_compromiso(self, descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento, user_id):
-        return self.repo_persona.create_compromiso(descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento, user_id)
+    def create_compromiso(self, descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento, user_id, origen=None, area=None):
+        return self.repo_persona.create_compromiso(descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento, user_id, origen, area)
 
     def asociar_referentes(self, compromiso_id, referentes):
         self.repo_persona.asociar_referentes(compromiso_id, referentes)
@@ -50,6 +50,14 @@ class PersonaCompService:
 
         form.id_departamento.choices = [(d['id'], d['name']) for d in departamentos]
         form.referentes.choices = [(r['id'], f"{r['name']} {r['lastname']} - {r['departamento']} - {r['profesion']}") for r in referentes]
+
+        # Inicializar campos de origen y área con opciones vacías
+        # Estos se cargarán dinámicamente cuando se seleccione un departamento
+        if hasattr(form, 'origen'):
+            form.origen.choices = [('', 'Seleccione un departamento primero')]
+        
+        if hasattr(form, 'area'):
+            form.area.choices = [('', 'Seleccione un departamento primero')]
 
     def add_verificador(self, id_compromiso, nombre_archivo, ruta_archivo, descripcion, user_id):
         """

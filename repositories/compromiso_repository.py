@@ -65,6 +65,8 @@ class CompromisoRepository:
                     c.comentario,
                     c.comentario_direccion,
                     d.name AS departamento_name,
+                    o.name AS origen_name,
+                    a.name AS area_name,
                     ARRAY_AGG(p.id) AS referentes_ids,
                     STRING_AGG(
                         p.name || ' ' || p.lastname || 
@@ -76,6 +78,8 @@ class CompromisoRepository:
                 LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                 LEFT JOIN persona p ON pc.id_persona = p.id
                 LEFT JOIN departamento d ON c.id_departamento = d.id
+                LEFT JOIN origen o ON c.id_origen = o.id
+                LEFT JOIN area a ON c.id_area = a.id
                 WHERE c.id_departamento = %s
             """
             params = [departamento_id]
@@ -114,7 +118,9 @@ class CompromisoRepository:
                     c.fecha_limite,
                     c.comentario,
                     c.comentario_direccion,
-                    d.name
+                    d.name,
+                    o.name,
+                    a.name
             """
 
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -137,6 +143,8 @@ class CompromisoRepository:
                     c.comentario,
                     c.comentario_direccion,
                     d.name AS departamento_name,
+                    o.name AS origen_name,
+                    a.name AS area_name,
                     ARRAY_AGG(p.id) AS referentes_ids,
                     STRING_AGG(
                         CASE 
@@ -149,6 +157,8 @@ class CompromisoRepository:
                 LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                 LEFT JOIN persona p ON pc.id_persona = p.id
                 LEFT JOIN departamento d ON c.id_departamento = d.id
+                LEFT JOIN origen o ON c.id_origen = o.id
+                LEFT JOIN area a ON c.id_area = a.id
                 WHERE c.id IN (
                     SELECT c2.id
                     FROM compromiso c2
@@ -193,7 +203,9 @@ class CompromisoRepository:
                     c.fecha_limite,
                     c.comentario,
                     c.comentario_direccion,
-                    d.name
+                    d.name,
+                    o.name,
+                    a.name
                 ORDER BY c.fecha_limite
             """
 
@@ -684,6 +696,8 @@ class CompromisoRepository:
                 c.comentario_direccion,
                 d.id AS departamento_id,
                 d.name AS departamento_name,
+                o.name AS origen_name,
+                a.name AS area_name,
                 STRING_AGG(
                     p.name || ' ' || p.lastname || 
                     CASE WHEN pc.es_responsable_principal THEN ' (*)' ELSE '' END,
@@ -708,6 +722,8 @@ class CompromisoRepository:
             JOIN departamento d ON c.id_departamento = d.id
             LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
             LEFT JOIN persona p ON pc.id_persona = p.id
+            LEFT JOIN origen o ON c.id_origen = o.id
+            LEFT JOIN area a ON c.id_area = a.id
             JOIN persona usuario_actual ON usuario_actual.id = %s  -- Join para acceder al nivel jerárquico del usuario actual
             WHERE
                 CASE
@@ -750,7 +766,7 @@ class CompromisoRepository:
             query += " AND c.avance BETWEEN %s AND %s"
             params.extend([min_avance, max_avance])
 
-        query += " GROUP BY c.id, d.id"
+        query += " GROUP BY c.id, d.id, d.name, o.name, a.name, c.descripcion, c.estado, c.prioridad, c.fecha_creacion, c.fecha_limite, c.avance, c.comentario, c.comentario_direccion"
 
         # Add fecha_limite sorting
         if fecha_limite:
@@ -782,6 +798,8 @@ class CompromisoRepository:
                 SELECT c.id AS compromiso_id, c.descripcion, c.estado, c.prioridad, 
                        c.fecha_creacion, c.fecha_limite, c.avance, c.comentario, 
                        c.comentario_direccion, c.id_departamento,
+                       o.name AS origen_name,
+                       a.name AS area_name,
                        STRING_AGG(
                            p.name || ' ' || p.lastname || 
                            CASE WHEN pc.es_responsable_principal THEN ' (*)' ELSE '' END,
@@ -792,8 +810,10 @@ class CompromisoRepository:
                 FROM compromiso c
                 LEFT JOIN persona_compromiso pc ON c.id = pc.id_compromiso
                 LEFT JOIN persona p ON pc.id_persona = p.id
+                LEFT JOIN origen o ON c.id_origen = o.id
+                LEFT JOIN area a ON c.id_area = a.id
                 WHERE c.id = %s
-                GROUP BY c.id
+                GROUP BY c.id, o.name, a.name
             """, (compromiso_id,))
             return cursor.fetchone()
 
@@ -820,6 +840,19 @@ class CompromisoRepository:
             print(f"Error al insertar compromiso en la base de datos: {e}")
             raise e
 
+    def insert_compromiso(self, descripcion, prioridad, fecha_limite, id_departamento, avance, estado, fecha_creacion, id_origen=None, id_area=None):
+        try:
+            with self.conn.cursor() as cursor:
+                print(f"DEBUG - Insertando compromiso con origen={id_origen}, area={id_area}")
+                cursor.execute("""
+                    INSERT INTO compromiso (descripcion, prioridad, fecha_limite, id_departamento, avance, estado, fecha_creacion, id_origen, id_area)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+                """, (descripcion, prioridad, fecha_limite, id_departamento, avance, estado, fecha_creacion, id_origen, id_area))
+                return cursor.fetchone()[0]
+        except Exception as e:
+            self.conn.rollback()
+            print(f"Error en insert_compromiso: {e}")
+            raise e
 
     def rollback(self):
         self.conn.rollback()
@@ -907,5 +940,51 @@ class CompromisoRepository:
         except Exception as e:
             print(f"Error checking if user is principal responsible: {e}")
             return False
+
+    def fetch_areas_by_departamento(self, departamento_id):
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                # Obtener el departamento padre (primer dígito seguido de dos ceros)
+                # Ejemplo: si departamento_id es 320, el padre sería 300
+                parent_dept_id = (departamento_id // 100) * 100
+                
+                # Incluir áreas del departamento actual, del departamento padre y globales
+                cursor.execute("""
+                    SELECT id, name 
+                    FROM area 
+                    WHERE id_departamento = %s 
+                       OR id_departamento = %s 
+                       OR id_departamento IS NULL
+                    ORDER BY name
+                """, (departamento_id, parent_dept_id))
+                
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            print(f"Error en fetch_areas_by_departamento: {e}")
+            raise e
+
+    def fetch_origenes_by_departamento(self, departamento_id):
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                # Obtener el departamento padre (primer dígito seguido de dos ceros)
+                # Ejemplo: si departamento_id es 320, el padre sería 300
+                parent_dept_id = (departamento_id // 100) * 100
+                
+                # Incluir orígenes del departamento actual, del departamento padre y globales
+                cursor.execute("""
+                    SELECT id, name 
+                    FROM origen 
+                    WHERE id_departamento = %s 
+                       OR id_departamento = %s 
+                       OR id_departamento IS NULL
+                    ORDER BY name
+                """, (departamento_id, parent_dept_id))
+                
+                return cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            print(f"Error en fetch_origenes_by_departamento: {e}")
+            raise e
 
 

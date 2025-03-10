@@ -8,154 +8,274 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        :root {
+            --color-primary: #3498db;
+            --color-primary-dark: #2980b9;
+            --color-success: #2ecc71;
+            --color-success-dark: #27ae60;
+            --color-warning: #f1c40f;
+            --color-danger: #e74c3c;
+            --color-danger-dark: #c0392b;
+            --color-orange: #e67e22;
+            --color-text: #333;
+            --color-background: #f4f4f4;
+            --color-white: #fff;
+            --border-radius: 4px;
+            --box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: var(--color-text);
             margin: 0;
             padding: 20px;
-            background-color: #f4f4f4;
+            background-color: var(--color-background);
+            font-size: 15px;
         }
+
         .container {
-            width: 100%;
+            max-width: 1400px;
             margin: 0 auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background-color: var(--color-white);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
         }
+
         h1 {
             color: #2c3e50;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            font-size: 30px;
+            font-weight: 600;
         }
-        form {
-            margin-bottom: 20px;
+
+        /* Improved Form Styling */
+        .filter-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 25px 0;
+            justify-content: center;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            border: 1px solid #e9ecef;
         }
-        input[type="text"], select {
-            padding: 10px;
-            margin-right: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+
+        .filter-form input,
+        .filter-form select {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            width: 200px;
+            transition: var(--transition);
         }
-        button {
-            padding: 10px 20px;
-            background-color: #3498db;
-            color: white;
+
+        .filter-form input:focus,
+        .filter-form select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .filter-form button {
+            padding: 12px 20px;
+            background-color: var(--color-primary);
+            color: var(--color-white);
             border: none;
-            border-radius: 4px;
+            border-radius: var(--border-radius);
             cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        button:hover {
-            background-color: #2980b9;
+
+        .filter-form button:hover {
+            background-color: var(--color-primary-dark);
+            transform: translateY(-2px);
         }
+
+        .filter-form .btn-clear {
+            background-color: var(--color-danger);
+        }
+
+        .filter-form .btn-clear:hover {
+            background-color: var(--color-danger-dark);
+        }
+
+        /* Improved Table Styling */
         table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
+            table-layout: auto;
+            font-size: 14px;
+            margin-top: 20px;
+            border: 1px solid #e9ecef;
         }
+
         th, td {
             padding: 12px 15px;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #e9ecef;
             word-wrap: break-word;
+            vertical-align: middle;
         }
+
         th {
-            background-color: #3498db;
-            color: white;
+            background-color: var(--color-primary);
+            color: var(--color-white);
+            font-size: 15px;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        tbody tr:hover {
+            background-color: #e9ecef;
+        }
+
+        /* Column widths */
+        th:nth-child(1) { width: 14%; }  /* Descripción */
+        th:nth-child(2) { width: 6%; }   /* Estado */
+        th:nth-child(3) { width: 6%; }   /* Prioridad */
+        th:nth-child(4) { width: 7%; }   /* Fecha Creación */
+        th:nth-child(5) { width: 5%; }   /* Avance */
+        th:nth-child(6) { width: 7%; }   /* Fecha Límite */
+        th:nth-child(7) { width: 8%; }   /* Departamento */
+        th:nth-child(8) { width: 7%; }   /* Origen */
+        th:nth-child(9) { width: 7%; }   /* Área */
+        th:nth-child(10) { width: 9%; }  /* Referentes */
+        th:nth-child(11) { width: 7%; }  /* Niveles Jerárquicos */
+        th:nth-child(12) { width: 7%; }  /* Comentario Referente */
+        th:nth-child(13) { width: 7%; }  /* Comentario Dirección */
+        th:nth-child(14) { width: 10%; } /* Acciones */
+
+        /* Improved Button Styling */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            margin: 3px;
+            background-color: var(--color-primary);
+            color: var(--color-white);
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: var(--color-primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .btn i {
             font-size: 14px;
         }
-        tr:hover {
-            background-color: #f5f5f5;
-        }
-        /* Column widths */
-        th:nth-child(1) { width: 12%; } /* Descripción */
-        th:nth-child(2) { width: 8%; }  /* Estado */
-        th:nth-child(3) { width: 6%; }  /* Prioridad */
-        th:nth-child(4) { width: 8%; }  /* Fecha Creación */
-        th:nth-child(5) { width: 5%; }  /* Avance */
-        th:nth-child(6) { width: 9%; }  /* Fecha Límite */
-        th:nth-child(7) { width: 10%; } /* Nombre Departamento */
-        th:nth-child(8) { width: 15%; } /* Referentes */
-        th:nth-child(9) { width: 15%; } /* Niveles Jerárquicos */
-        th:nth-child(10) { width: 8%; } /* Comentario Referente */
-        th:nth-child(11) { width: 8%; } /* Comentario Dirección */
-        th:nth-child(12) { width: 6%; } /* Acciones */
 
-        .btn {
-            display: inline-block;
-            padding: 6px 10px;
-            margin: 1px;
-            background-color: #3498db;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            transition: background-color 0.3s;
-            font-size: 12px;
-        }
-        .btn:hover {
-            background-color: #2980b9;
-        }
         .back-btn {
             display: block;
             width: 200px;
             margin: 20px auto;
             text-align: center;
-            padding: 10px;
-            background-color: #2ecc71;
+            padding: 12px;
+            background-color: var(--color-success);
             font-size: 16px;
         }
+
         .back-btn:hover {
-            background-color: #27ae60;
+            background-color: var(--color-success-dark);
         }
         
         /* Estados */
         .estado-completado {
-            background-color: #2ecc71;
-            color: white;
-            padding: 4px 8px;
-            border-radius:3px;
+            background-color: var(--color-success);
+            color: var(--color-white);
+            padding: 6px 10px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            display: inline-block;
         }
+        
         .estado-pendiente {
-            background-color: #f1c40f;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
+            background-color: var(--color-warning);
+            color: #333;
+            padding: 6px 10px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            display: inline-block;
         }
         
         /* Prioridades */
         .prioridad-alta {
-            background-color: #e74c3c;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
-        .prioridad-media {
-            background-color: #e67e22;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-        }
-        .prioridad-baja {
-            background-color: #f1c40f;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
+            background-color: var(--color-danger);
+            color: var(--color-white);
+            padding: 6px 10px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            display: inline-block;
         }
         
-        /* Avance progress bar */
+        .prioridad-media {
+            background-color: var(--color-orange);
+            color: var(--color-white);
+            padding: 6px 10px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .prioridad-baja {
+            background-color: var(--color-warning);
+            color: #333;
+            padding: 6px 10px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        /* Improved Progress Bar */
         .progress-container {
             width: 100%;
-            border-radius: 4px;
-            align-items: center;
+            border-radius: var(--border-radius);
+            background-color: #e0e0e0;
+            height: 22px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
         }
+        
         .progress-bar {
-            height: 20px;
-            border-radius: 4px;
-            transition: width 0.3s ease-in-out;
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease-in-out;
             position: relative;
             align-items: center;
         }
+        
         .progress-text {
             position: absolute;
             width: 100%;
@@ -163,86 +283,206 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;  
+            font-weight: bold;
+            color: var(--color-white);
+            text-shadow: 0 1px 1px rgba(0,0,0,0.3);
         }
         
         /* Fecha límite */
         .fecha-limite {
-            padding: 4px 8px;
-            border-radius: 4px;
-            align-items: justify;
+            padding: 6px 10px;
+            border-radius: var(--border-radius);
+            display: inline-block;
+            font-weight: 500;
         }
+        
         .fecha-limite-pasada {
-            background-color: #e74c3c;
-            color: white;
+            background-color: var(--color-danger);
+            color: var(--color-white);
         }
+        
         .fecha-limite-cercana {
-            background-color: #f1c40f;
-            color: white;
+            background-color: var(--color-warning);
+            color: #333;
         }
+        
         .fecha-limite-futura {
-            background-color: #2ecc71;
-            color: white;
+            background-color: var(--color-success);
+            color: var(--color-white);
         }
 
         .btn-no-reunion {
-            background-color: #3498db;
-            color: #ffffff;
-            border-radius: 4px;
-            padding: 6px 10px;
+            background-color: #95a5a6;
+            color: var(--color-white);
+            border-radius: var(--border-radius);
+            padding: 8px 12px;
             text-decoration: none;
-            font-size: 12px;
-            transition: background-color 0.3s;
+            font-size: 13px;
+            transition: var(--transition);
             pointer-events: none;
-            opacity: 0.5;
-        }
-
-        .filter-form {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 20px;
-            justify-content: center;
-        }
-
-        .filter-form input,
-        .filter-form select {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 14px;
-            width: 200px;
-        }
-
-        .filter-form button {
-            padding: 10px 20px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            font-size: 14px;
-        }
-
-        .filter-form button:hover {
-            background-color: #2980b9;
-        }
-
-        .filter-form .btn-clear {
-            background-color: #e74c3c;
-        }
-
-        .filter-form .btn-clear:hover {
-            background-color: #c0392b;
+            opacity: 0.7;
         }
 
         /* Alert Styles */
-        .alert { padding: 15px; margin-bottom: 20px; border: 1px solid transparent; border-radius: 4px; }
-        .alert-success { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
-        .alert-danger { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
-        .alert-warning { background-color: #fff3cd; border-color: #ffeeba; color: #856404; }
-        .alert .close { background: none; border: none; font-size: 20px; cursor: pointer; }
+        .alert {
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: var(--border-radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+            color: #856404;
+        }
+        
+        .alert .close {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: inherit;
+            opacity: 0.7;
+            transition: var(--transition);
+        }
+        
+        .alert .close:hover {
+            opacity: 1;
+        }
+
+        /* Header actions */
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .home-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background-color: #2c3e50;
+            color: var(--color-white);
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .home-link:hover {
+            background-color: #1a252f;
+            transform: translateY(-2px);
+        }
+
+        /* Responsive adjustments */
+        @media screen and (max-width: 1400px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .btn {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 10px 12px;
+            }
+            
+            table {
+                font-size: 13px;
+            }
+            
+            .filter-form {
+                padding: 15px;
+            }
+        }
+        
+        @media screen and (max-width: 1024px) {
+            .container {
+                padding: 12px;
+            }
+            
+            .btn {
+                padding: 5px 8px;
+                font-size: 11px;
+                margin: 2px;
+            }
+            
+            .filter-form {
+                gap: 10px;
+            }
+            
+            .filter-form input,
+            .filter-form select,
+            .filter-form button {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+        
+        @media screen and (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .filter-form {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .filter-form input,
+            .filter-form select,
+            .filter-form button {
+                width: 100%;
+            }
+        }
+        
+        /* Make action buttons stack better on smaller screens */
+        @media screen and (max-width: 1200px) {
+            td:last-child {
+                display: flex;
+                flex-wrap: wrap;
+                max-width: 150px;
+            }
+            
+            .btn, form {
+                margin: 2px;
+            }
+        }
     </style>
     <script>
         function getProgressBarColor(value) {
@@ -272,21 +512,38 @@
         }
 
         window.onload = function() {
+            // Inicializar barras de progreso
             document.querySelectorAll('.progress-bar').forEach(bar => {
                 const value = bar.getAttribute('data-value');
                 bar.style.width = value + '%';
                 bar.style.backgroundColor = getProgressBarColor(value);
             });
 
+            // Formatear y colorear fechas límite
             document.querySelectorAll('[data-fecha-limite]').forEach(elem => {
                 const fecha = elem.getAttribute('data-fecha-limite');
                 const clase = getFechaLimiteClass(fecha);
-                elem.parentElement.classList.add(clase);  // Aplicar la clase a la celda
+                elem.parentElement.classList.add(clase);
                 elem.textContent = formatDate(fecha);
             });
 
+            // Formatear fechas de creación
             document.querySelectorAll('.fecha-creacion').forEach(elem => {
                 elem.textContent = formatDate(elem.textContent);
+            });
+            
+            // Añadir efecto hover a las filas de la tabla
+            document.querySelectorAll('tbody tr').forEach(row => {
+                row.addEventListener('mouseover', function() {
+                    this.style.backgroundColor = '#e9ecef';
+                });
+                row.addEventListener('mouseout', function() {
+                    if (this.rowIndex % 2 === 0) {
+                        this.style.backgroundColor = '#f8f9fa';
+                    } else {
+                        this.style.backgroundColor = '';
+                    }
+                });
             });
         };
     </script>
@@ -304,13 +561,17 @@
             document.querySelectorAll('.alert').forEach(function(alert){
                 alert.style.display = 'none';
             });
-        }, 2000);
+        }, 3000); // Aumentado a 3 segundos para mejor visibilidad
     </script>
-    <div class="container">
+    
         <h1>Compromisos Departamentales</h1>
-        <a href="/home" class="btn btn-primary"><i class="fas fa-home"></i> Volver al Inicio</a>
-        <br>
-        <br>
+        
+        <div class="header-actions">
+            <a href="/home" class="home-link">
+                <i class="fas fa-home"></i> Volver al Inicio
+            </a>
+        </div>
+        
         <form method="GET" action="{{ url_for('home.ver_compromisos_compartidos') }}" class="filter-form">
             <input type="text" name="search" placeholder="Buscar por persona o departamento" value="{{ request.args.get('search', '') }}">
             <select name="estado">
@@ -330,99 +591,118 @@
                 <option value="asc" {% if request.args.get('fecha_limite') == 'asc' %}selected{% endif %}>Más cercana</option>
                 <option value="desc" {% if request.args.get('fecha_limite') == 'desc' %}selected{% endif %}>Más lejana</option>
             </select>
-            <button type="submit"><i class="fa-solid fa-magnifying-glass"></i>Buscar</button>
+            <button type="submit"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
             <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn btn-clear"><i class="fas fa-filter"></i> Borrar Filtros</a>
         </form>
-        <table>
-            <thead>
-                <tr>
-                    <th>Descripción</th>
-                    <th>Estado</th>
-                    <th>Prioridad</th>
-                    <th>Fecha Creación</th>
-                    <th>Avance</th>
-                    <th>Fecha Límite</th>
-                    <th>Nombre Departamento</th>
-                    <th>Referentes</th>
-                    <th>Niveles Jerárquicos</th>
-                    <th>Comentario Referente</th>
-                    <th>Comentario Dirección</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for compromiso in compromisos %}
-                <tr>
-                    <td>{{ compromiso.descripcion }}</td>
-                    <td>
-                        <span class="{% if compromiso.estado == 'Completado' %}estado-completado{% else %}estado-pendiente{% endif %}">
-                            {{ compromiso.estado }}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="
-                            {% if compromiso.prioridad == 'Alta' %}prioridad-alta
-                            {% elif compromiso.prioridad == 'Media' %}prioridad-media
-                            {% else %}prioridad-baja{% endif %}">
-                            {{ compromiso.prioridad }}
-                        </span>
-                    </td>
-                    <td class="fecha-creacion" data-fecha-creacion="{{ compromiso.fecha_creacion }}">{{ compromiso.fecha_creacion }}</td>
-                    <td>
-                        <div class="progress-container">
-                            <div class="progress-bar" data-value="{{ compromiso.avance }}">
-                                <div class="progress-text">{{ compromiso.avance }}%</div>
+        
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Descripción</th>
+                        <th>Origen</th>
+                        <th>Área</th>
+                        <th>Estado</th>
+                        <th>Prioridad</th>
+                        <th>Fecha Creación</th>
+                        <th>Avance</th>
+                        <th>Fecha Límite</th>
+                        <th>Departamento</th>
+                        <th>Referentes</th>
+                        <th>Niveles Jerárquicos</th>
+                        <th>Comentario Referente</th>
+                        <th>Comentario Dirección</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for compromiso in compromisos %}
+                    <tr>
+                        <td>{{ compromiso.descripcion }}</td>
+                        <td>{{ compromiso.origen_name or 'No definido' }}</td>
+                        <td>{{ compromiso.area_name or 'No definido' }}</td>
+                        <td>
+                            <span class="{% if compromiso.estado == 'Completado' %}estado-completado{% else %}estado-pendiente{% endif %}">
+                                {{ compromiso.estado }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="
+                                {% if compromiso.prioridad == 'Alta' %}prioridad-alta
+                                {% elif compromiso.prioridad == 'Media' %}prioridad-media
+                                {% else %}prioridad-baja{% endif %}">
+                                {{ compromiso.prioridad }}
+                            </span>
+                        </td>
+                        <td class="fecha-creacion" data-fecha-creacion="{{ compromiso.fecha_creacion }}">{{ compromiso.fecha_creacion }}</td>
+                        <td>
+                            <div class="progress-container">
+                                <div class="progress-bar" data-value="{{ compromiso.avance }}">
+                                    <div class="progress-text">{{ compromiso.avance }}%</div>
+                                </div>
                             </div>
-                        </div>
-                    </td>
-                    <td>
-                        <span class="fecha-limite" data-fecha-limite="{{ compromiso.fecha_limite }}">
-                            {{ compromiso.fecha_limite }}
-                        </span>
-                    </td>
-                    <td>{{ compromiso.departamento_name }}</td>
-                    <td>{{ compromiso.referentes }}</td>
-                    <td>{{ compromiso.niveles_jerarquicos }}</td>
-                    <td>{{ compromiso.comentario }}</td>
-                    <td>{{ compromiso.comentario_direccion }}</td>
-                    <td>
-                        {% if compromiso.permiso_editar %}
-                        <a href="{{ url_for('home.editar_compromiso', compromiso_id=compromiso.compromiso_id) }}" class="btn"><i class="fas fa-edit"></i> Editar</a>
-                        {% else %}
-                        <a href="#" class="btn" style="pointer-events: none; opacity: 0.5;"><i class="fas fa-edit"></i> Editar</a>
-                        {% endif %}
-                        
-                        {% if compromiso.permiso_derivar %}
-                        <a href="{{ url_for('home.derivar_compromiso', compromiso_id=compromiso.compromiso_id) }}" class="btn"><i class="fas fa-share"></i> Derivar</a>
-                        {% else %}
-                        <a href="#" class="btn" style="pointer-events: none; opacity: 0.5;"><i class="fas fa-share"></i> Derivar</a>
-                        {% endif %}
-                        <a href="{{ url_for('reunion.ver_reunion', compromiso_id=compromiso.compromiso_id) }}"
-                           class="btn {% if not compromiso.tiene_reunion %}btn-no-reunion{% else %}btn-primary{% endif %}">
-                           <i class="fas fa-calendar-alt"></i>
-                           Ver reunión
-                        </a>
-                        <!-- Actualizar el botón para usar la ruta correcta de verificadores -->
-                        <a href="{{ url_for('home.ver_verificadores', compromiso_id=compromiso.compromiso_id) }}" class="btn">
-                            <i class="fas fa-paperclip"></i> Verificadores
-                        </a>
-                        <!-- Delete button -->
-                        <form method="POST" action="{{ url_for('home.eliminar_compromiso', compromiso_id=compromiso.compromiso_id) }}" style="display:inline;">
-                            <button type="submit" class="btn" onclick="return confirm('¿Estás seguro de que deseas eliminar este compromiso?');"><i class="fas fa-trash-alt"></i> Eliminar</button>
-                        </form>
-                        <!-- Archivado button - Mostrar solo si el compromiso está completado y el usuario no es funcionario -->
-                        {% if compromiso.estado == 'Completado' and user.nivel_jerarquico != 'FUNCIONARIO/A' %}
-                        <form method="POST" action="{{ url_for('home.archivar_compromiso', compromiso_id=compromiso.compromiso_id) }}" style="display:inline;">
-                            <button type="submit" class="btn" onclick="return confirm('¿Estás seguro de que deseas archivar este compromiso?');">
-                                <i class="fas fa-archive"></i> Archivar
-                            </button>
-                        </form>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                        <td>
+                            <span class="fecha-limite" data-fecha-limite="{{ compromiso.fecha_limite }}">
+                                {{ compromiso.fecha_limite }}
+                            </span>
+                        </td>
+                        <td>{{ compromiso.departamento_name }}</td>
+                        <td>{{ compromiso.referentes }}</td>
+                        <td>{{ compromiso.niveles_jerarquicos }}</td>
+                        <td>{{ compromiso.comentario }}</td>
+                        <td>{{ compromiso.comentario_direccion }}</td>
+                        <td>
+                            {% if compromiso.permiso_editar %}
+                            <a href="{{ url_for('home.editar_compromiso', compromiso_id=compromiso.compromiso_id) }}" class="btn">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                            {% else %}
+                            <a href="#" class="btn" style="pointer-events: none; opacity: 0.5;">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                            {% endif %}
+                            
+                            {% if compromiso.permiso_derivar %}
+                            <a href="{{ url_for('home.derivar_compromiso', compromiso_id=compromiso.compromiso_id) }}" class="btn">
+                                <i class="fas fa-share"></i> Derivar
+                            </a>
+                            {% else %}
+                            <a href="#" class="btn" style="pointer-events: none; opacity: 0.5;">
+                                <i class="fas fa-share"></i> Derivar
+                            </a>
+                            {% endif %}
+                            
+                            <a href="{{ url_for('reunion.ver_reunion', compromiso_id=compromiso.compromiso_id) }}"
+                               class="btn {% if not compromiso.tiene_reunion %}btn-no-reunion{% else %}btn-primary{% endif %}">
+                               <i class="fas fa-calendar-alt"></i>
+                               Ver reunión
+                            </a>
+                            
+                            <a href="{{ url_for('home.ver_verificadores', compromiso_id=compromiso.compromiso_id) }}" class="btn">
+                                <i class="fas fa-paperclip"></i> Verificadores
+                            </a>
+                            
+                            <form method="POST" action="{{ url_for('home.eliminar_compromiso', compromiso_id=compromiso.compromiso_id) }}" style="display:inline;">
+                                <button type="submit" class="btn" style="background-color: #e74c3c;" 
+                                        onclick="return confirm('¿Estás seguro de que deseas eliminar este compromiso?');">
+                                    <i class="fas fa-trash-alt"></i> Eliminar
+                                </button>
+                            </form>
+                            
+                            {% if compromiso.estado == 'Completado' and user.nivel_jerarquico != 'FUNCIONARIO/A' %}
+                            <form method="POST" action="{{ url_for('home.archivar_compromiso', compromiso_id=compromiso.compromiso_id) }}" style="display:inline;">
+                                <button type="submit" class="btn" style="background-color: #8e44ad;" 
+                                        onclick="return confirm('¿Estás seguro de que deseas archivar este compromiso?');">
+                                    <i class="fas fa-archive"></i> Archivar
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
     </div>
 </body>
 </html>

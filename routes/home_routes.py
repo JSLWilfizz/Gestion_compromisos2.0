@@ -1,6 +1,6 @@
 # /routes/home_routes.py
 import traceback
-from flask import Blueprint, render_template, session, redirect, url_for, flash, request
+from flask import Blueprint, render_template, session, redirect, url_for, flash, request, jsonify
 from flask_login import login_required
 from repositories.compromiso_service import CompromisoService
 from repositories.reunion_service import ReunionService
@@ -448,7 +448,7 @@ def desarchivar_compromiso(compromiso_id):
     compromiso = compromiso_service.get_compromiso_by_id(compromiso_id)
 
     # Verificar si el usuario tiene permiso para desarchivar el compromiso
-    if not (session.get('the_big_boss') or compromiso['id_departamento'] == user['id_departamento']):
+    if not (session.get('the_big_boss') or user['nivel_jerarquico'] != 'FUNCIONARIO/A'):
         set_alert('No tienes permiso para desarchivar este compromiso.', 'danger')
         return redirect(url_for('home.home_view'))
 
@@ -517,6 +517,18 @@ def crear_compromiso():
 
     if request.method == 'POST':
         print("Formulario enviado")
+        
+        # Si se ha seleccionado un departamento, cargar las opciones de origen y area
+        departamento_id = request.form.get('id_departamento')
+        if departamento_id:
+            # Cargar áreas y orígenes para el departamento seleccionado
+            areas = compromiso_service.get_areas_by_departamento(departamento_id)
+            origenes = compromiso_service.get_origenes_by_departamento(departamento_id)
+            
+            # Actualizar las opciones en el formulario
+            form.origen.choices = [(str(o['id']), o['name']) for o in origenes]
+            form.area.choices = [(str(a['id']), a['name']) for a in areas]
+        
         if form.validate_on_submit():
             print("Formulario validado")
             descripcion = form.descripcion.data
@@ -528,13 +540,21 @@ def crear_compromiso():
             comentario_direccion = form.comentario_direccion.data
             id_departamento = form.id_departamento.data
             referentes = form.referentes.data
-
-            print(f"Datos del formulario: {descripcion}, {estado}, {prioridad}, {fecha_creacion}, {fecha_limite}, {comentario}, {comentario_direccion}, {id_departamento}, {referentes}")
+            
+            # Mejorar la verificación de los valores de origen y área
+            origen = form.origen.data if (hasattr(form, 'origen') and form.origen.data and form.origen.data.strip() != '') else None
+            area = form.area.data if (hasattr(form, 'area') and form.area.data and form.area.data.strip() != '') else None
+            
+            print(f"Datos del formulario: {descripcion}, {estado}, {prioridad}, {fecha_creacion}, {fecha_limite}, {comentario}, {comentario_direccion}, {id_departamento}, {referentes}, {origen}, {area}")
+            
+            # Imprimir tipos de datos para depuración
+            print(f"Tipo de origen: {type(origen)}, Tipo de area: {type(area)}")
 
             try:
                 # Crear el compromiso
                 compromiso_id = persona_comp_service.create_compromiso(
-                    descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, comentario_direccion, id_departamento, user_id
+                    descripcion, estado, prioridad, fecha_creacion, fecha_limite, comentario, 
+                    comentario_direccion, id_departamento, user_id, origen, area
                 )
                 # Asociar los referentes al compromiso
                 persona_comp_service.asociar_referentes(compromiso_id, referentes)
@@ -687,4 +707,34 @@ def eliminar_verificador(verificador_id, compromiso_id):
         set_alert(f'Error al eliminar el verificador: {str(e)}', 'danger')
     
     return redirect(url_for('home.ver_verificadores', compromiso_id=compromiso_id))
+
+@home.route('/get_areas_by_departamento', methods=['GET'])
+@login_required
+def get_areas_by_departamento():
+    departamento_id = request.args.get('departamento_id', type=int)
+    if not departamento_id:
+        return jsonify([])
+    
+    try:
+        areas = compromiso_service.get_areas_by_departamento(departamento_id)
+        return jsonify(areas)
+    except Exception as e:
+        print(f"Error en get_areas_by_departamento: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@home.route('/get_origenes_by_departamento', methods=['GET'])
+@login_required
+def get_origenes_by_departamento():
+    departamento_id = request.args.get('departamento_id', type=int)
+    if not departamento_id:
+        return jsonify([])
+    
+    try:
+        print(f"Obteniendo orígenes para departamento ID: {departamento_id}")
+        origenes = compromiso_service.get_origenes_by_departamento(departamento_id)
+        print(f"Orígenes obtenidos: {origenes}")
+        return jsonify(origenes)
+    except Exception as e:
+        print(f"Error en get_origenes_by_departamento: {e}")
+        return jsonify({'error': str(e)}), 500
 

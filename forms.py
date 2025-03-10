@@ -46,6 +46,9 @@ class CreateCompromisoForm(FlaskForm):
     comentario = TextAreaField('Comentario')
     comentario_direccion = TextAreaField('Comentario Dirección')
     id_departamento = SelectField('Departamento', choices=[], validators=[DataRequired()])
+    # Asegurarnos de coercer los valores a string para consistencia
+    origen = SelectField('Origen', choices=[], coerce=str, validators=[Optional()])
+    area = SelectField('Área', choices=[], coerce=str, validators=[Optional()])
     referentes = MultiSelectField('Referentes', choices=[], validators=[DataRequired()])
     submit = SubmitField('Crear Compromiso')
 

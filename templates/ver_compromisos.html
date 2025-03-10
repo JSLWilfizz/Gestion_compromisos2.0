@@ -296,6 +296,8 @@
                         <th>Avance (%)</th>
                         <th>Fecha Límite</th>
                         <th>Departamento</th>
+                        <th>Origen</th>
+                        <th>Área</th>
                         <th>Referentes</th>
                         {% if es_director %}
                         <th>Nuevos Referentes</th>
@@ -331,6 +333,8 @@
                             </td>
                             <td>{{ compromiso.fecha_limite.strftime('%d-%m-%Y %H:%M') }}</td>
                             <td>{{ compromiso.departamento_name }}</td>
+                            <td>{{ compromiso.origen_name or 'No definido' }}</td>
+                            <td>{{ compromiso.area_name or 'No definido' }}</td>
                             <td>{{ compromiso.referentes }}</td>
                             {% if es_director %}
                             <td>

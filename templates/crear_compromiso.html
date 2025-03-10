@@ -226,96 +226,194 @@ button:hover {
 
         <form action="{{ url_for('home.crear_compromiso') }}" method="POST">
             {{ form.hidden_tag() }}
+            
+            <!-- Descripción -->
             <div class="form-group">
-                <label for="id_departamento">Departamento</label>
-                {{ form.id_departamento(class="form-control") }}
+                <label for="descripcion">{{ form.descripcion.label }}</label>
+                {{ form.descripcion(class="form-control", id="descripcion", placeholder="Ingrese la descripción del compromiso") }}
             </div>
+            
+            <!-- Departamento -->
             <div class="form-group">
-                <label for="descripcion">Descripción</label>
-                {{ form.descripcion(class="form-control") }}
+                <label for="id_departamento">{{ form.id_departamento.label }}</label>
+                {{ form.id_departamento(class="form-control select2", id="id_departamento") }}
             </div>
+            
+            <!-- Origen -->
+            {% if form.origen is defined %}
             <div class="form-group">
-                <label for="referentes">Referentes</label>
-                <h6>El primer referente ingresado será el principal responsable</h6>
-                <br>
-                {{ form.referentes(class="form-control select2", multiple="multiple") }}
+                <label for="origen">{{ form.origen.label }}</label>
+                {{ form.origen(class="form-control select2", id="origen") }}
             </div>
+            {% endif %}
+            
+            <!-- Área -->
+            {% if form.area is defined %}
+            <div class="form-group">
+                <label for="area">{{ form.area.label }}</label>
+                {{ form.area(class="form-control select2", id="area") }}
+            </div>
+            {% endif %}
+            
+            <!-- Estado -->
+            <div class="form-group">
+                <label for="estado">{{ form.estado.label }}</label>
+                {{ form.estado(class="form-control", id="estado") }}
+            </div>
+            
+            <!-- Prioridad -->
+            <div class="form-group">
+                <label for="prioridad">{{ form.prioridad.label }}</label>
+                {{ form.prioridad(class="form-control", id="prioridad") }}
+            </div>
+            
             <div class="form-row">
-                <div class="form-group">
-                    <label for="fecha_creacion">Fecha de Creación</label>
-                    {% if form.fecha_creacion.data %}
-                        {{ form.fecha_creacion(class="form-control", type="datetime-local", value=form.fecha_creacion.data.strftime('%Y-%m-%dT%H:%M') if form.fecha_creacion.data else '') }}
-                    {% endif %}
+                <!-- Fecha Creación -->
+                <div class="form-group col-md-6">
+                    <label for="fecha_creacion">{{ form.fecha_creacion.label }}</label>
+                    {{ form.fecha_creacion(class="form-control", id="fecha_creacion", type="datetime-local") }}
                 </div>
-                <div class="form-group">
-                    <label for="fecha_limite">Fecha Límite</label>
-                    {{ form.fecha_limite(class="form-control", type="datetime-local", value=form.fecha_limite.data.strftime('%Y-%m-%dT%H:%M') if form.fecha_limite.data else '') }}
+                
+                <!-- Fecha Límite -->
+                <div class="form-group col-md-6">
+                    <label for="fecha_limite">{{ form.fecha_limite.label }}</label>
+                    {{ form.fecha_limite(class="form-control", id="fecha_limite", type="datetime-local") }}
                 </div>
             </div>
+            
             <div class="form-row">
-                <div class="form-group">
-                    <label for="estado">Estado</label>
-                    {{ form.estado(class="form-control") }}
+                <!-- Comentario -->
+                <div class="form-group col-md-6">
+                    <label for="comentario">{{ form.comentario.label }}</label>
+                    {{ form.comentario(class="form-control", id="comentario", rows="3") }}
                 </div>
-                <div class="form-group">
-                    <label for="prioridad">Prioridad</label>
-                    {{ form.prioridad(class="form-control") }}
+                
+                <!-- Comentario Dirección -->
+                <div class="form-group col-md-6">
+                    <label for="comentario_direccion">{{ form.comentario_direccion.label }}</label>
+                    {{ form.comentario_direccion(class="form-control", id="comentario_direccion", rows="3") }}
                 </div>
             </div>
+            
+            <!-- Referentes -->
             <div class="form-group">
-                <label for="comentario">Comentario</label>
-                {{ form.comentario(class="form-control") }}
+                <label for="referentes">{{ form.referentes.label }}</label>
+                {{ form.referentes(class="form-control select2", id="referentes", multiple="multiple") }}
+                <small class="form-text text-muted">El primer referente seleccionado será el responsable principal</small>
             </div>
-            <div class="form-group">
-                <label for="comentario_direccion">Comentario Dirección</label>
-                <textarea name="comentario_direccion" class="form-control" {% if user.cargo != 'DIRECTOR DE SERVICIO' %}readonly{% endif %}>{{ form.comentario_direccion.data }}</textarea>
-            </div>
-            <button type="submit">Crear Compromiso</button>
+            
+            <button type="submit" class="btn btn-primary">Crear Compromiso</button>
         </form>
+        
         <!-- Add a container to display the referentes order -->
         <div id="referentes-order" class="mt-4">
             <!-- Referentes seleccionados se mostrarán aquí -->
         </div>
     </div>
+    
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(document).ready(function() {
+            // Inicializar Select2
             $('.select2').select2({
-                placeholder: "Selecciona referentes",
-                allowClear: true,
                 width: '100%'
             });
 
-            function updateSelectedOrder(selectElement) {
-                const selectedOptions = Array.from(selectElement.selectedOptions);
-                const allOptions = Array.from(selectElement.options);
-
-                // Clear all options
-                selectElement.innerHTML = '';
-
-                // Append selected options first
-                selectedOptions.forEach(option => {
-                    selectElement.appendChild(option);
+            // Función para cargar áreas y orígenes según el departamento seleccionado
+            function cargarAreasYOrigenes(departamentoId) {
+                if (!departamentoId) {
+                    return; // No hacer nada si no hay departamento seleccionado
+                }
+                
+                console.log("Cargando áreas y orígenes para departamento ID:", departamentoId);
+                
+                // Cargar áreas asociadas al departamento
+                $.ajax({
+                    url: '/get_areas_by_departamento',  // Ruta absoluta en lugar de relativa
+                    type: 'GET',
+                    data: { departamento_id: departamentoId },
+                    beforeSend: function() {
+                        // Mostrar mensaje de carga
+                        $('#area').html('<option value="">Cargando áreas...</option>');
+                    },
+                    success: function(areas) {
+                        console.log("Áreas recibidas:", areas);
+                        var areaSelect = $('#area');
+                        areaSelect.empty();
+                        
+                        // Agregar opción predeterminada
+                        areaSelect.append(new Option('Seleccione un área', '', true, true));
+                        
+                        // Agregar áreas filtradas
+                        $.each(areas, function(index, area) {
+                            areaSelect.append(new Option(area.name, area.id, false, false));
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error al cargar áreas:', error, xhr.responseText, xhr.status);
+                        $('#area').html('<option value="">Error al cargar áreas</option>');
+                    }
                 });
-
-                // Append the rest of the options
-                allOptions.forEach(option => {
-                    if (!selectedOptions.includes(option)) {
-                        selectElement.appendChild(option);
+                
+                // Cargar orígenes asociados al departamento
+                $.ajax({
+                    url: '/get_origenes_by_departamento',  // Ruta absoluta en lugar de relativa
+                    type: 'GET',
+                    data: { departamento_id: departamentoId },
+                    beforeSend: function() {
+                        // Mostrar mensaje de carga
+                        $('#origen').html('<option value="">Cargando orígenes...</option>');
+                    },
+                    success: function(origenes) {
+                        console.log("Orígenes recibidos:", origenes);
+                        var origenSelect = $('#origen');
+                        origenSelect.empty();
+                        
+                        // Agregar opción predeterminada
+                        origenSelect.append(new Option('Seleccione un origen', '', true, true));
+                        
+                        // Agregar orígenes filtrados
+                        $.each(origenes, function(index, origen) {
+                            origenSelect.append(new Option(origen.name, origen.id, false, false));
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error al cargar orígenes:', error);
+                        console.error('Detalles del error:', xhr.status, xhr.statusText, xhr.responseText);
+                        $('#origen').html('<option value="">Error al cargar orígenes</option>');
                     }
                 });
             }
 
-            $('select[name="referentes"]').on('change', function () {
-                updateSelectedOrder(this);
+            // Evento para cuando cambia el departamento
+            $('#id_departamento').on('change', function() {
+                var departamentoId = $(this).val();
+                console.log("Departamento cambiado a:", departamentoId);
+                cargarAreasYOrigenes(departamentoId);
             });
 
-            // Call the function initially to set the order on page load
-            const referentesSelect = document.querySelector('select[name="referentes"]');
-            if (referentesSelect) {
-                updateSelectedOrder(referentesSelect);
+            // Inicializar áreas y orígenes con el departamento seleccionado inicialmente
+            var departamentoInicial = $('#id_departamento').val();
+            if (departamentoInicial) {
+                console.log("Departamento inicial:", departamentoInicial);
+                cargarAreasYOrigenes(departamentoInicial);
             }
+            
+            // Función para actualizar el orden de los referentes
+            $('#referentes').on('change', function() {
+                var selectedOptions = Array.from(this.selectedOptions);
+                var orderContainer = $('#referentes-order');
+                orderContainer.empty();
+
+                if (selectedOptions.length > 0) {
+                    orderContainer.append('<h4>Orden de Referentes:</h4>');
+                    selectedOptions.forEach(function(option, index) {
+                        var isResponsable = index === 0 ? ' (Responsable Principal)' : '';
+                        orderContainer.append('<div>' + (index + 1) + '. ' + option.text + isResponsable + '</div>');
+                    });
+                }
+            });
         });
     </script>
 </body>
