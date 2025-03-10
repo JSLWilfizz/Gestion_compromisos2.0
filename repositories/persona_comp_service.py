@@ -50,4 +50,22 @@ class PersonaCompService:
 
         form.id_departamento.choices = [(d['id'], d['name']) for d in departamentos]
         form.referentes.choices = [(r['id'], f"{r['name']} {r['lastname']} - {r['departamento']} - {r['profesion']}") for r in referentes]
+
+    def add_verificador(self, id_compromiso, nombre_archivo, ruta_archivo, descripcion, user_id):
+        """
+        Añade un verificador de compromiso
+        """
+        return self.repo_persona.add_verificador(id_compromiso, nombre_archivo, ruta_archivo, descripcion, user_id)
+
+    def get_verificadores(self, id_compromiso):
+        """
+        Obtiene los verificadores de un compromiso
+        """
+        return self.repo_persona.get_verificadores(id_compromiso)
+
+    def delete_verificador(self, verificador_id):
+        """
+        Elimina un verificador
+        """
+        return self.repo_persona.delete_verificador(verificador_id)
 # ...existing code...

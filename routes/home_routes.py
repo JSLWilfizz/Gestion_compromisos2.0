@@ -8,12 +8,23 @@ from repositories.persona_comp_service import PersonaCompService
 from .auth_routes import login_required
 from forms import CompromisoForm, CreateCompromisoForm
 from exceptions.compromiso_exceptions import ResponsablePrincipalError
+import os
+from werkzeug.utils import secure_filename
+from flask import current_app
+from datetime import datetime
+import psycopg2  # Añadir esta importación
+from psycopg2 import extras  # También necesitamos importar extras
 
 home = Blueprint('home', __name__)
 compromiso_service = CompromisoService()
 reunion_service = ReunionService()
 persona_comp_service = PersonaCompService()
 
+# Configurar extensiones permitidas para archivos
+ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'jpg', 'jpeg', 'png', 'zip'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @home.route('/')
 def redirect_home():
@@ -289,6 +300,10 @@ def eliminar_compromiso(compromiso_id):
     user_id = session['user_id']
     user = compromiso_service.get_user_info(user_id)
     compromiso = compromiso_service.get_compromiso_by_id(compromiso_id)
+    
+    # Verificar si hay verificadores asociados (opcional, informativo)
+    verificadores = compromiso_service.get_verificadores(compromiso_id)
+    tiene_verificadores = len(verificadores) > 0
 
     # Verificar si el usuario tiene permiso para eliminar el compromiso
     if not (compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento']) or session.get('the_big_boss') or session.get('es_director')):
@@ -299,26 +314,45 @@ def eliminar_compromiso(compromiso_id):
         # Establecer el id_persona en el contexto de la sesión
         persona_comp_service.set_current_user_id(user_id)
         
-        # Eliminar el compromiso usando el servicio
+        # Eliminar el compromiso usando el servicio - ahora preserva los verificadores
         persona_comp_service.eliminar_compromiso(compromiso_id, user_id)
-        set_alert('Compromiso eliminado con éxito.', 'success')
+        
+        mensaje = 'Compromiso eliminado con éxito.'
+        if tiene_verificadores:
+            mensaje += f' Se han preservado {len(verificadores)} verificadores asociados.'
+            
+        set_alert(mensaje, 'success')
     except Exception as e:
         print(f"Error al eliminar el compromiso: {e}")
         traceback.print_exc()
         set_alert(f'Error al eliminar el compromiso: {str(e)}', 'danger')
+        
     return redirect(url_for('home.ver_compromisos_compartidos'))
 
 @home.route('/ver_compromisos_eliminados')
 @login_required
 def ver_compromisos_eliminados():
     user_id = session['user_id']
-    if not session.get('the_big_boss'):
+    user = compromiso_service.get_user_info(user_id)
+    if user['nivel_jerarquico'] == 'FUNCIONARIO':
         set_alert('No tienes permiso para ver los compromisos eliminados.', 'danger')
         return redirect(url_for('home.home_view'))
 
     compromisos_eliminados = persona_comp_service.get_compromisos_eliminados()
+    
+    # Modificar para incluir información sobre verificadores en la vista
+    for compromiso in compromisos_eliminados:
+        cursor = persona_comp_service.repo_persona.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute("""
+            SELECT COUNT(*) as num_verificadores
+            FROM compromiso_eliminado_verificador
+            WHERE id_compromiso = %s
+        """, (compromiso['id'],))
+        result = cursor.fetchone()
+        compromiso['num_verificadores'] = result['num_verificadores'] if result else 0
+    
     alert = session.pop('alert', None)  # Retrieve alert for the template
-    return render_template('ver_compromisos_eliminados.html', compromisos=compromisos_eliminados, alert=alert)
+    return render_template('ver_compromisos_eliminados.html', compromisos=compromisos_eliminados, alert=alert, user=user)
 
 @home.route('/archivar_compromiso/<int:compromiso_id>', methods=['POST'])
 @login_required
@@ -326,21 +360,59 @@ def archivar_compromiso(compromiso_id):
     user_id = session['user_id']
     user = compromiso_service.get_user_info(user_id)
     compromiso = compromiso_service.get_compromiso_by_id(compromiso_id)
-
-    # Verificar si el usuario tiene permiso para archivar el compromiso
-    if not (compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento']) or session.get('the_big_boss') or session.get('es_director')):
-        set_alert('No tienes permiso para archivar este compromiso.', 'danger')
+    
+    if not compromiso:
+        set_alert('Compromiso no encontrado', 'danger')
+        return redirect(url_for('home.ver_compromisos_compartidos'))
+    
+    # Verificar si el compromiso está en estado "Completado"
+    if compromiso['estado'] != 'Completado':
+        set_alert('Solo se pueden archivar compromisos completados', 'danger')
+        return redirect(url_for('home.ver_compromisos_compartidos'))
+    
+    # Verificar si hay verificadores asociados (opcional, informativo)
+    verificadores = compromiso_service.get_verificadores(compromiso_id)
+    tiene_verificadores = len(verificadores) > 0
+    
+    # Simplificar la verificación de permisos
+    the_big_boss = session.get('the_big_boss', False)
+    es_director = session.get('es_director', False)
+    nivel_permitido = user['nivel_jerarquico'] in ['DIRECTOR DE SERVICIO', 'SUBDIRECTOR/A', 'JEFE/A DE DEPARTAMENTO', 'JEFE/A DE UNIDAD']
+    es_jefe = compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento'])
+    
+    # Agregar logs para depuración
+    print(f"User ID: {user_id}")
+    print(f"Es the_big_boss: {the_big_boss}")
+    print(f"Es director: {es_director}")
+    print(f"Nivel jerárquico: {user['nivel_jerarquico']}")
+    print(f"Nivel permitido: {nivel_permitido}")
+    print(f"Es jefe del departamento: {es_jefe}")
+    print(f"ID del departamento del compromiso: {compromiso['id_departamento']}")
+    print(f"ID del departamento del usuario: {user.get('id_departamento')}")
+    print(f"Tiene verificadores asociados: {tiene_verificadores} ({len(verificadores)} archivos)")
+    
+    # Simplificar la lógica de permisos para que sea más clara
+    tiene_permiso = the_big_boss or es_director or nivel_permitido or es_jefe
+    
+    if not tiene_permiso:
+        set_alert('No tienes permiso para archivar este compromiso. Se requiere ser responsable o tener un cargo superior.', 'danger')
         return redirect(url_for('home.ver_compromisos_compartidos'))
 
     try:
         # Establecer el id_persona en el contexto de la sesión
         persona_comp_service.set_current_user_id(user_id)
         
-        # Archivar el compromiso usando el servicio
+        # Archivar el compromiso usando el servicio - ahora preserva los verificadores
         persona_comp_service.archivar_compromiso(compromiso_id, user_id)
-        set_alert('Compromiso archivado con éxito.', 'success')
+        
+        mensaje = 'Compromiso archivado con éxito.'
+        if tiene_verificadores:
+            mensaje += f' Se han preservado {len(verificadores)} verificadores asociados.'
+            
+        set_alert(mensaje, 'success')
     except Exception as e:
         set_alert(f'Error al archivar el compromiso: {str(e)}', 'danger')
+    
     return redirect(url_for('home.ver_compromisos_compartidos'))
 
 @home.route('/ver_compromisos_archivados')
@@ -353,6 +425,18 @@ def ver_compromisos_archivados():
         return redirect(url_for('home.home_view'))
 
     compromisos_archivados = persona_comp_service.get_compromisos_archivados()
+    
+    # Modificar para incluir información sobre verificadores en la vista
+    for compromiso in compromisos_archivados:
+        cursor = persona_comp_service.repo_persona.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cursor.execute("""
+            SELECT COUNT(*) as num_verificadores
+            FROM compromiso_archivado_verificador
+            WHERE id_compromiso = %s
+        """, (compromiso['id'],))
+        result = cursor.fetchone()
+        compromiso['num_verificadores'] = result['num_verificadores'] if result else 0
+    
     alert = session.pop('alert', None)  # Retrieve alert to display after recovery
     return render_template('ver_compromisos_archivados.html', compromisos=compromisos_archivados, user=user, alert=alert)
 
@@ -475,4 +559,132 @@ def exportar_acta():
 @login_required
 def actas_reuniones():
     return render_template('actas_reuniones.html')
+
+@home.route('/ver_verificadores/<int:compromiso_id>', methods=['GET', 'POST'])
+@login_required
+def ver_verificadores(compromiso_id):
+    user_id = session.get('user_id')
+    compromiso = compromiso_service.get_compromiso_by_id(compromiso_id)
+    
+    if not compromiso:
+        set_alert('Compromiso no encontrado', 'danger')
+        return redirect(url_for('home.ver_compromisos_compartidos'))
+    
+    # Check if the current user is the principal responsible - ONLY THIS CHECK MATTERS NOW
+    is_principal = compromiso_service.is_principal_responsible(user_id, compromiso_id)
+    
+    # Get user info just for display purposes
+    user = compromiso_service.get_user_info(user_id)
+    
+    # Determine if the user can upload files (ONLY principal responsible)
+    can_upload = is_principal
+    
+    # Obtener verificadores del compromiso
+    verificadores = compromiso_service.get_verificadores(compromiso_id)
+    alert = session.pop('alert', None)
+    
+    return render_template(
+        'ver_verificadores.html',
+        compromiso=compromiso,
+        verificadores=verificadores,
+        can_upload=can_upload,
+        is_principal=is_principal,
+        alert=alert
+    )
+
+@home.route('/agregar_verificador/<int:compromiso_id>', methods=['POST'])
+@login_required
+def agregar_verificador(compromiso_id):
+    user_id = session.get('user_id')
+    
+    # ONLY check if the current user is the principal responsible
+    is_principal = compromiso_service.is_principal_responsible(user_id, compromiso_id)
+    
+    # Only allow upload if user is principal responsible - NO EXCEPTIONS
+    if not is_principal:
+        set_alert('Solo el responsable principal puede subir verificadores para este compromiso.', 'danger')
+        return redirect(url_for('home.ver_verificadores', compromiso_id=compromiso_id))
+    
+    # Continue with the existing upload logic
+    # Verificar que se haya enviado un archivo
+    if 'archivo' not in request.files:
+        set_alert('No se seleccionó ningún archivo', 'danger')
+        return redirect(url_for('home.ver_verificadores', compromiso_id=compromiso_id))
+    
+    archivo = request.files['archivo']
+    descripcion = request.form.get('descripcion', '')
+    
+    # Verificar que el archivo tenga un nombre
+    if archivo.filename == '':
+        set_alert('No se seleccionó ningún archivo', 'danger')
+        return redirect(url_for('home.ver_verificadores', compromiso_id=compromiso_id))
+    
+    # Verificar que el archivo tenga una extensión permitida
+    if archivo and allowed_file(archivo.filename):
+        # Obtener la extensión del archivo
+        ext = archivo.filename.rsplit('.', 1)[1].lower()
+        
+        # Crear estructura de directorios por tipo de archivo, año, mes y día
+        now = datetime.now()
+        year = now.strftime("%Y")
+        month = now.strftime("%m")
+        day = now.strftime("%d")
+        
+        # Build folder path: uploads/verificadores/{ext}/{year}/{month}/{day}
+        folder_path = os.path.join('verificadores', ext, year, month, day)
+        upload_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], folder_path)
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        # Guardar el archivo con un nombre seguro
+        filename = secure_filename(archivo.filename)
+        # Añadir timestamp para evitar nombres duplicados
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        filename = f"{timestamp}_{filename}"
+        
+        file_path = os.path.join(upload_folder, filename)
+        
+        try:
+            # Guardar el archivo en trozos para manejar archivos grandes
+            with open(file_path, 'wb') as f:
+                chunk_size = 4096  # 4KB por trozo
+                while True:
+                    chunk = archivo.read(chunk_size)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+            
+            # Guardar la referencia en la base de datos con la ruta relativa organizada
+            ruta_relativa = os.path.join(folder_path, filename)
+            # Asegurar que usamos forward slashes en la BD para consistencia
+            ruta_relativa = ruta_relativa.replace('\\', '/')
+            
+            compromiso_service.add_verificador(
+                compromiso_id, 
+                archivo.filename,  # Nombre original del archivo
+                ruta_relativa,     # Ruta relativa para acceder al archivo
+                descripcion,
+                user_id
+            )
+            set_alert('Verificador agregado con éxito', 'success')
+        except Exception as e:
+            set_alert(f'Error al guardar el verificador: {str(e)}', 'danger')
+        
+    else:
+        set_alert('Tipo de archivo no permitido', 'danger')
+    
+    return redirect(url_for('home.ver_verificadores', compromiso_id=compromiso_id))
+
+@home.route('/eliminar_verificador/<int:verificador_id>/<int:compromiso_id>', methods=['POST'])
+@login_required
+def eliminar_verificador(verificador_id, compromiso_id):
+    user_id = session.get('user_id')
+    
+    try:
+        # Eliminar la referencia en la base de datos
+        compromiso_service.delete_verificador(verificador_id)
+        set_alert('Verificador eliminado con éxito', 'success')
+    except Exception as e:
+        set_alert(f'Error al eliminar el verificador: {str(e)}', 'danger')
+    
+    return redirect(url_for('home.ver_verificadores', compromiso_id=compromiso_id))
 

@@ -9,181 +9,435 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f6f8;
-            color: #333;
+        :root {
+            --color-primary: #0d6efd;
+            --color-primary-hover: #0b5ed7;
+            --color-secondary: #343a40;
+            --color-background: #f8f9fa;
+            --color-card: #ffffff;
+            --color-text: #212529;
+            --color-gray-light: #e9ecef;
+            --color-gray-medium: #adb5bd;
+            --color-gray-dark: #6c757d;
+            --color-danger: #dc3545;
+            --color-warning: #ffc107;
+            --color-success: #20c997;
+            --color-info: #0dcaf0;
+            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --shadow-sm: 0 .125rem .25rem rgba(0,0,0,.075);
+            --shadow-md: 0 .5rem 1rem rgba(0,0,0,.15);
+            --shadow-lg: 0 1rem 3rem rgba(0,0,0,.175);
+            --border-radius: .375rem;
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
 
+        body {
+            font-family: var(--font-main);
+            background-color: var(--color-background);
+            color: var(--color-text);
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
         .container {
             max-width: 1200px;
-            margin: 50px auto;
-            background-color: white;
-            padding: 30px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
+            width: 90%;
+            margin: 2rem auto;
+            background-color: var(--color-card);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            border-radius: var(--border-radius);
+            flex: 1;
         }
 
         h1, h2 {
-            color: #007bff;
-            margin-bottom: 20px;
+            color: var(--color-primary);
             text-align: center;
-            font-size: 2em;
+            position: relative;
+            padding-bottom: 0.75rem;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+
+        h1::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background-color: var(--color-primary);
+            border-radius: 2px;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            margin: 2rem 0 1.5rem;
+            font-weight: 600;
         }
 
         .summary-box {
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
-            margin-bottom: 20px;
-            gap: 20px;
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
         }
 
         .summary-item {
             flex: 1;
-            background-color: #e9ecef;
-            padding: 20px;
-            border-radius: 8px;
+            min-width: 220px;
+            background-color: var(--color-card);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
             text-align: center;
-            font-size: 1.2em;
+            transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--color-gray-light);
+        }
+
+        .summary-item:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
         }
 
         .summary-item h3 {
-            font-size: 1.5em;
-            margin-bottom: 10px;
-            color: #333;
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+            color: var(--color-secondary);
+            font-weight: 600;
         }
 
         .summary-item p {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: #007bff;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: var(--color-primary);
         }
 
+        .summary-item:nth-child(1) {
+            border-top: 4px solid var(--color-info);
+        }
+
+        .summary-item:nth-child(2) {
+            border-top: 4px solid var(--color-success);
+        }
+
+        .summary-item:nth-child(2) p {
+            color: var(--color-success);
+        }
+
+        .summary-item:nth-child(3) {
+            border-top: 4px solid var(--color-warning);
+        }
+
+        .summary-item:nth-child(3) p {
+            color: var(--color-warning);
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            margin: 1.5rem 0;
+        }
 
         table {
             width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 1rem;
+            background-color: var(--color-card);
+            border-radius: var(--border-radius);
+            overflow: hidden;
         }
 
         th, td {
-            border: 1px solid #ddd;
-            padding: 15px;
-            font-size: 1em;
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-gray-light);
         }
 
         th {
-            background-color: #007bff;
+            background-color: var(--color-primary);
             color: white;
-            text-align: center;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
-        td {
-            text-align: center;
+        tr:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
         }
 
         .btn {
-            padding: 10px 15px;
-            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.65rem 1.25rem;
+            border-radius: var(--border-radius);
             color: white;
             text-decoration: none;
-            font-size: 1em;
+            font-weight: 500;
+            transition: all var(--transition-speed);
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
         }
 
         .btn-primary {
-            background-color: #007bff;
+            background-color: var(--color-primary);
+            box-shadow: var(--shadow-sm);
         }
 
         .btn-secondary {
-            background-color: #6c757d;
+            background-color: var(--color-secondary);
+            box-shadow: var(--shadow-sm);
         }
 
-        .btn-primary:hover, .btn-secondary:hover {
-            opacity: 0.85;
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            opacity: 0.95;
         }
 
-        .logo-container {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-        }
-
-        .logo-container img {
-            width: 80px;
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: var(--shadow-sm);
         }
 
         .footer {
+            background-color: var(--color-secondary);
+            padding: 2rem 0;
             text-align: center;
-            margin-top: 20px;
-            color: #666;
-            font-size: 14px;
+            color: white;
+            margin-top: 2rem;
         }
-        .footer {
-            background-color: #f8f9fa;
-            padding: 20px 0;
-            text-align: center;
-            color: #666;
-            font-size: 14px;
-            margin-top: 20px;
-            border-top: 1px solid #ddd;
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         .footer img {
-            width: 80px;
-            margin-top: 10px;
+            height: 60px;
+            transition: transform var(--transition-speed);
         }
+
+        .footer img:hover {
+            transform: scale(1.05);
+        }
+
+        .filter-container {
+            background-color: var(--color-card);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 2rem;
+            box-shadow: var (--shadow-sm);
+            border: 1px solid var(--color-gray-light);
+            height: fit-content;
+            width: fit-content;
+        }
+
         .filter-box {
             display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            height: fit-content;
+            width: fit-content;
+        }
+
+        .filter-group {
+            display: flex;
             align-items: center;
-            gap: 10px;
-            font-family: Arial, sans-serif;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 200px;
         }
+
         .filter-box label {
-            margin-right: 5px;
+            font-weight: 600;
+            color: var(--color-secondary);
+            white-space: nowrap;
         }
+
         .filter-box select {
-            padding: 5px;
+            padding: 0.6rem 0.75rem;
+            border: 1px solid var(--color-gray-light);
+            border-radius: var(--border-radius);
+            flex: 1;
+            color: var(--color-text);
+            background-color: white;
+            font-family: var(--font-main);
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23212529' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            padding-right: 2.5rem;
+        }
+
+        .filter-box select:focus {
+            border-color: var(--color-primary);
+            outline: none;
+            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        }
+
+        .actions-cell {
+            text-align: center;
+        }
+
+        .stats-cell {
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .department-cell {
+            font-weight: 600;
+        }
+
+        .back-button {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 992px) {
+            .container {
+                width: 95%;
+                padding: 1.5rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .filter-group {
+                min-width: 250px;
+            }
+            
+            .footer-content {
+                justify-content: center;
+                text-align: center;
+                gap: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+                margin: 1rem auto;
+            }
+            
+            h1 {
+                font-size: 1.75rem;
+            }
+            
+            h2 {
+                font-size: 1.5rem;
+            }
+            
+            .summary-box {
+                flex-direction: column;
+            }
+            
+            .summary-item {
+                min-width: 100%;
+                padding: 1.25rem;
+            }
+            
+            .filter-group {
+                min-width: 100%;
+            }
+            
+            th, td {
+                padding: 0.75rem;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Resumen de Compromisos - Directora</h1>
+        <h1>Resumen de Compromisos - Jefaturas</h1>
 
         <!-- Filtros de meses y áreas -->
-        <div class="filter-box">
+        <div class="filter-container">
             <form method="GET" action="{{ url_for('director.resumen_compromisos') }}">
-                <label for="month">Filtro por Mes:</label>
-                <select name="month" id="month" onchange="this.form.submit()">
-                    {% for month in ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre', 'Todos'] %}
-                    <option value="{{ month }}" {% if month == selected_mes %}selected{% endif %}>{{ month }}</option>
-                    {% endfor %}
-                </select>
-                <label for="year">Filtro por Año:</label>
-                <select name="year" id="year" onchange="this.form.submit()">
-                    {% for year in ['2024', '2025', 'Todos'] %}
-                    <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
-                    {% endfor %}
-                </select>
-                <label for="area_id">Filtro por Área:</label>
-                <select name="area_id" id="area_id" onchange="this.form.submit()">
-                    <option value="">Todas</option>
-                    {% for area in areas %}
-                    <option value="{{ area.id }}" {% if area.id == selected_area %}selected{% endif %}>{{ area.name }}</option>
-                    {% endfor %}
-                </select>
-                <label for="departamento_id">Filtro por Departamento:</label>
-                <select name="departamento_id" id="departamento_id" onchange="this.form.submit()">
-                    <option value="">Todos</option>
-                    {% for departamento in departamentos %}
-                    <option value="{{ departamento.id }}" {% if departamento.id == selected_departamento %}selected{% endif %}>{{ departamento.name }}</option>
-                    {% endfor %}
-                </select>
+                <div class="filter-box">
+                    <div class="filter-group">
+                        <label for="month">Mes:</label>
+                        <select name="month" id="month" onchange="this.form.submit()">
+                            {% for month in ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre', 'Todos'] %}
+                            <option value="{{ month }}" {% if month == selected_mes %}selected{% endif %}>{{ month }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="year">Año:</label>
+                        <select name="year" id="year" onchange="this.form.submit()">
+                            {% for year in ['2024', '2025', 'Todos'] %}
+                            <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="area_id">Área:</label>
+                        <select name="area_id" id="area_id" onchange="this.form.submit()">
+                            <option value="">Todas las áreas</option>
+                            {% for area in areas %}
+                            <option value="{{ area.id }}" {% if area.id == selected_area %}selected{% endif %}>{{ area.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="departamento_id">Departamento:</label>
+                        <select name="departamento_id" id="departamento_id" onchange="this.form.submit()">
+                            <option value="">Todos los departamentos</option>
+                            {% for departamento in departamentos %}
+                            <option value="{{ departamento.id }}" {% if departamento.id == selected_departamento %}selected{% endif %}>{{ departamento.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
             </form>
         </div>
-        <br>
+        
         <div class="summary-box">
             <div class="summary-item">
                 <h3>Compromisos Totales</h3>
@@ -200,42 +454,56 @@
         </div>
 
         <!-- Tabla de compromisos por departamento -->
-        <h2>Compromisos por Departamento</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Departamento</th>
-                    <th>Compromisos Totales</th>
-                    <th>Completados</th>
-                    <th>Pendientes</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for departamento in resumen.departamentos %}
-                <tr>
-                    <td>{{ departamento.nombre_departamento }}</td>
-                    <td>{{ departamento.total_compromisos }}</td>
-                    <td>{{ departamento.completados }}</td>
-                    <td>{{ departamento.pendientes }}</td>
-                    <td>
-                        <a href="{{ url_for('director.ver_compromisos_director', departamento_id=departamento.departamento_id, month=selected_mes, year = selected_year) }}" class="btn btn-primary"><i class="fas fa-eye"></i> Ver Compromisos</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <br>
-        <br>
+        <div class="table-header">
+            <h2>Compromisos por Departamento</h2>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Departamento</th>
+                        <th>Compromisos Totales</th>
+                        <th>Completados</th>
+                        <th>Pendientes</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for departamento in resumen.departamentos %}
+                    <tr>
+                        <td class="department-cell">{{ departamento.nombre_departamento }}</td>
+                        <td class="stats-cell">{{ departamento.total_compromisos }}</td>
+                        <td class="stats-cell">{{ departamento.completados }}</td>
+                        <td class="stats-cell">{{ departamento.pendientes }}</td>
+                        <td class="actions-cell">
+                            <a href="{{ url_for('director.ver_compromisos_director', departamento_id=departamento.departamento_id, month=selected_mes, year = selected_year) }}" class="btn btn-primary">
+                                <i class="fas fa-eye"></i> Ver Compromisos
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
         <!-- Botón para volver al home -->
-        <a href="{{ url_for('home.home_view') }}" class="btn btn-secondary" style="margin-top: 40px;"><i class="fas fa-home"></i> Volver al inicio</a>
+        <div class="back-button">
+            <a href="{{ url_for('home.home_view') }}" class="btn btn-secondary">
+                <i class="fas fa-home"></i> Volver al inicio
+            </a>
+        </div>
     </div>
     
-    <!-- Logo en la esquina inferior izquierda -->
+    <!-- Footer -->
     <footer class="footer">
-        Servicio de Salud del Maule
-        <div>
-            <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
+        <div class="footer-content">
+            <div>
+                <p>Servicio de Salud del Maule</p>
+            </div>
+            <div>
+                <img src="{{ url_for('static', filename='logo_ministerio.png') }}" alt="Logo Servicio de Salud del Maule">
+            </div>
         </div>
     </footer>
 </body>

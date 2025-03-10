@@ -147,7 +147,7 @@
                     <td>{{ compromiso.archivado_por_nombre }}</td>
                     <td class="fecha">{{ compromiso.fecha_archivado }}</td>
                     <td>
-                        {% if the_big_boss or compromiso.id_departamento == user.id_departamento %}
+                        {% if compromiso.id_departamento == user.id_departamento or user.nivel_jerarquico == "DIRECTOR DE SERVICIO" %}
                         <form method="POST" action="{{ url_for('home.desarchivar_compromiso', compromiso_id=compromiso.id) }}" style="display:inline;">
                             <button type="submit" class="btn" onclick="return confirm('¿Estás seguro de que deseas desarchivar este compromiso?');"><i class="fas fa-undo"></i> Desarchivar</button>
                         </form>

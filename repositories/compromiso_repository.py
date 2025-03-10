@@ -827,4 +827,85 @@ class CompromisoRepository:
     def close(self):
         self.conn.close()
 
+    def add_verificador(self, id_compromiso, nombre_archivo, ruta_archivo, descripcion, user_id):
+        """
+        Añade un verificador de compromiso a la base de datos
+        """
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    INSERT INTO compromiso_verificador
+                    (id_compromiso, nombre_archivo, ruta_archivo, descripcion, subido_por)
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id
+                """, (id_compromiso, nombre_archivo, ruta_archivo, descripcion, user_id))
+                
+                resultado = cursor.fetchone()
+                self.conn.commit()
+                return resultado['id']
+        except Exception as e:
+            self.conn.rollback()
+            print(f"Error al añadir verificador: {e}")
+            raise e
+
+    def get_verificadores(self, id_compromiso):
+        """
+        Obtiene todos los verificadores asociados a un compromiso
+        """
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT v.*, p.name || ' ' || p.lastname AS subido_por_nombre
+                    FROM compromiso_verificador v
+                    LEFT JOIN persona p ON v.subido_por = p.id
+                    WHERE v.id_compromiso = %s
+                    ORDER BY v.fecha_subida DESC
+                """, (id_compromiso,))
+                return cursor.fetchall()
+        except Exception as e:
+            print(f"Error al obtener verificadores: {e}")
+            raise e
+
+    def delete_verificador(self, verificador_id):
+        """
+        Elimina un verificador por su ID
+        """
+        try:
+            with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                # Primero obtener la ruta del archivo para devolverla
+                cursor.execute("SELECT ruta_archivo FROM compromiso_verificador WHERE id = %s", (verificador_id,))
+                resultado = cursor.fetchone()
+                
+                if not resultado:
+                    raise ValueError("Verificador no encontrado")
+                    
+                # Ahora eliminar el registro
+                cursor.execute("DELETE FROM compromiso_verificador WHERE id = %s", (verificador_id,))
+                self.conn.commit()
+                
+                return resultado['ruta_archivo']
+        except Exception as e:
+            self.conn.rollback()
+            print(f"Error al eliminar verificador: {e}")
+            raise e
+
+    def is_principal_responsible(self, user_id, compromiso_id):
+        """
+        Checks if the user is the principal responsible for the commitment
+        """
+        try:
+            with self.conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT EXISTS(
+                        SELECT 1 FROM persona_compromiso 
+                        WHERE id_persona = %s 
+                        AND id_compromiso = %s 
+                        AND es_responsable_principal = TRUE
+                    )
+                """, (user_id, compromiso_id))
+                return cursor.fetchone()[0]
+        except Exception as e:
+            print(f"Error checking if user is principal responsible: {e}")
+            return False
+
 

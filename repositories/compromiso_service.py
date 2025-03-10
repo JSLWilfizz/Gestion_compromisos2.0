@@ -199,5 +199,29 @@ class CompromisoService:
     def set_current_user_id(self, user_id):
         self.repo.set_current_user_id(user_id)
 
+    def add_verificador(self, id_compromiso, nombre_archivo, ruta_archivo, descripcion, user_id):
+        """
+        Añade un archivo verificador a un compromiso
+        """
+        return self.repo.add_verificador(id_compromiso, nombre_archivo, ruta_archivo, descripcion, user_id)
+
+    def get_verificadores(self, id_compromiso):
+        """
+        Obtiene los verificadores asociados a un compromiso
+        """
+        return self.repo.get_verificadores(id_compromiso)
+
+    def delete_verificador(self, verificador_id):
+        """
+        Elimina un verificador por su ID
+        """
+        return self.repo.delete_verificador(verificador_id)
+
+    def is_principal_responsible(self, user_id, compromiso_id):
+        """
+        Checks if the user is the principal responsible for the commitment
+        """
+        return self.repo.is_principal_responsible(user_id, compromiso_id)
+
 
 

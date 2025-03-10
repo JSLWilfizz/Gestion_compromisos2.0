@@ -369,9 +369,9 @@
             // Añadir la imagen escalada al PDF
             pdf.addImage(imgData, 'PNG', x, y, scaledWidth, scaledHeight);
 
-            const fechaActual = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
-            const horaActual = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }).replace(/:/g, '-');
-            pdf.save(`Acta_Reunion_${fechaActual}_${horaActual}.pdf`);
+            const fechaActual = new Date().toLocaleDateString('es-ES').replace(/\//g, '');
+            const horaActual = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }).replace(/:/g, '');
+            pdf.save(`AR_${fechaActual}_${horaActual}.pdf`);
         }
     </script>
 </body>

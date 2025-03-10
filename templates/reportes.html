@@ -182,6 +182,114 @@
       border-radius: 8px;
       color: var(--secondary-color);
     }
+    /* Added styles for filter notification */
+    .filter-notification {
+      background-color: #f8f9fa;
+      border-left: 4px solid var(--primary-color);
+      padding: 10px 15px;
+      margin-bottom: 20px;
+      border-radius: var(--border-radius);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .filter-notification p {
+      margin: 0;
+      font-size: 0.95rem;
+    }
+    
+    .filter-toggle {
+      display: inline-flex;
+      align-items: center;
+      margin-left: 20px;
+    }
+    
+    .filter-toggle label {
+      margin-right: 10px;
+    }
+    
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    
+    .switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: var(--primary-color);
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+    /* Estilos para los contenedores de hijos expandidos */
+    .child-container {
+      width: 100%;
+      display: table;
+    }
+
+    /* Asegurar que las filas de departamentos ocupen todo el ancho */
+    .dept-row td {
+      width: 100%;
+    }
+
+    /* Mejorar el estilo del botón de expansión */
+    .toggle-btn {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    /* Estilo para las filas de departamentos hijos */
+    .child-container tr {
+      width: 100%;
+    }
+
+    /* Asegurar que las celdas de la tabla ocupen el ancho correcto */
+    .child-container td {
+      width: auto;
+    }
   </style>
 </head>
 <body>
@@ -200,6 +308,21 @@
         });
     }, 2000);
   </script>
+  
+  <!-- Filter notification - will be shown/hidden via JavaScript -->
+  <div id="filterNotification" class="filter-notification" style="display: none;">
+    <p><i class="fas fa-filter"></i> <span id="filterMessage">Ver datos filtrados por tu departamento y subordinados.</span></p>
+    {% if is_admin %}
+    <div class="filter-toggle">
+      <label for="toggleFilter">Ver todos los datos:</label>
+      <label class="switch">
+        <input type="checkbox" id="toggleFilter">
+        <span class="slider"></span>
+      </label>
+    </div>
+    {% endif %}
+  </div>
+
   <div style="margin-left: 20px 0;">
     <button id="mainScreen" class="nav-button"><i class="fas fa-home"></i> Volver al Inicio</button>  </div>
     <br>
@@ -224,7 +347,7 @@
         </ul>
       </div>
       <div class="stats-section">
-        <h3>Otros</h3>
+        <h3>Otros Datos Generales</h3>
         <ul class="stats-list">
           <li>Total de Reuniones: <strong id="totalReuniones">0</strong></li>
           <li>Promedio de Compromisos por Reunión: <strong id="avgCompromisosPorReunion">0</strong></li>
@@ -333,6 +456,7 @@
     let datos = [];
     let deptData = [];
     let personasData = [];
+    let reunionesData = [];
     let currentSection = 0;
     const sections = ['deptSection', 'personasSection', 'chartSection', 'chartDeptSection', 'chartReunionesSection'];
 
@@ -354,11 +478,27 @@
       if (currentSection < sections.length - 1) showSection(currentSection + 1);
     });
 
-    async function fetchReportData() {
+    async function fetchReportData(unfiltered = false) {
       try {
-        const response = await fetch('/api/report_data');
+        let url = '/api/report_data';
+        if (unfiltered) {
+          url += '?unfiltered=true';
+        }
+        
+        const response = await fetch(url);
         const data = await response.json();
         console.log("Fetched Report Data:", data);
+        
+        // Check if data is filtered by user's department
+        if (data.user_is_filtered) {
+          document.getElementById('filterMessage').textContent = 
+            `Estás viendo datos filtrados por tu departamento y subordinados. Total departamentos: ${data.user_dept_hierarchy.length}`;
+          document.getElementById('filterNotification').style.display = 'flex';
+        } else {
+          document.getElementById('filterNotification').style.display = 'flex';
+          document.getElementById('filterMessage').textContent = 'Estás viendo datos de toda la organización.';
+        }
+        
         datos = data.compromisos_por_dia || [];
         deptData = data.compromisos_por_dia_por_departamento || [];
         reunionesData = data.reuniones_por_dia || [];
@@ -368,23 +508,170 @@
       }
     }
 
-    function renderPersonasTable(personas) {
-        const personasTableBody = document.getElementById('personasTableBody');
-        personasTableBody.innerHTML = '';
-        personas.forEach(p => {
-            const total = p.pendientes + p.completados;
-            const percentage = total ? ((p.completados*100)/total).toFixed(2) : '0.00';
-            const row = `<tr>
-                <td>${p.persona}</td>
-                <td>${p.pendientes}</td>
-                <td>${p.completados}</td>
-                <td>${percentage}%</td>
-            </tr>`;
-            personasTableBody.insertAdjacentHTML('beforeend', row);
+    // Improved buildDeptHierarchy function that better respects hierarchies
+    function buildDeptHierarchy(departments) {
+      console.log("Building hierarchy from:", departments);
+      
+      // Create a map of all departments by ID for quick access
+      const deptMap = new Map();
+      departments.forEach(dept => {
+        deptMap.set(dept.id, {
+          ...dept,
+          children: [],
+          totalWithChildren: dept.total || 0,
+          childrenTotal: 0  // Added to track children totals separately
         });
+      });
+      
+      // Connect parent-child relationships
+      const rootDepts = [];
+      deptMap.forEach(dept => {
+        if (!dept.id_departamento_padre) {
+          // This is a root department
+          rootDepts.push(dept);
+        } else {
+          // This has a parent
+          const parent = deptMap.get(dept.id_departamento_padre);
+          if (parent) {
+            parent.children.push(dept);
+          } else {
+            // Parent not found, treat as root
+            rootDepts.push(dept);
+          }
+        }
+      });
+      
+      // Calculate totals including children recursively
+      function calculateTotals(dept) {
+        // Start with this department's own total
+        dept.totalWithChildren = dept.total || 0;
+        dept.childrenTotal = 0;
+        
+        // Add all children totals
+        if (dept.children && dept.children.length > 0) {
+          dept.children.forEach(child => {
+            // Recursively calculate totals for children first
+            calculateTotals(child);
+            // Add child's total (including its children) to this department's childrenTotal
+            dept.childrenTotal += child.totalWithChildren;
+          });
+          
+          // Add childrenTotal to totalWithChildren for aggregated value
+          dept.totalWithChildren += dept.childrenTotal;
+          
+          // Sort children by name for consistent display
+          dept.children.sort((a, b) => a.departamento.localeCompare(b.departamento));
+        }
+        
+        return dept.totalWithChildren;
+      }
+      
+      // Process all root departments
+      rootDepts.forEach(calculateTotals);
+      
+      // Sort root departments by name
+      rootDepts.sort((a, b) => a.departamento.localeCompare(b.departamento));
+      
+      console.log("Hierarchy built:", rootDepts);
+      return rootDepts;
     }
 
+    function renderDeptHierarchy(container, hierarchy, level = 0) {
+      hierarchy.forEach(dept => {
+        // Create the row for this department
+        const row = document.createElement('tr');
+        row.classList.add('dept-row');
+        row.id = `dept-row-${dept.id}`;
+        row.dataset.level = level;
+        row.dataset.id = dept.id;
+        row.dataset.parentId = dept.id_departamento_padre || '';
+        row.dataset.total = dept.total || 0;
+        row.dataset.childrenTotal = dept.childrenTotal || 0;
+        row.dataset.totalWithChildren = dept.totalWithChildren || 0;
+        row.dataset.expanded = 'false';
+        
+        // Create expansion button if needed
+        let expansionControl = '<span style="display:inline-block; width:40px;"></span>';
+        if (dept.children && dept.children.length > 0) {
+          expansionControl = `<button class="toggle-btn" data-dept-id="${dept.id}">+</button>`;
+        }
+        
+        // Set row HTML content with totalWithChildren displayed initially
+        // We're adding a specific indent style to make sure child departments appear properly indented
+        row.innerHTML = `
+          <td>
+            <div style="display: flex; align-items: center;">
+              ${expansionControl}
+              <span style="padding-left: 5px;">${dept.departamento}</span>
+            </div>
+          </td>
+          <td>${dept.totalWithChildren}</td>
+          <td>${(parseFloat(dept.porcentaje_completados) || 0).toFixed(2)}%</td>
+        `;
+        
+        // Add this row to the container
+        container.appendChild(row);
+        
+        // Si este departamento tiene hijos, render them recursively
+        if (dept.children && dept.children.length > 0) {
+          // Add a container for all children of this department
+          const childContainer = document.createElement('tr');
+          childContainer.innerHTML = `<td colspan="3" style="padding: 0;">
+            <table style="width: 100%; margin: 0;">
+              <tbody id="children-of-${dept.id}" class="child-container" style="display: none;"></tbody>
+            </table>
+          </td>`;
+          container.appendChild(childContainer);
+          
+          // Recursively render all children
+          const childrenContainer = document.getElementById(`children-of-${dept.id}`);
+          renderDeptHierarchy(childrenContainer, dept.children, level + 1);
+        }
+      });
+    }
+
+    // Toggle handler for expanding/collapsing departments with proper total updates
+    document.addEventListener('click', function(e) {
+      if (e.target && e.target.classList.contains('toggle-btn')) {
+        const btn = e.target;
+        const deptId = btn.getAttribute('data-dept-id');
+        const row = btn.closest('tr');
+        const isExpanded = btn.textContent === '-';
+        
+        // Toggle button text and expansion state
+        btn.textContent = isExpanded ? '+' : '-';
+        row.dataset.expanded = isExpanded ? 'false' : 'true';
+        
+        // Toggle child container visibility
+        const childContainer = document.getElementById(`children-of-${deptId}`);
+        if (childContainer) {
+          childContainer.style.display = isExpanded ? 'none' : '';
+        }
+        
+        // Update the total display based on expansion state
+        const totalCell = row.cells[1];
+        if (isExpanded) {
+          // Collapsing - show total with children
+          totalCell.textContent = row.dataset.totalWithChildren;
+          
+          // Also collapse all expanded children and reset their buttons
+          if (childContainer) {
+            childContainer.querySelectorAll('.toggle-btn').forEach(childBtn => {
+              if (childBtn.textContent === '-') {
+                // Trigger click on any expanded children to collapse them
+                childBtn.click();
+              }
+            });
+          }
+        } else {
+          // Expanding - show own total without children
+          totalCell.textContent = row.dataset.total;
+        }
+      }
+    });
+
     function updateReportData(data) {
+      // Update general statistics
       document.getElementById('totalCompromisos').textContent = data.total_compromisos || 0;
       document.getElementById('pendientes').textContent = data.pendientes || 0;
       document.getElementById('completados').textContent = data.completados || 0;
@@ -397,113 +684,139 @@
       document.getElementById('deletedCompromisos').textContent = data.deleted_compromisos || 0;
       document.getElementById('avgCompromisosPorReunion').textContent = (parseFloat(data.avg_compromisos_por_reunion) || 0).toFixed(2);
 
+      // Update department hierarchy table
       const deptTableBody = document.getElementById('deptTableBody');
       deptTableBody.innerHTML = '';
-      if (data.compromisos_por_jerarquia_departamento) {
-        const deptHierarchy = buildDeptHierarchy(data.compromisos_por_jerarquia_departamento);
-        renderDeptHierarchy(deptTableBody, deptHierarchy);
+      
+      if (data.compromisos_por_jerarquia_departamento && data.compromisos_por_jerarquia_departamento.length > 0) {
+        console.log("Rendering department hierarchy...");
+        const hierarchy = buildDeptHierarchy(data.compromisos_por_jerarquia_departamento);
+        renderDeptHierarchy(deptTableBody, hierarchy);
+      } else {
+        deptTableBody.innerHTML = '<tr><td colspan="3" class="text-center">No hay datos de departamentos disponibles</td></tr>';
       }
 
+      // Update personas table with department grouping
       const personasTableBody = document.getElementById('personasTableBody');
       personasTableBody.innerHTML = '';
-      if (data.personas_mas && data.percentage_completados_por_persona) {
-        data.personas_mas.slice(0, 10).forEach((p, index) => {
-          const row = `<tr>
-            <td>${p.persona}</td>
-            <td>${p.pendientes}</td>
-            <td>${p.completados}</td>
-            <td>${(parseFloat(data.percentage_completados_por_persona[index].porcentaje_completados) || 0).toFixed(2)}%</td>
-          </tr>`;
-          personasTableBody.insertAdjacentHTML('beforeend', row);
+      
+      if (data.personas_mas && data.personas_mas.length > 0) {
+        // Group people by department path
+        const deptGroups = {};
+        data.personas_mas.forEach(person => {
+          const deptPath = person.dept_path || person.nombre_departamento || 'Sin Departamento';
+          if (!deptGroups[deptPath]) {
+            deptGroups[deptPath] = [];
+          }
+          deptGroups[deptPath].push(person);
         });
-      }
-
-      renderCharts(datos, deptData, data.compromisos_por_jerarquia_departamento);
-      // Render new Reuniones chart from data fetched
-      if(data.reuniones_por_dia) {
-         renderReunionesChart(data.reuniones_por_dia);
-      }
-      // Actualizar tabla de Personas y guardar data para filtro
-      personasData = data.personas_mas || [];
-      renderPersonasTable(personasData);
-    }
-
-    // Reemplazar la función buildDeptHierarchy existente por la siguiente:
-    function buildDeptHierarchy(departments) {
-      const buildTree = (parentId) => {
-        return departments
-          .filter(dept => dept.id_departamento_padre === parentId)
-          .map(dept => {
-            const children = buildTree(dept.id);
-            return {
-              ...dept,
-              children,
-              totalWithChildren: dept.total + children.reduce((acc, child) => acc + child.totalWithChildren, 0)
-            };
+        
+        // Sort department paths
+        const sortedDeptPaths = Object.keys(deptGroups).sort();
+        
+        // Add department headers and people
+        sortedDeptPaths.forEach(deptPath => {
+          // Add department header
+          const headerRow = document.createElement('tr');
+          headerRow.className = 'dept-header';
+          headerRow.innerHTML = `
+            <td colspan="4" style="background-color: #e3f2fd; font-weight: bold;">
+              ${deptPath}
+            </td>
+          `;
+          personasTableBody.appendChild(headerRow);
+          
+          // Add people for this department
+          const peopleInDept = deptGroups[deptPath];
+          peopleInDept.sort((a, b) => (b.pendientes + b.completados) - (a.pendientes + a.completados));
+          
+          peopleInDept.forEach(p => {
+            const total = p.pendientes + p.completados;
+            const percentage = total ? ((p.completados*100)/total).toFixed(2) : '0.00';
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${p.persona}</td>
+              <td>${p.pendientes}</td>
+              <td>${p.completados}</td>
+              <td>${percentage}%</td>
+            `;
+            personasTableBody.appendChild(row);
           });
+        });
+      } else {
+        personasTableBody.innerHTML = '<tr><td colspan="4" class="text-center">No hay datos de personas disponibles</td></tr>';
       }
-      return buildTree(null);
-    }
 
-    function renderDeptHierarchy(container, hierarchy, level = 0) {
-      hierarchy.forEach(dept => {
-        const row = document.createElement('tr');
-        row.classList.add('dept-row');
-        row.dataset.id = dept.id;
-        row.dataset.parentId = dept.id_departamento_padre || '';
-        row.dataset.total = dept.total;
-        row.dataset.totalWithChildren = dept.totalWithChildren;
-        row.style.display = level === 0 ? '' : 'none';
-        row.innerHTML = `
-          <td style="padding-left: ${level * 20}px;">
-            ${dept.children.length > 0 ? `<button class="toggle-btn">+</button>` : ''}
-            ${dept.departamento}
-          </td>
-          <td>${dept.totalWithChildren}</td>
-          <td>${(parseFloat(dept.porcentaje_completados) || 0).toFixed(2)}%</td>
-        `;
-        container.appendChild(row);
-        if (dept.children.length > 0) {
-          renderDeptHierarchy(container, dept.children, level + 1);
+      // Save personas data for filtering
+      personasData = data.personas_mas || [];
+      
+      // Render charts
+      renderCharts(datos, deptData, data.compromisos_por_jerarquia_departamento);
+      if(data.reuniones_por_dia) {
+        renderReunionesChart(data.reuniones_por_dia);
+      }
+    }
+    
+    // Updated Listener for filtrar empleados that maintains department grouping
+    document.getElementById('filtroPersonas').addEventListener('input', function(){
+      const search = this.value.toLowerCase();
+      
+      // Filter people by search term
+      const filtered = personasData.filter(p => 
+        p.persona.toLowerCase().includes(search)
+      );
+      
+      // Group filtered people by department
+      const deptGroups = {};
+      filtered.forEach(person => {
+        const deptPath = person.dept_path || person.nombre_departamento || 'Sin Departamento';
+        if (!deptGroups[deptPath]) {
+          deptGroups[deptPath] = [];
         }
+        deptGroups[deptPath].push(person);
       });
-      // Se elimina el binding individual de eventos aquí
-    }
-
-    // Nuevo listener de delegación para botones toggle en deptTableBody
-    document.getElementById('deptTableBody').addEventListener('click', function(e) {
-      if (e.target.classList.contains('toggle-btn')) {
-        const btn = e.target;
-        const row = btn.closest('tr');
-        const id = row.dataset.id;
-        const isExpanded = btn.textContent === '-';
-        btn.textContent = isExpanded ? '+' : '-';
-        toggleDeptRows(id, !isExpanded);
-        updateDeptTotals();
+      
+      // Sort department paths
+      const sortedDeptPaths = Object.keys(deptGroups).sort();
+      
+      // Rebuild table with filtered data
+      const personasTableBody = document.getElementById('personasTableBody');
+      personasTableBody.innerHTML = '';
+      
+      if (sortedDeptPaths.length > 0) {
+        sortedDeptPaths.forEach(deptPath => {
+          // Add department header
+          const headerRow = document.createElement('tr');
+          headerRow.className = 'dept-header';
+          headerRow.innerHTML = `
+            <td colspan="4" style="background-color: #e3f2fd; font-weight: bold;">
+              ${deptPath}
+            </td>
+          `;
+          personasTableBody.appendChild(headerRow);
+          
+          // Add people for this department
+          const peopleInDept = deptGroups[deptPath];
+          
+          peopleInDept.sort((a, b) => (b.pendientes + b.completados) - (a.pendientes + a.completados));
+          
+          peopleInDept.forEach(p => {
+            const total = p.pendientes + p.completados;
+            const percentage = total ? ((p.completados*100)/total).toFixed(2) : '0.00';
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${p.persona}</td>
+              <td>${p.pendientes}</td>
+              <td>${p.completados}</td>
+              <td>${percentage}%</td>
+            `;
+            personasTableBody.appendChild(row);
+          });
+        });
+      } else {
+        personasTableBody.innerHTML = '<tr><td colspan="4" class="text-center">No se encontraron resultados</td></tr>';
       }
     });
-
-    function toggleDeptRows(parentId, show) {
-      document.querySelectorAll(`.dept-row[data-parent-id="${parentId}"]`).forEach(row => {
-        row.style.display = show ? '' : 'none';
-        if (show) {
-          const btn = row.querySelector('.toggle-btn');
-          if (btn && btn.textContent === '-') {
-            toggleDeptRows(row.dataset.id, true);
-          }
-        }
-      });
-    }
-
-    function updateDeptTotals() {
-      document.querySelectorAll('.dept-row').forEach(row => {
-        const btn = row.querySelector('.toggle-btn');
-        // Si hay botón y está expandido ('-'), mostrar el total propio, sino el total acumulado
-        row.querySelector('td:nth-child(2)').textContent = (btn && btn.textContent === '-') 
-          ? row.dataset.total 
-          : row.dataset.totalWithChildren;
-      });
-    }
 
     // Nueva función para formatear la fecha según el tipo de agrupación
     function formatearFecha(fecha, tipo) {
@@ -521,7 +834,7 @@
           // Extraer "YYYY" de "YYYY-MM-DD"
           return fecha.substring(0,4);
       }
-  }
+    }
 
     // Función para agrupar datos (genérica) basándose en "dia" y sumando "total"
     function agruparDatos(data, tipo) {
@@ -671,9 +984,7 @@
       });
     }
     
-    // Los listeners individuales para cada select continúan activos
-
-    // Listener individual para Compromisos Por Fecha
+    // Listeners for select elements
     document.getElementById('agrupacionCompromisos').addEventListener('change', (e) => {
       const tipo = e.target.value;
       const datosAgrupados = agruparDatos(datos, tipo);
@@ -706,14 +1017,13 @@
       });
     });
 
-    // Listener individual para Compromisos Por Fecha y Departamento
     document.getElementById('agrupacionDept').addEventListener('change', (e) => {
       const tipo = e.target.value;
       const deptDataAgrupada = agruparDeptData(deptData, tipo);
       const datosAgrupados = agruparDatos(datos, tipo);
       const labels = tipo === 'dia'
-           ? datosAgrupados.map(item => formatearFecha(item.dia, 'dia'))
-           : datosAgrupados.map(item => item.dia);
+          ? datosAgrupados.map(item => formatearFecha(item.dia, 'dia'))
+          : datosAgrupados.map(item => item.dia);
       const deptLabels = [...new Set(deptDataAgrupada.map(item => item.departamento))];
       const deptDatasets = deptLabels.map(dept => {
           const deptTotals = labels.map(label => {
@@ -744,13 +1054,12 @@
       });
     });
 
-    // Listener individual para Reuniones Por Día
     document.getElementById('agrupacionReuniones').addEventListener('change', (e) => {
       const tipo = e.target.value;
       const reunionesAgrupadas = agruparDatos(reunionesData, tipo);
       const labels = tipo === 'dia'
-           ? reunionesAgrupadas.map(item => formatearFecha(item.dia, 'dia'))
-           : reunionesAgrupadas.map(item => item.dia);
+          ? reunionesAgrupadas.map(item => formatearFecha(item.dia, 'dia'))
+          : reunionesAgrupadas.map(item => item.dia);
       const totals = reunionesAgrupadas.map(item => item.total);
       if(window.myReunionesChart) window.myReunionesChart.destroy();
       const ctxReuniones = document.getElementById('reunionesChart').getContext('2d');
@@ -777,12 +1086,12 @@
       });
     });
 
-    // Listener para filtrar empleados
-    document.getElementById('filtroPersonas').addEventListener('input', function(){
-        const search = this.value.toLowerCase();
-        const filtered = personasData.filter(p => p.persona.toLowerCase().includes(search));
-        renderPersonasTable(filtered);
+    {% if is_admin %}
+    // Toggle filter for admin users
+    document.getElementById('toggleFilter').addEventListener('change', function() {
+      fetchReportData(this.checked);
     });
+    {% endif %}
 
     document.addEventListener('DOMContentLoaded', () => {
       fetchReportData();
@@ -792,7 +1101,6 @@
     document.getElementById('mainScreen').addEventListener('click', () => {
       window.location.href = '/home'; // Adjust route as needed
     });
-    
   </script>
 </body>
 <br>

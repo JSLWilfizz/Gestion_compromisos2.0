@@ -236,7 +236,7 @@ button:hover {
             </div>
             <div class="form-group">
                 <label for="referentes">Referentes</label>
-                <h6>El ultimo referente ingresado será el principal responsable</h6>
+                <h6>El primer referente ingresado será el principal responsable</h6>
                 <br>
                 {{ form.referentes(class="form-control select2", multiple="multiple") }}
             </div>
@@ -287,32 +287,34 @@ button:hover {
                 width: '100%'
             });
 
-            // Array para rastrear el orden de selección de referentes
-            let referentesOrder = [];
+            function updateSelectedOrder(selectElement) {
+                const selectedOptions = Array.from(selectElement.selectedOptions);
+                const allOptions = Array.from(selectElement.options);
 
-            // Manejar cambios en el select de referentes
-            $('select[name="referentes"]').on('change', function() {
-                const selectedValues = Array.from(this.selectedOptions).map(option => option.value);
-                // Actualizar el array basándose en el orden de selección
-                referentesOrder = referentesOrder.filter(value => selectedValues.includes(value));
-                selectedValues.forEach(value => {
-                    if (!referentesOrder.includes(value)) {
-                        referentesOrder.push(value);
+                // Clear all options
+                selectElement.innerHTML = '';
+
+                // Append selected options first
+                selectedOptions.forEach(option => {
+                    selectElement.appendChild(option);
+                });
+
+                // Append the rest of the options
+                allOptions.forEach(option => {
+                    if (!selectedOptions.includes(option)) {
+                        selectElement.appendChild(option);
                     }
                 });
-                // Actualizar la visualización del orden
-                updateReferentesDisplay();
+            }
+
+            $('select[name="referentes"]').on('change', function () {
+                updateSelectedOrder(this);
             });
 
-            // Función para actualizar la visualización basada en referentesOrder
-            function updateReferentesDisplay() {
-                const displayContainer = $('#referentes-order');
-                displayContainer.empty();
-                referentesOrder.forEach(function(id, index) {
-                    const option = $('select[name="referentes"] option[value="' + id + '"]');
-                    const label = option.text();
-                    displayContainer.append('<div>' + (index + 1) + '. ' + label + '</div>');
-                });
+            // Call the function initially to set the order on page load
+            const referentesSelect = document.querySelector('select[name="referentes"]');
+            if (referentesSelect) {
+                updateSelectedOrder(referentesSelect);
             }
         });
     </script>

@@ -35,12 +35,58 @@ def set_alert(message, alert_type='info'):
 def crear_reunion_paso1():
     form = CreateMeetingForm()
     service.get_initial_form_data(form)
+    alert = None
+    form_data = {}  # Para almacenar los datos del formulario en caso de error
 
     session.pop('compromisos_data', None)
     session.pop('reunion_data', None)
 
     if request.method == 'POST' and ReunionValidator.validate_first_step(form):
+        # Guardar los datos del formulario
+        form_data = {
+            'nombre_reunion': request.form.get('nombre_reunion', ''),
+            'lugar': request.form.get('lugar', ''),
+            'tema': request.form.get('tema', ''),
+            'fecha_reunion': request.form.get('fecha_reunion', ''),
+            'origen': request.form.get('origen', ''),
+            'area': request.form.get('area', ''),
+            'temas_analizado': request.form.get('temas_analizado', ''),
+            'proximas_reuniones': request.form.get('proximas_reuniones', '')
+        }
+        
+        # Obtener datos de compromisos
+        compromisos_data = []
+        index = 1
+        while True:
+            nombre_key = f'compromisos-{index}-nombre'
+            if nombre_key not in request.form:
+                break
+                
+            compromiso = {
+                'nombre': request.form.get(nombre_key, ''),
+                'prioridad': request.form.get(f'compromisos-{index}-prioridad', ''),
+                'fecha_limite': request.form.get(f'compromisos-{index}-fecha_limite', ''),
+                'departamento': request.form.get(f'compromisos-{index}-departamento', ''),
+                'referentes': request.form.getlist(f'compromisos-{index}-referentes')
+            }
+            compromisos_data.append(compromiso)
+            index += 1
+        
+        form_data['compromisos'] = compromisos_data
+        form_data['asistentes'] = request.form.getlist('asistentes[]')
+        form_data['invitados'] = request.form.getlist('invitados[]')
+        
         try:
+            # Verificación explícita de compromisos
+            compromisos_count = 0
+            for key in request.form:
+                if key.startswith('compromisos-') and key.endswith('-nombre'):
+                    if request.form.get(key).strip():
+                        compromisos_count += 1
+            
+            if compromisos_count == 0:
+                raise ValueError("Es necesario tener al menos un compromiso por reunión")
+            
             uploaded_files = request.files.getlist('acta_pdf')
             file_paths = []
             for file_item in uploaded_files:
@@ -83,18 +129,23 @@ def crear_reunion_paso1():
             set_alert('Reunión creada con éxito.', 'success')
             return redirect(url_for('home.home_view'))
 
+        except ValueError as ve:
+            # Para errores de validación, muestra mensaje claro
+            alert = {'message': str(ve), 'type': 'danger'}
+            current_app.logger.warning(f"Error de validación: {str(ve)}")
+        
         except Exception as e:
             error_line = traceback.format_exc().splitlines()[-1]  # Última línea con detalle del error
             detailed_trace = traceback.format_exc()  # Traza completa del error
+            
+            # Mensaje de error para mostrar en la misma página, no redireccionando
+            error_message = f"Ocurrió un error al crear la reunión: {e}"
+            alert = {'message': error_message, 'type': 'danger'}
+            
+            # Imprimir la traza completa en los logs para depuración
+            current_app.logger.error("Detalles del error:\n%s", detailed_trace)
 
-            # Mensaje de error para el usuario
-            set_alert(f"Ocurrió un error al crear la reunión: {e} en {error_line}", 'danger')
-
-            # Opcional: imprimir la traza completa en los logs o consola para depuración
-            print("Detalles del error:\n", detailed_trace)
-            set_alert(f"Ocurrió un error al crear la reunión: {e} en {error_line}", 'danger')
-
-    return render_template('crear_reunion.html', form=form)
+    return render_template('crear_reunion.html', form=form, alert=alert, some_reunion_id_value=None, form_data=form_data)
 
 @reunion.route('/add_invitado', methods=['POST'])
 def add_invitado():

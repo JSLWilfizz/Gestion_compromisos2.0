@@ -50,6 +50,16 @@ class ReunionService:
             raise ValueError("El campo 'origen' es requerido")
         if not area_id:
             raise ValueError("El campo 'area' es requerido")
+            
+        # Verificar si hay al menos un compromiso
+        compromisos_count = 0
+        for key in request_data:
+            if key.startswith('compromisos-') and key.endswith('-nombre'):
+                if request_data.get(key).strip():
+                    compromisos_count += 1
+        
+        if compromisos_count == 0:
+            raise ValueError("Es necesario tener al menos un compromiso por reunión")
 
         name_list = []
         correo_list = []    

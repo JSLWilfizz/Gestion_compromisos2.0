@@ -147,12 +147,14 @@
                     <td>{{ compromiso.eliminado_por_nombre }}</td>
                     <td class="fecha">{{ compromiso.fecha_eliminacion }}</td>
                     <td>
+                        {% if user.nivel_jerarquico == 'DIRECTOR DE SERVICIO' %}
                         <form method="POST" action="{{ url_for('home.eliminar_permanentemente_compromiso', compromiso_id=compromiso.id) }}" style="display:inline;">
                             <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar permanentemente este compromiso?');"><i class="fas fa-trash-alt"></i> Eliminar Permanentemente</button>
                         </form>
                         <form method="POST" action="{{ url_for('home.recuperar_compromiso', compromiso_id=compromiso.id) }}" style="display:inline;">
                             <button type="submit" class="btn btn-success" onclick="return confirm('¿Estás seguro de que deseas recuperar este compromiso?');"><i class="fas fa-undo"></i> Recuperar</button>
                         </form>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

@@ -402,14 +402,20 @@
                            <i class="fas fa-calendar-alt"></i>
                            Ver reunión
                         </a>
+                        <!-- Actualizar el botón para usar la ruta correcta de verificadores -->
+                        <a href="{{ url_for('home.ver_verificadores', compromiso_id=compromiso.compromiso_id) }}" class="btn">
+                            <i class="fas fa-paperclip"></i> Verificadores
+                        </a>
                         <!-- Delete button -->
                         <form method="POST" action="{{ url_for('home.eliminar_compromiso', compromiso_id=compromiso.compromiso_id) }}" style="display:inline;">
                             <button type="submit" class="btn" onclick="return confirm('¿Estás seguro de que deseas eliminar este compromiso?');"><i class="fas fa-trash-alt"></i> Eliminar</button>
                         </form>
-                        <!-- Archivado button -->
-                        {% if compromiso.estado == 'Completado' and user.nivel_jerarquico == 'DIRECTOR DE SERVICIO' or user.nivel_jerarquico == 'JEFE/A DE DEPARTAMENTO' or user.nivel_jerarquico == 'SUBDIRECTOR/A' or user.nivel_jerarquico == 'JEFE/A DE UNIDAD' %}
+                        <!-- Archivado button - Mostrar solo si el compromiso está completado y el usuario no es funcionario -->
+                        {% if compromiso.estado == 'Completado' and user.nivel_jerarquico != 'FUNCIONARIO/A' %}
                         <form method="POST" action="{{ url_for('home.archivar_compromiso', compromiso_id=compromiso.compromiso_id) }}" style="display:inline;">
-                            <button type="submit" class="btn" onclick="return confirm('¿Estás seguro de que deseas archivar este compromiso?');"><i class="fas fa-archive"></i> Archivar</button>
+                            <button type="submit" class="btn" onclick="return confirm('¿Estás seguro de que deseas archivar este compromiso?');">
+                                <i class="fas fa-archive"></i> Archivar
+                            </button>
                         </form>
                         {% endif %}
                     </td>

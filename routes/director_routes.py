@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session, jsonify
 from repositories.compromiso_service import CompromisoService
-from .auth_routes import is_director
+from .auth_routes import not_funcionario_required
 from repositories.gestion_service import GestionService
 from repositories.reportes_service import ReportesService
+from routes.auth_routes import not_funcionario_required  # Asegúrate de importar el decorador
 
 director_bp = Blueprint('director', __name__)
 compromiso_service = CompromisoService()
@@ -12,8 +13,9 @@ reportes_service = ReportesService()
 def set_alert(message, alert_type='info'):
     session['alert'] = {'message': message, 'type': alert_type}
 
+
 @director_bp.route('/director/resumen_compromisos', methods=['GET', 'POST'])
-@is_director
+@not_funcionario_required
 def resumen_compromisos():
     alert = session.pop('alert', None)
     mes = request.args.get('month', 'Todos')
@@ -41,7 +43,7 @@ def resumen_compromisos():
                          alert=alert)
 
 @director_bp.route('/director/ver_compromisos', methods=['GET', 'POST'])
-@is_director
+@not_funcionario_required
 def ver_compromisos_director():
     alert = session.pop('alert', None)
     mes = request.args.get('month')
@@ -75,7 +77,7 @@ def ver_compromisos_director():
     return render_template('director_ver_compromisos.html', compromisos=compromisos, todos_referentes=todos_referentes, alert=alert)
 
 @director_bp.route('/director/compromisos_por_mes', methods=['GET', 'POST'])
-@is_director
+@not_funcionario_required
 def resumen_compromisos_por_mes():
     alert = session.pop('alert', None)
     month = request.args.get('month', None)
@@ -91,7 +93,7 @@ def resumen_compromisos_por_mes():
     return render_template('resumen_compromisos_mes.html', compromisos=compromisos, month=month, year=year, alert=alert)
 
 @director_bp.route('/director/editar_compromisos', methods=['GET', 'POST'])
-@is_director
+@not_funcionario_required
 def editar_compromisos():
     alert = session.pop('alert', None)
     departamento_id = request.args.get('departamento_id')
@@ -157,7 +159,7 @@ def departamentos():
     )
 
 @director_bp.route('/director/editar_funcionario/<int:funcionario_id>', methods=['GET', 'POST'])
-@is_director
+@not_funcionario_required
 def editar_funcionario(funcionario_id):
     alert = session.pop('alert', None)
     funcionario = gestion_service.get_funcionario_by_id(funcionario_id)
@@ -182,7 +184,7 @@ def editar_funcionario(funcionario_id):
     return render_template('editar_funcionario.html', funcionario=funcionario, departamentos=departamentos, niveles_jerarquicos=niveles_jerarquicos, alert=alert)
 
 @director_bp.route('/director/editar_departamento/<int:departamento_id>', methods=['GET', 'POST'])
-@is_director
+@not_funcionario_required
 def editar_departamento(departamento_id):
     alert = session.pop('alert', None)
     departamento = gestion_service.get_departamento_by_id(departamento_id)
@@ -199,17 +201,29 @@ def editar_departamento(departamento_id):
     return render_template('editar_departamento.html', departamento=departamento, all_departamentos=all_departamentos, alert=alert)
 
 @director_bp.route('/api/report_data', methods=['GET'])
-@is_director
+@not_funcionario_required
 def get_report_data():
     try:
-        report_data = reportes_service.get_report_data()
+        # Get the user_id from session
+        user_id = session.get('user_id')
+        # Check if request wants unfiltered data (for admin/director)
+        unfiltered = request.args.get('unfiltered', 'false').lower() == 'true'
+        
+        if unfiltered:
+            report_data = reportes_service.get_report_data()
+        else:
+            report_data = reportes_service.get_report_data(user_id)
+        
         return jsonify(report_data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @director_bp.route('/director/reportes', methods=['GET'])
-@is_director
+@not_funcionario_required
 def reportes():
     alert = session.pop('alert', None)
-    return render_template('reportes.html', alert=alert)
+    # Determine if the user has admin privileges to see the toggle for unfiltered data
+    user_id = session.get('user_id')
+    is_admin = False  # You could implement logic to determine if user is admin
+    return render_template('reportes.html', alert=alert, is_admin=is_admin)
 

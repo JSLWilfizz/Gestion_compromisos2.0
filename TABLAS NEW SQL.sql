@@ -74,13 +74,21 @@ CREATE TABLE IF NOT EXISTS staff_persona(
 -- Tabla área (nueva)
 CREATE TABLE IF NOT EXISTS area (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255)
+    name VARCHAR(255),
+    id_departamento INT,
+    CONSTRAINT fk_id_departamento_area
+        FOREIGN KEY (id_departamento)
+        REFERENCES departamento(id)
 );
 
 -- Tabla origen (nueva)
 CREATE TABLE IF NOT EXISTS origen (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(255)
+    name VARCHAR(255),
+    id_departamento INT,
+    CONSTRAINT fk_id_departamento_origen
+        FOREIGN KEY (id_departamento)
+        REFERENCES departamento(id)
 );
 
 -- Tabla reunion con referencia a calendario, staff, area y origen
@@ -302,5 +310,121 @@ EXECUTE PROCEDURE set_responsable_principal();
 
 
 
+-- Add department relationship to area table
+ALTER TABLE area 
+ADD COLUMN id_departamento INT,
+ADD CONSTRAINT fk_id_departamento_area
+    FOREIGN KEY (id_departamento)
+    REFERENCES departamento(id);
 
+-- Add department relationship to origen table
+ALTER TABLE origen
+ADD COLUMN id_departamento INT,
+ADD CONSTRAINT fk_id_departamento_origen
+    FOREIGN KEY (id_departamento)
+    REFERENCES departamento(id);
 
+-- Tabla para almacenar verificadores de compromisos
+CREATE TABLE IF NOT EXISTS compromiso_verificador (
+    id SERIAL PRIMARY KEY,
+    id_compromiso INT NOT NULL,
+    nombre_archivo VARCHAR(255) NOT NULL,
+    ruta_archivo VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    fecha_subida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    subido_por INT,
+    CONSTRAINT fk_compromiso_verificador
+        FOREIGN KEY (id_compromiso)
+        REFERENCES compromiso(id) ON DELETE CASCADE,
+    CONSTRAINT fk_subido_por
+        FOREIGN KEY (subido_por)
+        REFERENCES persona(id) ON DELETE SET NULL
+);
+
+-- Tabla para almacenar verificadores de compromisos archivados
+CREATE TABLE IF NOT EXISTS compromiso_archivado_verificador (
+    id SERIAL PRIMARY KEY,
+    id_compromiso INT NOT NULL,
+    nombre_archivo VARCHAR(255) NOT NULL,
+    ruta_archivo VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    fecha_subida TIMESTAMP,
+    subido_por INT,
+    CONSTRAINT fk_compromiso_archivado_verificador
+        FOREIGN KEY (id_compromiso)
+        REFERENCES compromisos_archivados(id) ON DELETE CASCADE
+);
+
+-- Tabla para almacenar verificadores de compromisos eliminados
+CREATE TABLE IF NOT EXISTS compromiso_eliminado_verificador (
+    id SERIAL PRIMARY KEY,
+    id_compromiso INT NOT NULL,
+    nombre_archivo VARCHAR(255) NOT NULL,
+    ruta_archivo VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    fecha_subida TIMESTAMP,
+    subido_por INT,
+    CONSTRAINT fk_compromiso_eliminado_verificador
+        FOREIGN KEY (id_compromiso)
+        REFERENCES compromiso_eliminado(id) ON DELETE CASCADE
+);
+
+-- Asegurarse de que hay índices para optimizar las queries con verificadores
+CREATE INDEX IF NOT EXISTS idx_compromiso_verificador_compromiso_id ON compromiso_verificador(id_compromiso);
+CREATE INDEX IF NOT EXISTS idx_compromiso_archivado_verificador_compromiso_id ON compromiso_archivado_verificador(id_compromiso);
+CREATE INDEX IF NOT EXISTS idx_compromiso_eliminado_verificador_compromiso_id ON compromiso_eliminado_verificador(id_compromiso);
+
+-- Asegurarse de que las claves foráneas están configuradas correctamente
+ALTER TABLE compromiso_verificador
+    DROP CONSTRAINT IF EXISTS fk_compromiso_verificador,
+    ADD CONSTRAINT fk_compromiso_verificador
+        FOREIGN KEY (id_compromiso)
+        REFERENCES compromiso(id) ON DELETE CASCADE;
+
+ALTER TABLE compromiso_archivado_verificador
+    DROP CONSTRAINT IF EXISTS fk_compromiso_archivado_verificador,
+    ADD CONSTRAINT fk_compromiso_archivado_verificador
+        FOREIGN KEY (id_compromiso)
+        REFERENCES compromisos_archivados(id) ON DELETE CASCADE;
+
+ALTER TABLE compromiso_eliminado_verificador
+    DROP CONSTRAINT IF EXISTS fk_compromiso_eliminado_verificador,
+    ADD CONSTRAINT fk_compromiso_eliminado_verificador
+        FOREIGN KEY (id_compromiso)
+        REFERENCES compromiso_eliminado(id) ON DELETE CASCADE;
+
+-- Asegurar que existen vistas para facilitar consultas de verificadores
+CREATE OR REPLACE VIEW vista_compromisos_con_verificadores AS
+SELECT 
+    c.id AS compromiso_id,
+    c.descripcion,
+    c.estado,
+    c.fecha_limite,
+    d.name AS departamento_name,
+    COUNT(cv.id) AS num_verificadores
+FROM 
+    compromiso c
+LEFT JOIN 
+    compromiso_verificador cv ON c.id = cv.id_compromiso
+LEFT JOIN 
+    departamento d ON c.id_departamento = d.id
+GROUP BY 
+    c.id, c.descripcion, c.estado, c.fecha_limite, d.name;
+
+CREATE OR REPLACE VIEW vista_compromisos_archivados_con_verificadores AS
+SELECT 
+    ca.id AS compromiso_id,
+    ca.descripcion,
+    ca.estado,
+    ca.fecha_limite,
+    ca.fecha_archivado,
+    d.name AS departamento_name,
+    COUNT(cv.id) AS num_verificadores
+FROM 
+    compromisos_archivados ca
+LEFT JOIN 
+    compromiso_archivado_verificador cv ON ca.id = cv.id_compromiso
+LEFT JOIN 
+    departamento d ON ca.id_departamento = d.id
+GROUP BY 
+    ca.id, ca.descripcion, ca.estado, ca.fecha_limite, ca.fecha_archivado, d.name;

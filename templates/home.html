@@ -277,15 +277,17 @@
 
 <body>
     <div class="wrapper">
-        {% if the_big_boss %}
+        {% if user.nivel_jerarquico != 'FUNCIONARIO/A'  %}
         <div class="sidebar">
-            <h3>Panel del Director</h3>
+            <h3>Panel de Gestión</h3>
             <ul class="sidebar-nav">
+                {% if user.nivel_jerarquico == 'DIRECTOR DE SERVICIO' %}
                 <li>
                     <a href="{{ url_for('director.resumen_compromisos') }}">
                         <i class="fas fa-chart-line"></i>Resumen General de Compromisos
                     </a>
                 </li>
+                {% endif %}
                 <li>
                     <a href="{{ url_for('director.funcionarios') }}">
                         <i class="fas fa-user-tie"></i>Funcionarios
@@ -306,6 +308,13 @@
                         <i class="fas fa-trash-alt"></i> Compromisos Eliminados
                     </a>
                 </li>
+                {% if user.nivel_jerarquico == 'DIRECTOR DE SERVICIO' or user.nivel_jerarquico == 'SUBDIRECTOR/A' or user.nivel_jerarquico == 'SECRETARIO/A' %}
+                <li>
+                    <a href="#">
+                        <i class="fas fa-user-slash"></i> Area y Origen Departamentales
+                    </a>
+                </li>
+                {% endif %}
             </ul>
         </div>
         {% endif %}
@@ -338,7 +347,7 @@
                 <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn btn-compromisosdepartamentales">
                     <i class="fas fa-users mr-2"></i> Compromisos Departamentales
                 </a>
-                {% if the_big_boss or user.nivel_jerarquico != 'FUNCIONARIO/A' %}
+                {% if user.nivel_jerarquico != 'FUNCIONARIO/A' %}
                 <a href="{{ url_for('home.ver_compromisos_archivados') }}" class="btn btn-archivados">
                     <i class="fas fa-archive mr-2"></i> Compromisos Archivados
                 </a>

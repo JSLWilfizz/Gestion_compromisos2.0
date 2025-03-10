@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ver Compromiso</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo_ministerio.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .compromiso-info {
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .compromiso-info h2 {
+            color: #3498db;
+            margin-top: 0;
+        }
+        
+        .info-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            width: 150px;
+            margin-right: 10px;
+        }
+        
+        .info-value {
+            flex: 1;
+        }
+        
+        .verificadores-section {
+            margin-top: 30px;
+        }
+        
+        .verificadores-section h2 {
+            color: #3498db;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        
+        .verificador-form {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input[type="file"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-back {
+            background-color: #2ecc71;
+            margin-bottom: 20px;
+        }
+        
+        .btn-back:hover {
+            background-color: #27ae60;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .verificadores-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .verificador-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .verificador-info {
+            flex: 1;
+        }
+        
+        .verificador-actions {
+            margin-left: 15px;
+        }
+        
+        .file-icon {
+            font-size: 24px;
+            margin-right: 10px;
+            color: #3498db;
+        }
+        
+        .no-verificadores {
+            font-style: italic;
+            color: #7f8c8d;
+        }
+        
+        /* Estado y prioridad */
+        .estado {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .estado-completado {
+            background-color: #2ecc71;
+        }
+        
+        .estado-pendiente {
+            background-color: #f1c40f;
+            color: #333;
+        }
+        
+        .prioridad {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .prioridad-alta {
+            background-color: #e74c3c;
+        }
+        
+        .prioridad-media {
+            background-color: #f39c12;
+        }
+        
+        .prioridad-baja {
+            background-color: #3498db;
+        }
+        
+        /* Progreso */
+        .progress-container {
+            width: 100%;
+            height: 20px;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            margin-top: 5px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            line-height: 20px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        
+        .close-btn:hover {
+            color: #e74c3c;
+        }
+
+        /* Responsive desing */
+        @media (max-width: 768px) {
+            .info-label {
+                width: 100%;
+                margin-bottom: 5px;
+            }
+            
+            .info-value {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Alert Section -->
+        {% if alert %}
+        <div class="alert alert-{{ alert['type'] }}">
+          <span>{{ alert['message'] }}</span>
+          <button type="button" class="close-btn" onclick="this.parentElement.style.display='none';">&times;</button>
+        </div>
+        {% endif %}
+        <script>
+            setTimeout(function(){
+                document.querySelectorAll('.alert').forEach(function(alert){
+                    alert.style.display = 'none';
+                });
+            }, 3000);
+        </script>
+        
+        <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn btn-back">
+            <i class="fas fa-arrow-left"></i> Volver a compromisos
+        </a>
+        
+        <h1><i class="fas fa-tasks"></i> Detalle del Compromiso</h1>
+        
+        <div class="compromiso-info">
+            <h2>{{ compromiso.descripcion }}</h2>
+            
+            <div class="info-row">
+                <div class="info-label">Estado:</div>
+                <div class="info-value">
+                    <span class="estado {% if compromiso.estado == 'Completado' %}estado-completado{% else %}estado-pendiente{% endif %}">
+                        {{ compromiso.estado }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Prioridad:</div>
+                <div class="info-value">
+                    <span class="prioridad 
+                          {% if compromiso.prioridad == 'Alta' %}prioridad-alta
+                          {% elif compromiso.prioridad == 'Media' %}prioridad-media
+                          {% else %}prioridad-baja{% endif %}">
+                        {{ compromiso.prioridad }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Departamento:</div>
+                <div class="info-value">{{ compromiso.departamento_name }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Fecha Creación:</div>
+                <div class="info-value">{{ compromiso.fecha_creacion.strftime('%d-%m-%Y %H:%M') if compromiso.fecha_creacion else 'No especificada' }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Fecha Límite:</div>
+                <div class="info-value">{{ compromiso.fecha_limite.strftime('%d-%m-%Y %H:%M') if compromiso.fecha_limite else 'No especificada' }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Referentes:</div>
+                <div class="info-value">{{ compromiso.referentes }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Avance:</div>
+                <div class="info-value">
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: {{ compromiso.avance }}%; background-color: {{ '#27ae60' if compromiso.avance >= 100 else '#3498db' }};">
+                            {{ compromiso.avance }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Comentario:</div>
+                <div class="info-value">{{ compromiso.comentario }}</div>
+            </div>
+            
+            <div class="info-row">
+                <div class="info-label">Comentario Dirección:</div>
+                <div class="info-value">{{ compromiso.comentario_direccion }}</div>
+            </div>
+        </div>
+        
+        <div class="verificadores-section">
+            <h2><i class="fas fa-paperclip"></i> Verificadores del Compromiso</h2>
+            
+            {% if is_principal %}
+            <div class="verificador-form">
+                <h3>Añadir nuevo verificador</h3>
+                <form method="POST" action="{{ url_for('home.agregar_verificador', compromiso_id=compromiso.compromiso_id) }}" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="archivo">Seleccionar archivo:</label>
+                        <input type="file" id="archivo" name="archivo" required>
+                        <small>Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, PNG, ZIP</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="descripcion">Descripción (opcional):</label>
+                        <textarea id="descripcion" name="descripcion" placeholder="Describa brevemente el contenido del archivo..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn">
+                        <i class="fas fa-upload"></i> Subir Verificador
+                    </button>
+                </form>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Solo el responsable principal del compromiso puede subir verificadores.
+            </div>
+            {% endif %}
+            
+            <h3>Verificadores subidos</h3>
+            {% if verificadores %}
+                <ul class="verificadores-list">
+                    {% for verificador in verificadores %}
+                    <li class="verificador-item">
+                        <div class="verificador-info">
+                            <i class="fas fa-file file-icon"></i>
+                            <strong>{{ verificador.nombre_archivo }}</strong>
+                            {% if verificador.descripcion %}
+                                <p>{{ verificador.descripcion }}</p>
+                            {% endif %}
+                            <small>Subido por: {{ verificador.subido_por_nombre }} el {{ verificador.fecha_subida.strftime('%d-%m-%Y %H:%M') }}</small>
+                        </div>
+                        <div class="verificador-actions">
+                            <a href="{{ url_for('uploaded_file', filename=verificador.ruta_archivo) }}" class="btn" target="_blank">
+                                <i class="fas fa-download"></i> Descargar
+                            </a>
+                            {% if is_principal %}
+                            <form method="POST" action="{{ url_for('home.eliminar_verificador', verificador_id=verificador.id, compromiso_id=compromiso.compromiso_id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar este verificador?');">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="no-verificadores">No hay verificadores adjuntos a este compromiso.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <script>
+        // JavaScript para mostrar el nombre del archivo seleccionado
+        document.getElementById('archivo').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || 'Ningún archivo seleccionado';
+            const label = this.nextElementSibling;
+            if (label) {
+                label.textContent = fileName;
+            }
+        });
+    </script>
+
+    <!-- Agregar este script después del formulario de subida -->
+    <script>
+        document.getElementById('archivo').addEventListener('change', function() {
+            const maxSize = 64 * 1024 * 1024; // 64MB en bytes
+            const fileSize = this.files[0]?.size || 0;
+            
+            if (fileSize > maxSize) {
+                alert('El archivo es demasiado grande. El tamaño máximo permitido es 64MB.');
+                this.value = ''; // Limpiar el input para que el usuario seleccione otro archivo
+            }
+        });
+    </script>
+</body>
+</html>

@@ -11,7 +11,7 @@ auth = Blueprint('auth', __name__)
 compromiso_service = CompromisoService()
 
 from functools import wraps
-from flask import redirect, url_for, session
+from flask import redirect, url_for, session, flash
 
 def login_required(f):
     @wraps(f)
@@ -31,6 +31,16 @@ def is_director(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def not_funcionario_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        user = session.get('user')
+        if user and user.get('nivel_jerarquico') == 'FUNCIONARIO/A':
+            flash('No tienes permiso para acceder a esta página.', 'danger')
+            return redirect(url_for('home.home_view'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 def set_alert(message, alert_type='info'):
     session['alert'] = {'message': message, 'type': alert_type}
     print(f"Alert set: {session['alert']}")  # Debugging statement
@@ -46,7 +56,7 @@ def login():
         cursor = conn.cursor()
 
         cursor.execute("""
-            SELECT u.id_persona, u.username, u.password, p.name, p.lastname
+            SELECT u.id_persona, u.username, u.password, p.name, p.lastname, p.nivel_jerarquico
             FROM users u
             INNER JOIN persona p ON u.id_persona = p.id
             WHERE u.username = %s
@@ -58,8 +68,20 @@ def login():
             stored_password = user[2]
             if password == stored_password:
                 session['user_id'] = user[0]
+                session['nivel_jerarquico'] = user[5]  # Asegúrate de que esto se configure correctamente
+                # Almacenar los datos del usuario completos en session["user"]
+                session['user'] = {
+                    'id': user[0],
+                    'username': user[1],
+                    'name': user[3],
+                    'lastname': user[4],
+                    'nivel_jerarquico': user[5],
+                    # Agrega el departamento u otros campos necesarios si están disponibles
+                }
                 print(f"User ID set in session: {session['user_id']}")  # Debugging statement
                 set_alert('Bienvenido/a, {}!'.format(user[3]), 'success')
+                if user[1] == '0':
+                    return redirect(url_for('admin.index'))
                 return redirect(url_for('home.home_view'))
             else:
                 set_alert('Contraseña incorrecta.', 'danger')
@@ -79,5 +101,6 @@ def logout():
     session.pop('username', None)
     session.pop('es_director', None)
     session.pop('the_big_boss', None)
+    session.clear()
     set_alert('Has cerrado sesión correctamente.', 'success')
     return redirect(url_for('auth.login'))

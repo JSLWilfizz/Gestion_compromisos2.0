@@ -201,7 +201,7 @@
 <body>
     <div class="wrapper">
         <div class="sidebar">
-            <h3>Panel del Director</h3>
+            <h3>Panel de Gestión</h3>
             <ul class="sidebar-menu">
                 <li><a href="{{ url_for('reunion.crear_reunion_paso1') }}" class="btn-primary"><i class="fas fa-calendar-plus mr-2"></i> Crear Reunión</a></li>
                 <li><a href="{{ url_for('home.ver_compromisos') }}" class="btn-secondary"><i class="fas fa-list mr-2"></i> Mis Compromisos</a></li>
@@ -255,7 +255,9 @@
                             <th>Codigo Departamento</th>
                             <th>Nombre</th>
                             <th>ID Departamento Padre</th>
+                            {% if current_user.nivel_jerarquico == 'DIRECTOR DE SERVICIO' %}
                             <th>Acciones</th>
+                            {% endif %}
                         </tr>
                     </thead>
                     <tbody>
@@ -264,7 +266,9 @@
                             <td>{{ departamento.id }}</td>
                             <td>{{ departamento.name }}</td>
                             <td>{{ departamento.id_departamento_padre }}</td>
+                            {% if current_user.nivel_jerarquico == 'DIRECTOR DE SERVICIO' %}
                             <td><a href="{{ url_for('director.editar_departamento', departamento_id=departamento.id) }}" class="btn btn-primary"><i class="fas fa-edit"></i> Editar</a></td>
+                            {% endif %}
                         </tr>
                         {% endfor %}
                     </tbody>

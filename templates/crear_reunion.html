@@ -182,10 +182,51 @@
             font-size: 20px;
             cursor: pointer;
         }
+        
+        /* Estilos para el indicador de carga */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 8px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 8px solid #1e40af;
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen flex flex-col">
+    <!-- Loading overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+    
     <div class="bg-white shadow-lg rounded-lg overflow-hidden">
         <div class="bg-blue-600 text-white p-4">
             <h1 class="text-2xl font-bold">Acta de Reunión DSSM</h1>
@@ -216,42 +257,39 @@
                         <label for="nombre_reunion" class="block text-sm font-medium text-gray-700">Nombre de la
                             Reunión</label>
                         <input type="text" id="nombre_reunion" name="nombre_reunion" class="form-control"
-                            placeholder="Introduce el nombre de la reunión" required>
+                            placeholder="Introduce el nombre de la reunión" required
+                            value="{{ form_data.get('nombre_reunion', '') }}">
                     </div>
 
                     <div>
                         <label for="lugar" class="block text-sm font-medium text-gray-700">Lugar</label>
                         <input type="text" id="lugar" name="lugar" class="form-control"
-                            placeholder="Introduce el lugar de la reunión" required>
+                            placeholder="Introduce el lugar de la reunión" required
+                            value="{{ form_data.get('lugar', '') }}">
                     </div>
                     <div>
-                        <label for="tema" class="block text sm font-medium text-gray-700">Tema</label>
+                        <label for="tema" class="block text sm font-medium text-gray-700">Temas a Tratar</label>
                         <textarea type="text" id="tema" name="tema" class="form-control"
-                            placeholder="Introduce los temas de la reunión" required rows="3"></textarea>
+                            placeholder="Introduce los temas de la reunión" required rows="3">{{ form_data.get('tema', '') }}</textarea>
                     </div>
                     <div id="hora-group">
                         <label for="fecha_reunion" class="block text-sm font-medium text-gray-700">Fecha y Hora de
                             la Reunión</label>
                         <input type="datetime-local" id="fecha_reunion" name="fecha_reunion" class="form-control"
-                            required>
+                            required value="{{ form_data.get('fecha_reunion', '') }}">
                     </div>
                     <div id="origen-group">
                         <label for="origen" class="block text-sm font-medium text-gray-700">Origen</label>
-                        {{ form.origen(class="form-control") }}
-                        <input type="text" id="new-origen" name="new_origen" class="form-control hidden"
-                            placeholder="Introduce nuevo origen">
-                        <button type="button" class="btn btn-secondary mt-2" id="btn-add-origen"><i class="fas fa-plus"></i> Añadir nuevo Origen</button>
+                        {{ form.origen(class="form-control select2", **{'data-selected': form_data.get('origen', '')}) }}
                     </div>
                     <div id="area-group">
                         <label for="area" class="block text-sm font-medium text-gray-700">Área</label>
-                        {{ form.area(class="form-control") }}
-                        <input type="text" id="new-area" name="new_area" class="form-control hidden"
-                            placeholder="Introduce nueva área">
-                        <button type="button" class="btn btn-secondary mt-2" id="btn-add-area"><i class="fas fa-plus"></i> Añadir nueva Área</button>
+                        {{ form.area(class="form-control select2", **{'data-selected': form_data.get('area', '')}) }}
                     </div>
                     <div id="asistentes-group" class="col-span-2">
                         <label for="asistentes-select" class="block text-sm font-medium text-gray-700">Asistentes</label>
-                        <select id="asistentes-select" name="asistentes[]" class="form-control select2 w-full" multiple>
+                        <select id="asistentes-select" name="asistentes[]" class="form-control select2 w-full" multiple
+                                data-selected="{{ form_data.get('asistentes', [])|tojson }}">
                             {% for value, label, departamento, cargo in form.compromisos[0].referentes.choices %}
                             <option value="{{ value }}" data-departamento="{{ departamento }}" data-cargo="{{ cargo }}">{{ label }}</option>
                             {% endfor %}
@@ -390,7 +428,7 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                    <a style="font-size: small;">Ultimo referente ingresado sera el principal responsable</a>
+                    <a style="font-size: small; float: right;">El primer referente ingresado sera el principal responsable</a>
                     <br>
                     <button type="button" id="add-compromiso" class="btn btn-secondary mt-4"><i class="fas fa-plus"></i> Agregar otro
                         compromiso</button>
@@ -402,13 +440,13 @@
                     <a href="{{ url_for('home.home_view') }}" class="btn btn-secondary"><i class="fas fa-home"></i> Volver al inicio</a>
 
                     <div>
-                        <label for="acta_pdf" class="block text-sm font-medium text-gray-700">Subir acta de la
+                        <label for="acta_pdf" class="block text-sm font-medium text-gray-700">Subir Acta y Documentos de la
                             reunión</label>
                             <input type="file" id="acta_pdf" name="acta_pdf" multiple 
                             accept=".pdf, .png, .jpeg, .jpg, .doc, .docx, .zip, .ppt, .pptx, .xls, .xlsx, .pbix"
                             class="form-control mt-1">
                                               </div>
-                    <button type="submit" class="btn btn-primary btn-confirm"><i class="fas fa-check"></i> Confirmar Reunión y Compromisos</button>
+                    <button type="submit" id="submit-btn" class="btn btn-primary btn-confirm"><i class="fas fa-check"></i> Confirmar Reunión y Compromisos</button>
                 </div>
             </form>
             <br>
@@ -427,6 +465,165 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Verificar si hay un error después de enviar el formulario y restablecer UI
+            const alertElement = document.querySelector('.alert');
+            if (alertElement && alertElement.classList.contains('alert-danger')) {
+                // Ocultar el overlay de carga
+                const loadingOverlay = document.getElementById('loading-overlay');
+                if (loadingOverlay) {
+                    loadingOverlay.classList.remove('active');
+                }
+                
+                // Restablecer el botón de envío
+                const submitBtn = document.getElementById('submit-btn');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-check"></i> Confirmar Reunión y Compromisos';
+                }
+                
+                // Asegurarse de que la alerta se muestra por más tiempo en caso de error
+                setTimeout(function() {
+                    document.querySelectorAll('.alert-danger').forEach(function(alert) {
+                        alert.style.display = 'none';
+                    });
+                }, 8000); // 8 segundos para errores
+                
+                // Seleccionar valores anteriores en los campos select2
+                if ($('select[name="origen"]').data('selected')) {
+                    $('select[name="origen"]').val($('select[name="origen"]').data('selected')).trigger('change');
+                }
+                
+                if ($('select[name="area"]').data('selected')) {
+                    $('select[name="area"]').val($('select[name="area"]').data('selected')).trigger('change');
+                }
+                
+                const asistentesSelected = $('#asistentes-select').data('selected');
+                if (asistentesSelected && asistentesSelected.length) {
+                    $('#asistentes-select').val(asistentesSelected).trigger('change');
+                }
+                
+                const invitadosSelected = $('#invitados-select').data('selected');
+                if (invitadosSelected && invitadosSelected.length) {
+                    $('#invitados-select').val(invitadosSelected).trigger('change');
+                }
+                
+                // Restaurar datos de compromisos si existen
+                {% if form_data and form_data.get('compromisos') %}
+                    // Eliminar filas existentes si hay datos de compromiso
+                    $('#compromisos-table tbody tr').slice(1).remove();
+                    
+                    {% for compromiso in form_data.get('compromisos') %}
+                        {% if loop.index > 1 %}
+                            // Añadir nueva fila para compromisos adicionales
+                            addCompromisoRow({{ loop.index }});
+                        {% endif %}
+                        
+                        // Establecer valores para los compromisos
+                        $('textarea[name="compromisos-{{ loop.index }}-nombre"]').val('{{ compromiso.get("nombre", "") }}');
+                        $('select[name="compromisos-{{ loop.index }}-prioridad"]').val('{{ compromiso.get("prioridad", "") }}');
+                        $('input[name="compromisos-{{ loop.index }}-fecha_limite"]').val('{{ compromiso.get("fecha_limite", "") }}');
+                        $('select[name="compromisos-{{ loop.index }}-departamento"]').val('{{ compromiso.get("departamento", "") }}');
+                        
+                        // Para los referentes
+                        const referentesSelected{{ loop.index }} = {{ compromiso.get("referentes", [])|tojson }};
+                        if (referentesSelected{{ loop.index }} && referentesSelected{{ loop.index }}.length) {
+                            $('select[name="compromisos-{{ loop.index }}-referentes"]').val(referentesSelected{{ loop.index }}).trigger('change');
+                        }
+                    {% endfor %}
+                    
+                    // Reinicializamos select2 para los compromisos restaurados
+                    $('.select2').select2({
+                        placeholder: "Selecciona referentes",
+                        allowClear: true,
+                        width: '100%'
+                    });
+                {% endif %}
+            }
+            
+            // Agregar validación para asegurar que hay al menos un compromiso
+            document.getElementById('form-reunion').addEventListener('submit', function(event) {
+                // Validación básica del formulario
+                const nombre_reunion = document.getElementById('nombre_reunion').value;
+                const lugar = document.getElementById('lugar').value;
+                const tema = document.getElementById('tema').value;
+                const fecha_reunion = document.getElementById('fecha_reunion').value;
+                
+                // Validar campos obligatorios
+                if (!nombre_reunion || !lugar || !tema || !fecha_reunion) {
+                    event.preventDefault(); // Detener el envío del formulario
+                    
+                    // Crear y mostrar un mensaje de error
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-danger';
+                    alertDiv.innerHTML = '<span>Por favor, complete todos los campos obligatorios.</span><button type="button" class="close" onclick="this.parentElement.style.display=\'none\';">&times;</button>';
+                    
+                    // Insertar el mensaje al principio del contenido del formulario
+                    const acta_content = document.getElementById('acta-content');
+                    acta_content.insertBefore(alertDiv, acta_content.firstChild);
+                    
+                    // Eliminar el mensaje después de unos segundos
+                    setTimeout(function() {
+                        alertDiv.style.display = 'none';
+                    }, 5000);
+                    
+                    return false;
+                }
+                
+                // Validar que haya al menos un compromiso
+                let tieneCompromisos = false;
+                const compromisosInputs = document.querySelectorAll('textarea[name$="-nombre"]');
+                for (let input of compromisosInputs) {
+                    if (input.value.trim()) {
+                        tieneCompromisos = true;
+                        break;
+                    }
+                }
+                
+                if (!tieneCompromisos) {
+                    event.preventDefault();
+                    
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-danger';
+                    alertDiv.innerHTML = '<span>Es necesario tener al menos un compromiso por reunión.</span><button type="button" class="close" onclick="this.parentElement.style.display=\'none\';">&times;</button>';
+                    
+                    const acta_content = document.getElementById('acta-content');
+                    acta_content.insertBefore(alertDiv, acta_content.firstChild);
+                    
+                    setTimeout(function() {
+                        alertDiv.style.display = 'none';
+                    }, 5000);
+                    
+                    return false;
+                }
+                
+                // Si todo está bien, mostrar el indicador de carga
+                document.getElementById('loading-overlay').classList.add('active');
+                
+                // Desactivar el botón de envío para evitar múltiples envíos
+                document.getElementById('submit-btn').disabled = true;
+                document.getElementById('submit-btn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+                
+                // El formulario continuará enviándose normalmente
+                return true;
+            });
+
+            // Inicializar select2 para campos generales y también para 'origen' y 'area'
+            $('.select2').select2({
+                placeholder: "Selecciona Referentes",
+                allowClear: true,
+                width: '100%'
+            });
+            // Inicialización específica para 'origen' y 'area' si se requiere un placeholder distinto
+            $('select[name="origen"]').select2({
+                placeholder: "Seleccione origen",
+                allowClear: true,
+                width: '100%'
+            });
+            $('select[name="area"]').select2({
+                placeholder: "Seleccione área",
+                allowClear: true,
+                width: '100%'
+            });
             // Only initialize EasyMDE if the element exists
             const descripcionEl = document.getElementById('descripcion');
             if (descripcionEl) {
@@ -701,6 +898,39 @@
                 });
             }
 
+            function updateSelectedOrder(selectElement) {
+                const selectedOptions = Array.from(selectElement.selectedOptions);
+                const allOptions = Array.from(selectElement.options);
+
+                // Clear all options
+                selectElement.innerHTML = '';
+
+                // Append selected options first
+                selectedOptions.forEach(option => {
+                    selectElement.appendChild(option);
+                });
+
+                // Append the rest of the options
+                allOptions.forEach(option => {
+                    if (!selectedOptions.includes(option)) {
+                        selectElement.appendChild(option);
+                    }
+                });
+            }
+
+            $('#compromisos-table').on('change', 'select[name$="-referentes"]', function () {
+                updateSelectedOrder(this);
+            });
+
+            // Call the function initially to set the order on page load
+            const compromisoRows = document.querySelectorAll('#compromisos-table tbody tr');
+            compromisoRows.forEach(row => {
+                const referentesSelect = row.querySelector('select[name$="-referentes"]');
+                if (referentesSelect) {
+                    updateSelectedOrder(referentesSelect);
+                }
+            });
+
         });
 
         function addCompromisoRow(index) {
@@ -740,6 +970,46 @@
             `;
             $('#compromisos-table tbody').append(newRow);
         }
+
+        // Función para mostrar alertas
+        function mostrarAlerta(mensaje, tipo) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-' + tipo;
+            alertDiv.innerHTML = '<span>' + mensaje + '</span><button type="button" class="close" onclick="this.parentElement.style.display=\'none\';">&times;</button>';
+            
+            const acta_content = document.getElementById('acta-content');
+            acta_content.insertBefore(alertDiv, acta_content.firstChild);
+            
+            setTimeout(function() {
+                alertDiv.style.display = 'none';
+            }, tipo === 'danger' ? 8000 : 5000);
+        }
+        
+        // Función para restablecer el estado de carga
+        function resetLoadingState() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) {
+                loadingOverlay.classList.remove('active');
+            }
+            
+            const submitBtn = document.getElementById('submit-btn');
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-check"></i> Confirmar Reunión y Compromisos';
+            }
+            
+            if (window.spinnerTimeout) {
+                clearTimeout(window.spinnerTimeout);
+            }
+        }
+        
+        // Agregar evento para cancelar la carga con ESC
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                resetLoadingState();
+                mostrarAlerta('Operación cancelada por el usuario.', 'info');
+            }
+        });
     </script>
 </body>
 </html>
