@@ -944,6 +944,9 @@ class CompromisoRepository:
     def fetch_areas_by_departamento(self, departamento_id):
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                # Convertir departamento_id a entero antes de realizar operaciones matemáticas
+                departamento_id = int(departamento_id)
+                
                 # Obtener el departamento padre (primer dígito seguido de dos ceros)
                 # Ejemplo: si departamento_id es 320, el padre sería 300
                 parent_dept_id = (departamento_id // 100) * 100
@@ -967,6 +970,9 @@ class CompromisoRepository:
     def fetch_origenes_by_departamento(self, departamento_id):
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
+                # Convertir departamento_id a entero antes de realizar operaciones matemáticas
+                departamento_id = int(departamento_id)
+                
                 # Obtener el departamento padre (primer dígito seguido de dos ceros)
                 # Ejemplo: si departamento_id es 320, el padre sería 300
                 parent_dept_id = (departamento_id // 100) * 100

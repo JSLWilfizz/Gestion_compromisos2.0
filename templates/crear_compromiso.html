@@ -289,10 +289,12 @@ button:hover {
                 </div>
                 
                 <!-- Comentario Dirección -->
+                 {% if user['nivel_jerarquico'] == 'DIRECTOR DE SERVICIO' %}
                 <div class="form-group col-md-6">
                     <label for="comentario_direccion">{{ form.comentario_direccion.label }}</label>
                     {{ form.comentario_direccion(class="form-control", id="comentario_direccion", rows="3") }}
                 </div>
+                {% endif %}
             </div>
             
             <!-- Referentes -->

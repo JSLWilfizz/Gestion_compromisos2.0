@@ -310,8 +310,8 @@
                 </li>
                 {% if user.nivel_jerarquico == 'DIRECTOR DE SERVICIO' or user.nivel_jerarquico == 'SUBDIRECTOR/A' or user.nivel_jerarquico == 'SECRETARIO/A' %}
                 <li>
-                    <a href="#">
-                        <i class="fas fa-user-slash"></i> Area y Origen Departamentales
+                    <a href="{{ url_for('director.origen_area') }}">
+                        <i class="fas fa-sitemap"></i> Áreas y Orígenes
                     </a>
                 </li>
                 {% endif %}

@@ -33,6 +33,32 @@ class GestionService:
     def update_departamento(self, departamento_id, name, id_departamento_padre):
         self.repo.update_departamento(departamento_id, name, id_departamento_padre)
 
+    def get_areas_by_departamento(self, departamento_id=None, search=None):
+        areas = self.repo.fetch_areas_by_departamento(departamento_id, search)
+        return [self._convert_area_to_dict(area) for area in areas]
+    
+    def get_origenes_by_departamento(self, departamento_id=None, search=None):
+        origenes = self.repo.fetch_origenes_by_departamento(departamento_id, search)
+        return [self._convert_origen_to_dict(origen) for origen in origenes]
+    
+    def crear_area(self, name, id_departamento):
+        return self.repo.crear_area(name, id_departamento)
+    
+    def crear_origen(self, name, id_departamento):
+        return self.repo.crear_origen(name, id_departamento)
+    
+    def actualizar_area(self, area_id, name, id_departamento):
+        self.repo.actualizar_area(area_id, name, id_departamento)
+    
+    def actualizar_origen(self, origen_id, name, id_departamento):
+        self.repo.actualizar_origen(origen_id, name, id_departamento)
+    
+    def eliminar_area(self, area_id):
+        self.repo.eliminar_area(area_id)
+    
+    def eliminar_origen(self, origen_id):
+        self.repo.eliminar_origen(origen_id)
+
     def _convert_funcionario_to_dict(self, row):
         return {
             'id': row[0],  # Add the id attribute
@@ -60,4 +86,20 @@ class GestionService:
             'name': row[1],
             'id_departamento_padre': row[2],
             'level': row[3]
+        }
+
+    def _convert_area_to_dict(self, row):
+        return {
+            'id': row[0],
+            'name': row[1],
+            'id_departamento': row[2],
+            'departamento_name': row[3]
+        }
+    
+    def _convert_origen_to_dict(self, row):
+        return {
+            'id': row[0],
+            'name': row[1],
+            'id_departamento': row[2],
+            'departamento_name': row[3]
         }

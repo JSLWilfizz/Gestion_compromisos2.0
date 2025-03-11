@@ -110,3 +110,155 @@ class GestionRepository:
         with conn.cursor() as cur:
             cur.execute(query, (name,))
             return cur.fetchall()
+
+    def fetch_areas_by_departamento(self, departamento_id=None, search=None):
+        conn = get_db_connection()
+        query = """
+            SELECT a.id, a.name, a.id_departamento, d.name as departamento_name
+            FROM area a
+            LEFT JOIN departamento d ON a.id_departamento = d.id
+            WHERE 1=1
+        """
+        params = []
+        
+        if departamento_id:
+            if departamento_id == 'null':
+                query += " AND a.id_departamento IS NULL"
+            else:
+                query += " AND a.id_departamento = %s"
+                params.append(departamento_id)
+            
+        if search:
+            query += " AND a.name ILIKE %s"
+            params.append(f"%{search}%")
+            
+        query += " ORDER BY a.name"
+        
+        with conn.cursor() as cursor:
+            cursor.execute(query, params)
+            return cursor.fetchall()
+    
+    def fetch_origenes_by_departamento(self, departamento_id=None, search=None):
+        conn = get_db_connection()
+        query = """
+            SELECT o.id, o.name, o.id_departamento, d.name as departamento_name
+            FROM origen o
+            LEFT JOIN departamento d ON o.id_departamento = d.id
+            WHERE 1=1
+        """
+        params = []
+        
+        if departamento_id:
+            if departamento_id == 'null':
+                query += " AND o.id_departamento IS NULL"
+            else:
+                query += " AND o.id_departamento = %s"
+                params.append(departamento_id)
+            
+        if search:
+            query += " AND o.name ILIKE %s"
+            params.append(f"%{search}%")
+            
+        query += " ORDER BY o.name"
+        
+        with conn.cursor() as cursor:
+            cursor.execute(query, params)
+            return cursor.fetchall()
+    
+    def crear_area(self, name, id_departamento):
+        conn = get_db_connection()
+        
+        try:
+            # First reset the sequence to avoid UniqueViolation error
+            with conn.cursor() as cursor:
+                # Get the current max ID
+                cursor.execute("SELECT MAX(id) FROM area")
+                max_id = cursor.fetchone()[0]
+                
+                # Reset the sequence to be one higher than the max ID
+                if max_id is not None:
+                    cursor.execute("SELECT setval('area_id_seq', %s)", (max_id,))
+            
+            # Now insert the new record
+            query = """
+                INSERT INTO area (name, id_departamento)
+                VALUES (%s, %s)
+                RETURNING id
+            """
+            with conn.cursor() as cursor:
+                cursor.execute(query, (name, id_departamento))
+                area_id = cursor.fetchone()[0]
+                conn.commit()
+                return area_id
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
+    
+    def crear_origen(self, name, id_departamento):
+        conn = get_db_connection()
+        
+        try:
+            # First reset the sequence to avoid UniqueViolation error
+            with conn.cursor() as cursor:
+                # Get the current max ID
+                cursor.execute("SELECT MAX(id) FROM origen")
+                max_id = cursor.fetchone()[0]
+                
+                # Reset the sequence to be one higher than the max ID
+                if max_id is not None:
+                    cursor.execute("SELECT setval('origen_id_seq', %s)", (max_id,))
+            
+            # Now insert the new record
+            query = """
+                INSERT INTO origen (name, id_departamento)
+                VALUES (%s, %s)
+                RETURNING id
+            """
+            with conn.cursor() as cursor:
+                cursor.execute(query, (name, id_departamento))
+                origen_id = cursor.fetchone()[0]
+                conn.commit()
+                return origen_id
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            conn.close()
+    
+    def actualizar_area(self, area_id, name, id_departamento):
+        conn = get_db_connection()
+        query = """
+            UPDATE area
+            SET name = %s, id_departamento = %s
+            WHERE id = %s
+        """
+        with conn.cursor() as cursor:
+            cursor.execute(query, (name, id_departamento, area_id))
+            conn.commit()
+    
+    def actualizar_origen(self, origen_id, name, id_departamento):
+        conn = get_db_connection()
+        query = """
+            UPDATE origen
+            SET name = %s, id_departamento = %s
+            WHERE id = %s
+        """
+        with conn.cursor() as cursor:
+            cursor.execute(query, (name, id_departamento, origen_id))
+            conn.commit()
+    
+    def eliminar_area(self, area_id):
+        conn = get_db_connection()
+        query = "DELETE FROM area WHERE id = %s"
+        with conn.cursor() as cursor:
+            cursor.execute(query, (area_id,))
+            conn.commit()
+    
+    def eliminar_origen(self, origen_id):
+        conn = get_db_connection()
+        query = "DELETE FROM origen WHERE id = %s"
+        with conn.cursor() as cursor:
+            cursor.execute(query, (origen_id,))
+            conn.commit()

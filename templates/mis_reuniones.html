@@ -214,6 +214,77 @@
                 margin-left: 0;
             }
         }
+
+        /* Pagination styles */
+        .pagination-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 25px;
+            gap: 10px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .pagination-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+            padding: 0 12px;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .pagination-btn:hover {
+            background-color: #edf2f7;
+            border-color: #cbd5e0;
+        }
+
+        .pagination-btn.active {
+            background-color: var(--secondary-color);
+            border-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        .pagination-btn.disabled {
+            background-color: #f7fafc;
+            border-color: #e2e8f0;
+            color: #a0aec0;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .pagination-info {
+            color: #4a5568;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .pagination-btn {
+                min-width: 35px;
+                height: 35px;
+                font-size: 13px;
+                padding: 0 8px;
+            }
+            
+            .pagination-info {
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -264,7 +335,15 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for reunion in reuniones %}
+                            {% set current_page = request.args.get('page', '1')|int or 1 %}
+                            {% set items_per_page = 5 %}
+                            {% set total_items = reuniones|length %}
+                            {% set total_pages = ((total_items / items_per_page)|round(0, 'ceil'))|int or 1 %}
+                            
+                            {% set start_index = (current_page - 1) * items_per_page %}
+                            {% set end_index = start_index + items_per_page %}
+                            
+                            {% for reunion in reuniones[start_index:end_index] %}
                             <tr>
                                 <td>{{ reunion.nombre }}</td>
                                 <td>{{ reunion.fecha_creacion.strftime('%d-%m-%Y %H:%M') }}</td>
@@ -298,6 +377,34 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                </div>
+                
+                <!-- Pagination controls -->
+                <div class="pagination-container">
+                    <div class="pagination">
+                        {% if current_page > 1 %}
+                        <a href="{{ url_for('reunion.mis_reuniones', page=current_page-1) }}" class="pagination-btn">&laquo; Anterior</a>
+                        {% else %}
+                        <span class="pagination-btn disabled">&laquo; Anterior</span>
+                        {% endif %}
+                        
+                        {% for i in range(1, total_pages + 1) %}
+                            {% if i == current_page %}
+                            <span class="pagination-btn active">{{ i }}</span>
+                            {% else %}
+                            <a href="{{ url_for('reunion.mis_reuniones', page=i) }}" class="pagination-btn">{{ i }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if current_page < total_pages %}
+                        <a href="{{ url_for('reunion.mis_reuniones', page=current_page+1) }}" class="pagination-btn">Siguiente &raquo;</a>
+                        {% else %}
+                        <span class="pagination-btn disabled">Siguiente &raquo;</span>
+                        {% endif %}
+                    </div>
+                    <div class="pagination-info">
+                        Página {{ current_page }} de {{ total_pages }} | Mostrando {{ reuniones[start_index:end_index]|length }} de {{ total_items }} reuniones
+                    </div>
                 </div>
             </div>
         </div>

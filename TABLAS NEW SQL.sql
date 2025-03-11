@@ -188,12 +188,15 @@ CREATE TABLE IF NOT EXISTS invitados (
 CREATE OR REPLACE FUNCTION crear_usuario()
 RETURNS TRIGGER AS $$
 DECLARE
-    password_aleatoria VARCHAR(12);
+    password_aleatoria VARCHAR(255);
 BEGIN
-    -- Generar una contraseña con nombre y apellido solo primeras 12 letras
-    password_aleatoria := SUBSTRING(NEW.name, 1, 1) || SUBSTRING(NEW.lastname, 1, 1) || SUBSTRING(NEW.lastname, 2, 1) || SUBSTRING(NEW.lastname, 3, 1) || SUBSTRING(NEW.lastname, 4, 1) || SUBSTRING(NEW.lastname, 5, 1) || SUBSTRING(NEW.lastname, 6, 1) || SUBSTRING(NEW.lastname, 7, 1) || SUBSTRING(NEW.lastname, 8, 1) || SUBSTRING(NEW.lastname, 9, 1) || SUBSTRING(NEW.lastname, 10, 1) || SUBSTRING(NEW.lastname, 11, 1);
-
-        
+    -- Generar una contraseña con primera letra del nombre y el RUT completo
+    password_aleatoria := 
+        CASE WHEN NEW.name IS NULL OR LENGTH(NEW.name) = 0 
+             THEN '' 
+             ELSE SUBSTRING(NEW.name FROM 1 FOR 1) 
+        END || 
+        COALESCE(NEW.rut, '');
 
     -- Insertar en la tabla users, asociando el id de persona
     INSERT INTO users (id_persona, username, password)

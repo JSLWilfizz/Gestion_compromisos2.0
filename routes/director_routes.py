@@ -227,3 +227,116 @@ def reportes():
     is_admin = False  # You could implement logic to determine if user is admin
     return render_template('reportes.html', alert=alert, is_admin=is_admin)
 
+@director_bp.route('/director/origen-area', methods=['GET', 'POST'])
+@not_funcionario_required
+def origen_area():
+    alert = session.pop('alert', None)
+    departamento_id = request.args.get('departamento_id', None)
+    search = request.args.get('search', '')
+    departamentos = gestion_service.get_departamentos()
+    
+    # Get user from session directly - no need to fetch it again
+    user = session.get('user', {})
+    
+    # Obtener áreas y orígenes, según los filtros seleccionados
+    areas = gestion_service.get_areas_by_departamento(departamento_id, search)
+    origenes = gestion_service.get_origenes_by_departamento(departamento_id, search)
+    
+    return render_template(
+        'origen_area.html', 
+        departamentos=departamentos, 
+        areas=areas, 
+        origenes=origenes,
+        selected_departamento=departamento_id,
+        search=search,
+        alert=alert,
+        user=user  # Pass the user from session to the template
+    )
+
+@director_bp.route('/director/crear-area', methods=['POST'])
+@not_funcionario_required
+def crear_area():
+    name = request.form.get('name')
+    departamento_id = request.form.get('departamento_id')
+    
+    if not name:
+        set_alert('El nombre del área es obligatorio', 'danger')
+        return redirect(url_for('director.origen_area', departamento_id=departamento_id))
+    
+    # Convert empty string to None for NULL in the database
+    if departamento_id == '':
+        departamento_id = None
+    
+    gestion_service.crear_area(name, departamento_id)
+    set_alert('Área creada correctamente', 'success')
+    return redirect(url_for('director.origen_area', departamento_id=departamento_id))
+
+@director_bp.route('/director/crear-origen', methods=['POST'])
+@not_funcionario_required
+def crear_origen():
+    name = request.form.get('name')
+    departamento_id = request.form.get('departamento_id')
+    
+    if not name:
+        set_alert('El nombre del origen es obligatorio', 'danger')
+        return redirect(url_for('director.origen_area', departamento_id=departamento_id))
+    
+    # Convert empty string to None for NULL in the database
+    if departamento_id == '':
+        departamento_id = None
+    
+    gestion_service.crear_origen(name, departamento_id)
+    set_alert('Origen creado correctamente', 'success')
+    return redirect(url_for('director.origen_area', departamento_id=departamento_id))
+
+@director_bp.route('/director/actualizar-area/<int:area_id>', methods=['POST'])
+@not_funcionario_required
+def actualizar_area(area_id):
+    name = request.form.get('name')
+    departamento_id = request.form.get('departamento_id')
+    
+    if not name:
+        set_alert('El nombre del área es obligatorio', 'danger')
+        return redirect(url_for('director.origen_area', departamento_id=departamento_id))
+    
+    # Convert empty string to None for NULL in the database
+    if departamento_id == '':
+        departamento_id = None
+    
+    gestion_service.actualizar_area(area_id, name, departamento_id)
+    set_alert('Área actualizada correctamente', 'success')
+    return redirect(url_for('director.origen_area', departamento_id=departamento_id))
+
+@director_bp.route('/director/actualizar-origen/<int:origen_id>', methods=['POST'])
+@not_funcionario_required
+def actualizar_origen(origen_id):
+    name = request.form.get('name')
+    departamento_id = request.form.get('departamento_id')
+    
+    if not name:
+        set_alert('El nombre del origen es obligatorio', 'danger')
+        return redirect(url_for('director.origen_area', departamento_id=departamento_id))
+    
+    # Convert empty string to None for NULL in the database
+    if departamento_id == '':
+        departamento_id = None
+    
+    gestion_service.actualizar_origen(origen_id, name, departamento_id)
+    set_alert('Origen actualizado correctamente', 'success')
+    return redirect(url_for('director.origen_area', departamento_id=departamento_id))
+
+@director_bp.route('/director/eliminar-area/<int:area_id>', methods=['POST'])
+@not_funcionario_required
+def eliminar_area(area_id):
+    departamento_id = request.form.get('departamento_id')
+    gestion_service.eliminar_area(area_id)
+    set_alert('Área eliminada correctamente', 'success')
+    return redirect(url_for('director.origen_area', departamento_id=departamento_id))
+
+@director_bp.route('/director/eliminar-origen/<int:origen_id>', methods=['POST'])
+@not_funcionario_required
+def eliminar_origen(origen_id):
+    departamento_id = request.form.get('departamento_id')
+    gestion_service.eliminar_origen(origen_id)
+    set_alert('Origen eliminado correctamente', 'success')
+    return redirect(url_for('director.origen_area', departamento_id=departamento_id))

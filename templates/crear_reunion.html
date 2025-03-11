@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"="width=device-width, initial-scale=1.0">
     <title>Crear Reunión y Agregar Compromisos</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -991,7 +991,7 @@
                         <input type="datetime-local" name="compromisos-${index}-fecha_limite" class="form-control" required>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <select name="compromisos-${index}-departamento" class="form-control" required>
+                        <select name="compromisos-${index}-departamento" class="form-control departamento-select" required>
                             <option value="">Seleccione departamento</option>
                             <!-- Las opciones se cargarán dinámicamente -->
                         </select>
@@ -1004,7 +1004,7 @@
                         </select>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        <!-- Campo para área específica del compromiso -->
+                        <!-- Campo para área específico del compromiso -->
                         <select name="compromisos-${index}-area" class="form-control">
                             <option value="">Seleccione área</option>
                             <!-- Las opciones se cargarán cuando se seleccione un departamento -->
@@ -1027,6 +1027,23 @@
                 placeholder: "Selecciona referentes",
                 allowClear: true,
                 width: '100%'
+            });
+
+            // Copiar las opciones de departamento del primer selector al nuevo
+            const firstDepartmentSelect = $('select[name="compromisos-1-departamento"]');
+            const newDepartmentSelect = $(`select[name="compromisos-${index}-departamento"]`);
+            
+            // Copia todas las opciones del primer select al nuevo
+            firstDepartmentSelect.find('option').each(function() {
+                newDepartmentSelect.append($(this).clone());
+            });
+            
+            // Copiar las opciones de referentes del primer selector al nuevo
+            const firstReferentesSelect = $('select[name="compromisos-1-referentes"]');
+            const newReferentesSelect = $(`select[name="compromisos-${index}-referentes"]`);
+            
+            firstReferentesSelect.find('option').each(function() {
+                newReferentesSelect.append($(this).clone());
             });
 
             // Activar el evento change para el departamento

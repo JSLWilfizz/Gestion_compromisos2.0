@@ -483,6 +483,76 @@
                 margin: 2px;
             }
         }
+        
+        /* Pagination styles */
+        .pagination-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 25px;
+            gap: 10px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .pagination-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+            padding: 0 12px;
+            background-color: var(--color-white);
+            border: 1px solid #ddd;
+            color: var(--color-text);
+            text-decoration: none;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .pagination-btn:hover {
+            background-color: #f4f4f4;
+            border-color: #ccc;
+        }
+
+        .pagination-btn.active {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+            color: var(--color-white);
+            font-weight: 600;
+        }
+
+        .pagination-btn.disabled {
+            background-color: #f4f4f4;
+            border-color: #ddd;
+            color: #aaa;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .pagination-info {
+            color: #666;
+            font-size: 14px;
+        }
+
+        @media screen and (max-width: 768px) {
+            .pagination-btn {
+                min-width: 35px;
+                height: 35px;
+                font-size: 13px;
+                padding: 0 8px;
+            }
+            
+            .pagination-info {
+                font-size: 12px;
+            }
+        }
     </style>
     <script>
         function getProgressBarColor(value) {
@@ -591,6 +661,7 @@
                 <option value="asc" {% if request.args.get('fecha_limite') == 'asc' %}selected{% endif %}>Más cercana</option>
                 <option value="desc" {% if request.args.get('fecha_limite') == 'desc' %}selected{% endif %}>Más lejana</option>
             </select>
+            <input type="hidden" name="page" value="1">
             <button type="submit"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
             <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn btn-clear"><i class="fas fa-filter"></i> Borrar Filtros</a>
         </form>
@@ -616,7 +687,15 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for compromiso in compromisos %}
+                    {% set current_page = request.args.get('page', '1')|int or 1 %}
+                    {% set items_per_page = 5 %}
+                    {% set total_items = compromisos|length %}
+                    {% set total_pages = ((total_items / items_per_page)|round(0, 'ceil'))|int or 1 %}
+                    
+                    {% set start_index = (current_page - 1) * items_per_page %}
+                    {% set end_index = start_index + items_per_page %}
+                    
+                    {% for compromiso in compromisos[start_index:end_index] %}
                     <tr>
                         <td>{{ compromiso.descripcion }}</td>
                         <td>{{ compromiso.origen_name or 'No definido' }}</td>
@@ -703,6 +782,40 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+        
+        <!-- Pagination controls -->
+        <div class="pagination-container">
+            <div class="pagination">
+                {% set current_page = request.args.get('page', '1')|int or 1 %}
+                {% set items_per_page = 5 %}
+                {% set total_items = compromisos|length %}
+                {% set total_pages = ((total_items / items_per_page)|round(0, 'ceil'))|int or 1 %}
+                
+                {% if current_page > 1 %}
+                <a href="{{ url_for('home.ver_compromisos_compartidos', page=current_page-1, search=request.args.get('search', ''), estado=request.args.get('estado', ''), avance=request.args.get('avance', ''), fecha_limite=request.args.get('fecha_limite', '')) }}" class="pagination-btn">&laquo; Anterior</a>
+                {% else %}
+                <span class="pagination-btn disabled">&laquo; Anterior</span>
+                {% endif %}
+                
+                {% for i in range(1, total_pages + 1) %}
+                    {% if i == current_page %}
+                    <span class="pagination-btn active">{{ i }}</span>
+                    {% else %}
+                    <a href="{{ url_for('home.ver_compromisos_compartidos', page=i, search=request.args.get('search', ''), estado=request.args.get('estado', ''), avance=request.args.get('avance', ''), fecha_limite=request.args.get('fecha_limite', '')) }}" class="pagination-btn">{{ i }}</a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if current_page < total_pages %}
+                <a href="{{ url_for('home.ver_compromisos_compartidos', page=current_page+1, search=request.args.get('search', ''), estado=request.args.get('estado', ''), avance=request.args.get('avance', ''), fecha_limite=request.args.get('fecha_limite', '')) }}" class="pagination-btn">Siguiente &raquo;</a>
+                {% else %}
+                <span class="pagination-btn disabled">Siguiente &raquo;</span>
+                {% endif %}
+            </div>
+            <div class="pagination-info">
+                Página {{ current_page }} de {{ total_pages }} | Mostrando {{ compromisos[start_index:end_index]|length }} de {{ total_items }} compromisos
+            </div>
+        </div>
     </div>
 </body>
 </html>

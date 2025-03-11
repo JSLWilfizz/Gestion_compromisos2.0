@@ -244,6 +244,77 @@
         .alert-danger { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
         .alert-warning { background-color: #fff3cd; border-color: #ffeeba; color: #856404; }
         .alert .close { background: none; border: none; font-size: 20px; cursor: pointer; }
+
+        /* Pagination styles */
+        .pagination-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 25px;
+            gap: 10px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .pagination-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+            padding: 0 12px;
+            background-color: white;
+            border: 1px solid #ccc;
+            color: var(--dark-color);
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .pagination-btn:hover {
+            background-color: #f8f9fa;
+            border-color: #adb5bd;
+        }
+
+        .pagination-btn.active {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        .pagination-btn.disabled {
+            background-color: #e9ecef;
+            border-color: #ced4da;
+            color: #6c757d;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .pagination-info {
+            color: var(--secondary-color);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        @media screen and (max-width: 768px) {
+            .pagination-btn {
+                min-width: 35px;
+                height: 35px;
+                font-size: 13px;
+                padding: 0 8px;
+            }
+            
+            .pagination-info {
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -308,7 +379,15 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for compromiso in compromisos %}
+                    {% set current_page = request.args.get('page', '1')|int or 1 %}
+                    {% set items_per_page = 5 %}
+                    {% set total_items = compromisos|length %}
+                    {% set total_pages = ((total_items / items_per_page)|round(0, 'ceil'))|int or 1 %}
+                    
+                    {% set start_index = (current_page - 1) * items_per_page %}
+                    {% set end_index = start_index + items_per_page %}
+                    
+                    {% for compromiso in compromisos[start_index:end_index] %}
                     <tr>
                         <form method="POST" action="{{ url_for('home.ver_compromisos') }}">
                             <input type="hidden" name="compromiso_id" value="{{ compromiso.compromiso_id }}">
@@ -363,6 +442,34 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+
+        <!-- Pagination controls -->
+        <div class="pagination-container">
+            <div class="pagination">
+                {% if current_page > 1 %}
+                <a href="{{ url_for('home.ver_compromisos', page=current_page-1, search=request.args.get('search', ''), estado=request.args.get('estado', ''), prioridad=request.args.get('prioridad', ''), fecha_limite=request.args.get('fecha_limite', '')) }}" class="pagination-btn">&laquo; Anterior</a>
+                {% else %}
+                <span class="pagination-btn disabled">&laquo; Anterior</span>
+                {% endif %}
+                
+                {% for i in range(1, total_pages + 1) %}
+                    {% if i == current_page %}
+                    <span class="pagination-btn active">{{ i }}</span>
+                    {% else %}
+                    <a href="{{ url_for('home.ver_compromisos', page=i, search=request.args.get('search', ''), estado=request.args.get('estado', ''), prioridad=request.args.get('prioridad', ''), fecha_limite=request.args.get('fecha_limite', '')) }}" class="pagination-btn">{{ i }}</a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if current_page < total_pages %}
+                <a href="{{ url_for('home.ver_compromisos', page=current_page+1, search=request.args.get('search', ''), estado=request.args.get('estado', ''), prioridad=request.args.get('prioridad', ''), fecha_limite=request.args.get('fecha_limite', '')) }}" class="pagination-btn">Siguiente &raquo;</a>
+                {% else %}
+                <span class="pagination-btn disabled">Siguiente &raquo;</span>
+                {% endif %}
+            </div>
+            <div class="pagination-info">
+                Página {{ current_page }} de {{ total_pages }} | Mostrando {{ compromisos[start_index:end_index]|length }} de {{ total_items }} compromisos
+            </div>
         </div>
     </div>
     <footer class="footer">

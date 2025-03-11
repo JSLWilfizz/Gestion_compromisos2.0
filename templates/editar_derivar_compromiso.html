@@ -263,8 +263,7 @@
             <textarea id="comentario" name="comentario">{{ compromiso.comentario }}</textarea>
 
             <label for="comentario_direccion">Comentario Dirección</label>
-            <textarea id="comentario_direccion" name="comentario_direccion" {% if not the_big_boss %}disabled{% endif %}>{{ compromiso.comentario_direccion }}</textarea>
-
+            <textarea id="comentario_direccion" name="comentario_direccion" {% if user.nivel_jerarquico != 'DIRECTOR DE SERVICIO' %}disabled{% endif %}>{{ compromiso.comentario_direccion }}</textarea>
             <div class="btn-group">
                 <button type="submit" class="btn"><i class="fas fa-save"></i> Guardar</button>
                 <a href="{{ url_for('home.ver_compromisos_compartidos') }}" class="btn btn-secondary"><i class="fas fa-times"></i> Cancelar</a>

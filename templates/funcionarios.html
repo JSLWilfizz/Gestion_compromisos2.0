@@ -222,6 +222,77 @@
             font-size: 20px;
             cursor: pointer;
         }
+        
+        /* Pagination styles */
+        .pagination-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 25px;
+            gap: 10px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 10px 0;
+        }
+
+        .pagination-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+            padding: 0 12px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            color: #333;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .pagination-btn:hover {
+            background-color: #f5f5f5;
+            border-color: #ccc;
+        }
+
+        .pagination-btn.active {
+            background-color: #3498db;
+            border-color: #2980b9;
+            color: white;
+            font-weight: 600;
+        }
+
+        .pagination-btn.disabled {
+            background-color: #f4f4f4;
+            border-color: #ddd;
+            color: #aaa;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .pagination-info {
+            color: #666;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .pagination-btn {
+                min-width: 35px;
+                height: 35px;
+                font-size: 13px;
+                padding: 0 8px;
+            }
+            
+            .pagination-info {
+                font-size: 12px;
+            }
+        }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -290,7 +361,15 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for funcionario in funcionarios %}
+                            {% set current_page = request.args.get('page', '1')|int or 1 %}
+                            {% set items_per_page = 6 %}
+                            {% set total_items = funcionarios|length %}
+                            {% set total_pages = ((total_items / items_per_page)|round(0, 'ceil'))|int or 1 %}
+                            
+                            {% set start_index = (current_page - 1) * items_per_page %}
+                            {% set end_index = start_index + items_per_page %}
+                            
+                            {% for funcionario in funcionarios[start_index:end_index] %}
                             <tr>
                                 <td>{{ funcionario.rut }}</td>
                                 <td>{{ funcionario.name }}</td>
@@ -306,6 +385,34 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    
+                    <!-- Pagination controls -->
+                    <div class="pagination-container">
+                        <div class="pagination">
+                            {% if current_page > 1 %}
+                            <a href="{{ url_for('director.funcionarios', page=current_page-1, search=request.args.get('search', ''), departamento=request.args.get('departamento', ''), nivel_jerarquico=request.args.get('nivel_jerarquico', '')) }}" class="pagination-btn">&laquo; Anterior</a>
+                            {% else %}
+                            <span class="pagination-btn disabled">&laquo; Anterior</span>
+                            {% endif %}
+                            
+                            {% for i in range(1, total_pages + 1) %}
+                                {% if i == current_page %}
+                                <span class="pagination-btn active">{{ i }}</span>
+                                {% else %}
+                                <a href="{{ url_for('director.funcionarios', page=i, search=request.args.get('search', ''), departamento=request.args.get('departamento', ''), nivel_jerarquico=request.args.get('nivel_jerarquico', '')) }}" class="pagination-btn">{{ i }}</a>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if current_page < total_pages %}
+                            <a href="{{ url_for('director.funcionarios', page=current_page+1, search=request.args.get('search', ''), departamento=request.args.get('departamento', ''), nivel_jerarquico=request.args.get('nivel_jerarquico', '')) }}" class="pagination-btn">Siguiente &raquo;</a>
+                            {% else %}
+                            <span class="pagination-btn disabled">Siguiente &raquo;</span>
+                            {% endif %}
+                        </div>
+                        <div class="pagination-info">
+                            Página {{ current_page }} de {{ total_pages }} | Mostrando {{ funcionarios[start_index:end_index]|length }} de {{ total_items }} funcionarios
+                        </div>
+                    </div>
                 {% else %}
                     <p>No se encontraron funcionarios.</p>
                 {% endif %}

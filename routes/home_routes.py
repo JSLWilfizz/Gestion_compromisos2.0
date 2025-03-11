@@ -214,6 +214,7 @@ def editar_compromiso(compromiso_id):
                            direccion=direccion,
                            title="Editar Compromiso",
                            derivar=False,
+                           user=user, 
                            alert=alert)
 
 @home.route('/derivar_compromiso/<int:compromiso_id>', methods=['GET', 'POST'])
@@ -306,7 +307,7 @@ def eliminar_compromiso(compromiso_id):
     tiene_verificadores = len(verificadores) > 0
 
     # Verificar si el usuario tiene permiso para eliminar el compromiso
-    if not (compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento']) or session.get('the_big_boss') or session.get('es_director')):
+    if not (compromiso_service.es_jefe_de_departamento(user_id, compromiso['id_departamento']) or user['nivel_jerarquico'] != 'FUNCIONARIO/A'):
         set_alert('No tienes permiso para eliminar este compromiso.', 'danger')
         return redirect(url_for('home.ver_compromisos_compartidos'))
 
